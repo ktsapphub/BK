@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export default function GalleryRoom({ section }) {
   const c = section.content || {};
@@ -38,6 +38,15 @@ export default function GalleryRoom({ section }) {
 
       <Dialog open={lightboxIdx !== null} onOpenChange={(v) => !v && setLightboxIdx(null)}>
         <DialogContent data-testid="gallery-lightbox" className="bg-black/95 border-none max-w-4xl p-0" onKeyDown={(e) => { if (e.key === "ArrowRight") showNext(); if (e.key === "ArrowLeft") showPrev(); }}>
+          <button
+            type="button"
+            onClick={() => setLightboxIdx(null)}
+            aria-label="Close"
+            data-testid="gallery-lightbox-close-button"
+            className="focus-ring absolute right-3 top-3 z-50 rounded-full p-2 bg-white/15 text-white hover:bg-white/25 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
           {lightboxIdx !== null && (
             <div className="relative">
               <img src={images[lightboxIdx].url} alt={images[lightboxIdx].alt || ""} className="w-full max-h-[80vh] object-contain" />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { X } from "lucide-react";
 
 export default function ServicesRoom({ section, services }) {
   const c = section.content || {};
@@ -39,6 +40,15 @@ export default function ServicesRoom({ section, services }) {
 
       <Sheet open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
         <SheetContent side="right" className="bg-[var(--background-primary)] text-[var(--text-primary)] w-full sm:max-w-lg overflow-y-auto">
+          <button
+            type="button"
+            onClick={() => setOpen(null)}
+            aria-label="Close"
+            data-testid="service-sheet-close-button"
+            className="focus-ring absolute right-4 top-4 z-50 rounded-full p-1.5 bg-[var(--background-secondary)] text-[var(--text-primary)] hover:bg-[var(--background-blue-soft)] transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
           {open && (
             <>
               <SheetHeader>
