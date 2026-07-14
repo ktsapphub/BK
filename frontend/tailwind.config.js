@@ -7,6 +7,11 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ['Urbanist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        body: ['Lexend', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        editorial: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',

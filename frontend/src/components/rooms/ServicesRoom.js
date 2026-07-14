@@ -1,0 +1,72 @@
+import { useState } from "react";
+import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+
+export default function ServicesRoom({ section, services }) {
+  const c = section.content || {};
+  const list = Array.isArray(services) ? services : [];
+  const [open, setOpen] = useState(null);
+
+  return (
+    <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="services-room" sectionType={section.section_type} className="py-24 md:py-32">
+      <RoomContainer>
+        <RoomEyebrow dark>Services</RoomEyebrow>
+        <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-4">{c.heading || "How I Can Help"}</h2>
+        {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-12 opacity-90">{c.intro}</p>}
+
+        {list.length === 0 ? (
+          <div className="rounded-[var(--radius-md)] border border-[var(--border-blue)] p-8 text-center">
+            <p className="font-editorial italic text-xl">Consulting by request.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-[var(--border-blue)]" data-testid="services-list">
+            {list.map((svc) => (
+              <li key={svc.id} className="py-6 md:py-7 flex items-center justify-between group">
+                <button
+                  onClick={() => setOpen(svc)}
+                  data-testid="service-open-sheet-button"
+                  className="focus-ring text-left font-display text-lg md:text-2xl font-semibold relative inline-block"
+                >
+                  {svc.title}
+                  <span className="absolute left-0 -bottom-1 h-px w-0 bg-[var(--accent-highlight)] transition-all duration-300 group-hover:w-full" />
+                </button>
+                <span className="font-body text-sm opacity-60 hidden sm:block max-w-md text-right">{svc.description}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </RoomContainer>
+
+      <Sheet open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
+        <SheetContent side="right" className="bg-[var(--background-primary)] text-[var(--text-primary)] w-full sm:max-w-lg overflow-y-auto">
+          {open && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="font-display text-2xl">{open.title}</SheetTitle>
+                <SheetDescription className="font-body">{open.description}</SheetDescription>
+              </SheetHeader>
+              {open.image_url && (
+                <img src={open.image_url} alt={open.title} className="w-full rounded-[var(--radius-md)] mt-4 aspect-video object-cover" loading="lazy" />
+              )}
+              {Array.isArray(open.capabilities) && open.capabilities.length > 0 && (
+                <div className="mt-6">
+                  <p className="font-display text-xs uppercase tracking-[0.14em] text-[var(--text-muted)] mb-3">Capabilities</p>
+                  <ul className="space-y-2">
+                    {open.capabilities.map((cap, i) => (
+                      <li key={i} className="font-body text-sm flex gap-2"><span className="text-[var(--surface-blue)]">—</span>{cap}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {open.cta_label && (
+                <a href={`#${open.cta_href || "contact"}`} className="focus-ring inline-flex mt-8 items-center rounded-[var(--radius-sm)] bg-[var(--surface-blue)] px-5 py-2.5 font-display text-sm font-semibold text-white hover:bg-[var(--accent-highlight)]">
+                  {open.cta_label}
+                </a>
+              )}
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </RoomWrapper>
+  );
+}

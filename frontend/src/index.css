@@ -1,22 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&family=Lexend:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   Bretton J. Key -- Design Tokens (source of truth, do not use raw hex)
+   =========================================================================== */
+:root {
+    --background-primary: #FFFFFF;
+    --background-secondary: #F7F9FC;
+    --background-blue-soft: #EEF5FC;
+    --surface-blue: #0057B8;
+    --surface-blue-dark: #003B7A;
+    --accent-highlight: #1677D2;
+    --text-primary: #111827;
+    --text-secondary: #374151;
+    --text-muted: #6B7280;
+    --text-on-blue: #FFFFFF;
+    --text-on-blue-muted: rgba(255, 255, 255, 0.78);
+    --border-primary: #E5E7EB;
+    --border-blue: rgba(0, 87, 184, 0.24);
+    --focus-ring: #1677D2;
+
+    --font-display: 'Urbanist', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Lexend', ui-sans-serif, system-ui, sans-serif;
+    --font-editorial: 'Fraunces', ui-serif, Georgia, serif;
+
+    --radius-xs: 8px;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+
+    --shadow-quiet: 0 1px 0 rgba(17, 24, 39, 0.06);
+    --shadow-room: 0 18px 50px rgba(17, 24, 39, 0.10);
+    --shadow-float: 0 10px 30px rgba(0, 87, 184, 0.10);
+}
+
 body {
     margin: 0;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-        "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-        sans-serif;
+    font-family: var(--font-body);
+    background: var(--background-primary);
+    color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-    font-family:
-        source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
+/* Admin dashboard keeps shadcn tokens neutral for utilitarian UI */
 @layer base {
     :root {
         --background: 0 0% 100%;
@@ -25,7 +59,7 @@ code {
         --card-foreground: 0 0% 3.9%;
         --popover: 0 0% 100%;
         --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 9%;
+        --primary: 212 100% 36%;
         --primary-foreground: 0 0% 98%;
         --secondary: 0 0% 96.1%;
         --secondary-foreground: 0 0% 9%;
@@ -37,48 +71,19 @@ code {
         --destructive-foreground: 0 0% 98%;
         --border: 0 0% 89.8%;
         --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
-        --chart-1: 12 76% 61%;
+        --ring: 205 82% 45%;
+        --chart-1: 212 100% 36%;
         --chart-2: 173 58% 39%;
         --chart-3: 197 37% 24%;
         --chart-4: 43 74% 66%;
         --chart-5: 27 87% 67%;
-        --radius: 0.5rem;
-    }
-    .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 14.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
+        --radius: 0.6rem;
     }
 }
 
 @layer base {
     * {
         @apply border-border;
-    }
-    body {
-        @apply bg-background text-foreground;
     }
 }
 
@@ -111,5 +116,67 @@ code {
         border-right-color: inherit;
         border-top-color: inherit;
         border-bottom-color: inherit;
+    }
+}
+
+/* ===========================================================================
+   Cinematic site utilities
+   =========================================================================== */
+.font-editorial {
+    font-family: var(--font-editorial);
+}
+
+.font-display {
+    font-family: var(--font-display);
+}
+
+.font-body {
+    font-family: var(--font-body);
+}
+
+.focus-ring {
+    outline: none;
+}
+
+.focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--focus-ring);
+}
+
+.room-noise {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+::selection {
+    background: var(--surface-blue);
+    color: var(--text-on-blue);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-blue);
+    border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }

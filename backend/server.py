@@ -1,42 +1,26 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Header, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File
 from fastapi.responses import Response
-from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 import uuid
-import bcrypt
-import jwt
-import requests
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional, Any, Dict
-from datetime import datetime, timezone, timedelta
+from typing import Optional, List
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+from database import db, client, clean_doc, clean_docs
+from auth_utils import (
+    hash_password, verify_password, create_jwt, seed_admin,
+    get_current_admin, now_iso,
+)
+from storage_utils import init_storage, put_object, get_object
+from models import (
+    LoginRequest, PageCreate, SectionCreate, SectionUpdate,
+    CareerEntryCreate, TestimonialCreate, ProjectCreate, ServiceCreate,
+    ThoughtCreate, ImpactItemCreate, NavigationItemCreate,
+    GlobalSettingsUpdate, InquiryCreate, ReorderRequest,
+    VALID_SECTION_TYPES, VALID_STATUS,
+)
 
-# ---------------------------------------------------------------------------
-# MongoDB connection
-# ---------------------------------------------------------------------------
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# ---------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------
-JWT_SECRET = os.environ.get('JWT_SECRET', 'change-me')
-JWT_ALGO = 'HS256'
-JWT_EXPIRE_HOURS = 24 * 7
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme')
 APP_NAME = os.environ.get('APP_NAME', 'bretton-key-site')
-EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
-
-STORAGE_URL = "https://integrations.emergentagent.com/objstore/api/v1/storage"
-storage_key_holder = {"key": None}
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -44,35 +28,16 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-
-# ---------------------------------------------------------------------------
-# Object storage helpers
-# ---------------------------------------------------------------------------
-def init_storage():
-    if storage_key_holder["key"]:
-        return storage_key_holder["key"]
-    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_LLM_KEY}, timeout=30)
-    resp.raise_for_status()
-    storage_key_holder["key"] = resp.json()["storage_key"]
-    return storage_key_holder["key"]
-
-
-def put_object(path: str, data: bytes, content_type: str) -> dict:
-    key = init_storage()
-    resp = requests.put(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key, "Content-Type": content_type},
-        data=data, timeout=120
-    )
-    resp.raise_for_status()
-    return resp.json()
-
-
-def get_object(path: str):
-    key = init_storage()
-    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
-    resp.raise_for_status()
-    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+REORDER_COLLECTIONS = {
+    "sections": "sections",
+    "career_entries": "career_entries",
+    "testimonials": "testimonials",
+    "projects": "projects",
+    "services": "services",
+    "thoughts": "thoughts",
+    "impact_items": "impact_items",
+    "navigation_items": "navigation_items",
+}
 
 
 @app.on_event("startup")
@@ -83,6 +48,35 @@ async def startup():
     except Exception as e:
         logger.error(f"Storage init failed: {e}")
     await seed_admin()
+    existing_settings = await db.global_settings.find_one({"key": "site"})
+    if not existing_settings:
+        await db.global_settings.insert_one({
+            "key": "site",
+            "site_title": "Bretton J. Key",
+            "site_tagline": "Twenty Years in Motion",
+            "contact_email": "brettonjkey@icloud.com",
+            "contact_phone": "(757) 589-4148",
+            "contact_location": "Norfolk, VA",
+            "scheduling_url": "https://calendly.com/bretton-j-key",
+            "social_instagram": "https://instagram.com/key.to.success",
+            "social_threads": "https://www.threads.net/@key.to.success",
+            "social_linkedin": "https://linkedin.com/in/brettonjkey",
+            "footer_text": "\u00a9 2026 Bretton J. Key. All rights reserved.",
+            "seo_default_title": "Bretton J. Key \u2014 Delivery Leader & Builder",
+            "seo_default_description": "PMP-certified delivery leader with 20+ years driving mission-critical technical programs.",
+            "seo_og_image": None,
+            "resume_pdf_url": None,
+            "updated_at": now_iso(),
+        })
+    home_page = await db.pages.find_one({"slug": "home"})
+    if not home_page:
+        await db.pages.insert_one({
+            "id": str(uuid.uuid4()),
+            "slug": "home",
+            "title": "Home",
+            "is_published": True,
+            "created_at": now_iso(),
+        })
 
 
 @app.on_event("shutdown")
@@ -90,155 +84,8 @@ async def shutdown_db_client():
     client.close()
 
 
-# ---------------------------------------------------------------------------
-# Auth helpers
-# ---------------------------------------------------------------------------
-def hash_password(pw: str) -> str:
-    return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
-
-
-def verify_password(pw: str, hashed: str) -> bool:
-    try:
-        return bcrypt.checkpw(pw.encode(), hashed.encode())
-    except Exception:
-        return False
-
-
-def create_jwt(email: str) -> str:
-    payload = {
-        "sub": email,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRE_HOURS),
-        "iat": datetime.now(timezone.utc),
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
-
-
-async def seed_admin():
-    existing = await db.users.find_one({"email": ADMIN_EMAIL})
-    if not existing:
-        await db.users.insert_one({
-            "id": str(uuid.uuid4()),
-            "email": ADMIN_EMAIL,
-            "password_hash": hash_password(ADMIN_PASSWORD),
-            "role": "admin",
-            "created_at": now_iso(),
-        })
-        logger.info(f"Seeded admin user {ADMIN_EMAIL}")
-
-
-def now_iso():
-    return datetime.now(timezone.utc).isoformat()
-
-
-async def get_current_admin(authorization: Optional[str] = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    token = authorization.split(" ", 1)[1]
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = await db.users.find_one({"email": payload.get("sub")}, {"_id": 0})
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return user
-
-
-# ---------------------------------------------------------------------------
-# Generic helpers
-# ---------------------------------------------------------------------------
-def clean_doc(doc: dict) -> dict:
-    if doc is None:
-        return doc
-    doc.pop("_id", None)
-    return doc
-
-
-VALID_SECTION_TYPES = {
-    "hero", "introduction", "values", "thoughts", "resume", "services",
-    "projects", "founder_story", "testimonials", "media", "impact",
-    "personal", "gallery", "contact", "custom"
-}
-VALID_STATUS = {"draft", "published", "archived"}
-
-
 # ===========================================================================
-# MODELS
-# ===========================================================================
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
-
-class SectionCreate(BaseModel):
-    page_id: str
-    section_type: str
-    internal_name: str
-    navigation_label: Optional[str] = None
-    display_order: int = 0
-    is_visible: bool = True
-    status: str = "draft"
-    theme: Optional[str] = "true_white"
-    layout: Optional[str] = None
-    transition_style: Optional[str] = "fade"
-    content: Dict[str, Any] = Field(default_factory=dict)
-
-
-class SectionUpdate(BaseModel):
-    section_type: Optional[str] = None
-    internal_name: Optional[str] = None
-    navigation_label: Optional[str] = None
-    display_order: Optional[int] = None
-    is_visible: Optional[bool] = None
-    status: Optional[str] = None
-    theme: Optional[str] = None
-    layout: Optional[str] = None
-    transition_style: Optional[str] = None
-    content: Optional[Dict[str, Any]] = None
-
-
-class PageCreate(BaseModel):
-    slug: str
-    title: str
-    is_published: bool = True
-
-
-class CareerEntryCreate(BaseModel):
-    title: str
-    org: str
-    location: Optional[str] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    is_current: bool = False
-    description: Optional[str] = None
-    achievements: List[str] = Field(default_factory=list)
-    skills: List[str] = Field(default_factory=list)
-    logo_url: Optional[str] = None
-    display_order: int = 0
-    is_visible: bool = True
-
-
-class TestimonialCreate(BaseModel):
-    name: str
-    title: Optional[str] = None
-    org: Optional[str] = None
-    relationship: Optional[str] = None
-    full_quote: str
-    short_quote: Optional[str] = None
-    portrait_url: Optional[str] = None
-    portrait_alt: Optional[str] = None
-    linkedin_url: Optional[str] = None
-    org_logo_url: Optional[str] = None
-    related_project_id: Optional[str] = None
-    verified: bool = False
-    status: str = "draft"
-    display_order: int = 0
-
-
-# ===========================================================================
-# AUTH ROUTES
+# AUTH
 # ===========================================================================
 @api_router.post("/admin/login")
 async def admin_login(body: LoginRequest):
@@ -255,7 +102,7 @@ async def admin_me(admin=Depends(get_current_admin)):
 
 
 # ===========================================================================
-# MEDIA ROUTES
+# MEDIA LIBRARY (object storage)
 # ===========================================================================
 @api_router.post("/admin/media/upload")
 async def upload_media(file: UploadFile = File(...), admin=Depends(get_current_admin)):
@@ -304,7 +151,7 @@ async def get_media(media_id: str):
 
 
 # ===========================================================================
-# PAGE ROUTES (admin)
+# PAGES (admin)
 # ===========================================================================
 @api_router.post("/admin/pages")
 async def create_page(body: PageCreate, admin=Depends(get_current_admin)):
@@ -324,7 +171,7 @@ async def list_pages(admin=Depends(get_current_admin)):
 
 
 # ===========================================================================
-# SECTION ROUTES (admin CRUD + publish + versioning)
+# SECTIONS (admin CRUD + publish + versioning + reorder)
 # ===========================================================================
 async def snapshot_version(section_doc: dict):
     version = {
@@ -395,8 +242,7 @@ async def delete_section(section_id: str, admin=Depends(get_current_admin)):
 
 @api_router.get("/admin/sections/{section_id}/versions")
 async def get_section_versions(section_id: str, admin=Depends(get_current_admin)):
-    versions = await db.content_versions.find({"section_id": section_id}, {"_id": 0}).sort("created_at", -1).to_list(200)
-    return versions
+    return await db.content_versions.find({"section_id": section_id}, {"_id": 0}).sort("created_at", -1).to_list(200)
 
 
 @api_router.post("/admin/sections/{section_id}/rollback/{version_id}")
@@ -408,12 +254,24 @@ async def rollback_section(section_id: str, version_id: str, admin=Depends(get_c
     restore = {k: v for k, v in snapshot.items() if k not in ("id", "_id")}
     restore["updated_at"] = now_iso()
     await db.sections.update_one({"id": section_id}, {"$set": restore})
-    new_doc = await db.sections.find_one({"id": section_id}, {"_id": 0})
-    return new_doc
+    return await db.sections.find_one({"id": section_id}, {"_id": 0})
 
 
 # ===========================================================================
-# CAREER ENTRIES (admin)
+# GENERIC REORDER
+# ===========================================================================
+@api_router.post("/admin/reorder/{collection}")
+async def reorder_collection(collection: str, body: ReorderRequest, admin=Depends(get_current_admin)):
+    if collection not in REORDER_COLLECTIONS:
+        raise HTTPException(status_code=400, detail="Invalid collection")
+    coll = db[REORDER_COLLECTIONS[collection]]
+    for item in body.items:
+        await coll.update_one({"id": item.id}, {"$set": {"display_order": item.display_order}})
+    return {"success": True}
+
+
+# ===========================================================================
+# CAREER ENTRIES (admin + public)
 # ===========================================================================
 @api_router.post("/admin/career-entries")
 async def create_career_entry(body: CareerEntryCreate, admin=Depends(get_current_admin)):
@@ -431,8 +289,7 @@ async def list_career_entries_admin(admin=Depends(get_current_admin)):
 
 @api_router.put("/admin/career-entries/{entry_id}")
 async def update_career_entry(entry_id: str, body: dict, admin=Depends(get_current_admin)):
-    body.pop("id", None)
-    body.pop("_id", None)
+    body.pop("id", None); body.pop("_id", None)
     result = await db.career_entries.update_one({"id": entry_id}, {"$set": body})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -445,8 +302,13 @@ async def delete_career_entry(entry_id: str, admin=Depends(get_current_admin)):
     return {"success": True}
 
 
+@api_router.get("/public/career-entries")
+async def get_public_career_entries():
+    return await db.career_entries.find({"is_visible": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
 # ===========================================================================
-# TESTIMONIALS (admin)
+# TESTIMONIALS (admin + public verified-gate)
 # ===========================================================================
 @api_router.post("/admin/testimonials")
 async def create_testimonial(body: TestimonialCreate, admin=Depends(get_current_admin)):
@@ -464,8 +326,7 @@ async def list_testimonials_admin(admin=Depends(get_current_admin)):
 
 @api_router.put("/admin/testimonials/{tid}")
 async def update_testimonial(tid: str, body: dict, admin=Depends(get_current_admin)):
-    body.pop("id", None)
-    body.pop("_id", None)
+    body.pop("id", None); body.pop("_id", None)
     result = await db.testimonials.update_one({"id": tid}, {"$set": body})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Testimonial not found")
@@ -478,8 +339,274 @@ async def delete_testimonial(tid: str, admin=Depends(get_current_admin)):
     return {"success": True}
 
 
+@api_router.get("/public/testimonials")
+async def get_public_testimonials():
+    return await db.testimonials.find({"verified": True, "status": "published"}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
 # ===========================================================================
-# PUBLIC ROUTES (RLS-equivalent: only published + visible)
+# PROJECTS (admin + public)
+# ===========================================================================
+@api_router.post("/admin/projects")
+async def create_project(body: ProjectCreate, admin=Depends(get_current_admin)):
+    doc = body.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    await db.projects.insert_one(doc)
+    return clean_doc(doc)
+
+
+@api_router.get("/admin/projects")
+async def list_projects_admin(admin=Depends(get_current_admin)):
+    return await db.projects.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.put("/admin/projects/{pid}")
+async def update_project(pid: str, body: dict, admin=Depends(get_current_admin)):
+    body.pop("id", None); body.pop("_id", None)
+    result = await db.projects.update_one({"id": pid}, {"$set": body})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return await db.projects.find_one({"id": pid}, {"_id": 0})
+
+
+@api_router.delete("/admin/projects/{pid}")
+async def delete_project(pid: str, admin=Depends(get_current_admin)):
+    await db.projects.delete_one({"id": pid})
+    return {"success": True}
+
+
+@api_router.get("/public/projects")
+async def get_public_projects():
+    return await db.projects.find({"is_published": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.get("/public/projects/{slug}")
+async def get_public_project(slug: str):
+    doc = await db.projects.find_one({"$or": [{"slug": slug}, {"id": slug}], "is_published": True}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return doc
+
+
+# ===========================================================================
+# SERVICES (admin + public)
+# ===========================================================================
+@api_router.post("/admin/services")
+async def create_service(body: ServiceCreate, admin=Depends(get_current_admin)):
+    doc = body.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    await db.services.insert_one(doc)
+    return clean_doc(doc)
+
+
+@api_router.get("/admin/services")
+async def list_services_admin(admin=Depends(get_current_admin)):
+    return await db.services.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.put("/admin/services/{sid}")
+async def update_service(sid: str, body: dict, admin=Depends(get_current_admin)):
+    body.pop("id", None); body.pop("_id", None)
+    result = await db.services.update_one({"id": sid}, {"$set": body})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return await db.services.find_one({"id": sid}, {"_id": 0})
+
+
+@api_router.delete("/admin/services/{sid}")
+async def delete_service(sid: str, admin=Depends(get_current_admin)):
+    await db.services.delete_one({"id": sid})
+    return {"success": True}
+
+
+@api_router.get("/public/services")
+async def get_public_services():
+    return await db.services.find({"is_published": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+# ===========================================================================
+# THOUGHTS / ARTICLES (admin + public)
+# ===========================================================================
+@api_router.post("/admin/thoughts")
+async def create_thought(body: ThoughtCreate, admin=Depends(get_current_admin)):
+    doc = body.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    await db.thoughts.insert_one(doc)
+    return clean_doc(doc)
+
+
+@api_router.get("/admin/thoughts")
+async def list_thoughts_admin(admin=Depends(get_current_admin)):
+    return await db.thoughts.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.put("/admin/thoughts/{tid}")
+async def update_thought(tid: str, body: dict, admin=Depends(get_current_admin)):
+    body.pop("id", None); body.pop("_id", None)
+    result = await db.thoughts.update_one({"id": tid}, {"$set": body})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Thought not found")
+    return await db.thoughts.find_one({"id": tid}, {"_id": 0})
+
+
+@api_router.delete("/admin/thoughts/{tid}")
+async def delete_thought(tid: str, admin=Depends(get_current_admin)):
+    await db.thoughts.delete_one({"id": tid})
+    return {"success": True}
+
+
+@api_router.get("/public/thoughts")
+async def get_public_thoughts():
+    return await db.thoughts.find({"is_published": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.get("/public/thoughts/{slug}")
+async def get_public_thought(slug: str):
+    doc = await db.thoughts.find_one({"$or": [{"slug": slug}, {"id": slug}], "is_published": True}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return doc
+
+
+# ===========================================================================
+# IMPACT / MEDIA LOG (admin + public) -- distinct from testimonials, allows video/podcast
+# ===========================================================================
+@api_router.post("/admin/impact-items")
+async def create_impact_item(body: ImpactItemCreate, admin=Depends(get_current_admin)):
+    doc = body.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    await db.impact_items.insert_one(doc)
+    return clean_doc(doc)
+
+
+@api_router.get("/admin/impact-items")
+async def list_impact_items_admin(admin=Depends(get_current_admin)):
+    return await db.impact_items.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.put("/admin/impact-items/{iid}")
+async def update_impact_item(iid: str, body: dict, admin=Depends(get_current_admin)):
+    body.pop("id", None); body.pop("_id", None)
+    result = await db.impact_items.update_one({"id": iid}, {"$set": body})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Impact item not found")
+    return await db.impact_items.find_one({"id": iid}, {"_id": 0})
+
+
+@api_router.delete("/admin/impact-items/{iid}")
+async def delete_impact_item(iid: str, admin=Depends(get_current_admin)):
+    await db.impact_items.delete_one({"id": iid})
+    return {"success": True}
+
+
+@api_router.get("/public/impact-items")
+async def get_public_impact_items():
+    return await db.impact_items.find({"is_published": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+# ===========================================================================
+# NAVIGATION (admin + public)
+# ===========================================================================
+@api_router.post("/admin/navigation-items")
+async def create_nav_item(body: NavigationItemCreate, admin=Depends(get_current_admin)):
+    doc = body.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    await db.navigation_items.insert_one(doc)
+    return clean_doc(doc)
+
+
+@api_router.get("/admin/navigation-items")
+async def list_nav_items_admin(admin=Depends(get_current_admin)):
+    return await db.navigation_items.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.delete("/admin/navigation-items/{nid}")
+async def delete_nav_item(nid: str, admin=Depends(get_current_admin)):
+    await db.navigation_items.delete_one({"id": nid})
+    return {"success": True}
+
+
+@api_router.get("/public/navigation")
+async def get_public_navigation():
+    manual = await db.navigation_items.find({"is_visible": True}, {"_id": 0}).sort("display_order", 1).to_list(200)
+    if manual:
+        return manual
+    # Auto-derive from published + visible sections that have a navigation_label
+    sections = await db.sections.find(
+        {"status": "published", "is_visible": True, "navigation_label": {"$nin": [None, ""]}},
+        {"_id": 0}
+    ).sort("display_order", 1).to_list(200)
+    return [
+        {"id": s["id"], "label": s["navigation_label"], "section_id": s["id"], "display_order": s["display_order"]}
+        for s in sections
+    ]
+
+
+# ===========================================================================
+# GLOBAL SETTINGS
+# ===========================================================================
+@api_router.get("/admin/global-settings")
+async def get_global_settings_admin(admin=Depends(get_current_admin)):
+    doc = await db.global_settings.find_one({"key": "site"}, {"_id": 0})
+    return doc or {}
+
+
+@api_router.put("/admin/global-settings")
+async def update_global_settings(body: GlobalSettingsUpdate, admin=Depends(get_current_admin)):
+    update = {k: v for k, v in body.model_dump().items() if v is not None}
+    update["updated_at"] = now_iso()
+    await db.global_settings.update_one({"key": "site"}, {"$set": update}, upsert=True)
+    return await db.global_settings.find_one({"key": "site"}, {"_id": 0})
+
+
+@api_router.get("/public/global-settings")
+async def get_public_global_settings():
+    doc = await db.global_settings.find_one({"key": "site"}, {"_id": 0})
+    return doc or {}
+
+
+# ===========================================================================
+# INQUIRIES (public submit + admin manage)
+# ===========================================================================
+@api_router.post("/public/inquiries")
+async def submit_inquiry(body: InquiryCreate):
+    doc = body.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["status"] = "new"
+    doc["created_at"] = now_iso()
+    await db.inquiries.insert_one(doc)
+    return {"success": True, "message": "Thank you \u2014 your message has been received. Bretton will follow up soon."}
+
+
+@api_router.get("/admin/inquiries")
+async def list_inquiries(admin=Depends(get_current_admin)):
+    return await db.inquiries.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+
+
+@api_router.put("/admin/inquiries/{iid}")
+async def update_inquiry(iid: str, body: dict, admin=Depends(get_current_admin)):
+    status = body.get("status")
+    if status not in {"new", "handled", "archived"}:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    result = await db.inquiries.update_one({"id": iid}, {"$set": {"status": status}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    return await db.inquiries.find_one({"id": iid}, {"_id": 0})
+
+
+@api_router.delete("/admin/inquiries/{iid}")
+async def delete_inquiry(iid: str, admin=Depends(get_current_admin)):
+    await db.inquiries.delete_one({"id": iid})
+    return {"success": True}
+
+
+# ===========================================================================
+# PAGE / SECTIONS PUBLIC (RLS-equivalent)
 # ===========================================================================
 @api_router.get("/public/page/{slug}")
 async def get_public_page(slug: str):
@@ -490,7 +617,6 @@ async def get_public_page(slug: str):
         {"page_id": page["id"], "status": "published", "is_visible": True},
         {"_id": 0}
     ).sort("display_order", 1).to_list(500)
-    # Graceful handling of unknown section types
     safe_sections = []
     for s in sections:
         if s.get("section_type") not in VALID_SECTION_TYPES:
@@ -498,20 +624,6 @@ async def get_public_page(slug: str):
             s["content"] = s.get("content") or {}
         safe_sections.append(s)
     return {"page": page, "sections": safe_sections}
-
-
-@api_router.get("/public/career-entries")
-async def get_public_career_entries():
-    entries = await db.career_entries.find({"is_visible": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
-    return entries
-
-
-@api_router.get("/public/testimonials")
-async def get_public_testimonials():
-    items = await db.testimonials.find(
-        {"verified": True, "status": "published"}, {"_id": 0}
-    ).sort("display_order", 1).to_list(500)
-    return items
 
 
 @api_router.get("/")
