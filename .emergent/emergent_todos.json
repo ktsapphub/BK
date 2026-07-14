@@ -1,0 +1,46 @@
+[
+  {
+    "content": "Phase 0: Get Object Storage integration playbook",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 1: Backend minimal CMS core (auth, sections, career_entries, testimonials, media, versioning)",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 1: Write & pass poc_core_flow_test.py",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: Full backend (all collections/endpoints/section types)",
+    "status": "in_progress"
+  },
+  {
+    "content": "Phase 2: design_agent pass for cinematic UI direction",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Full public site - all 15 section renderers + motion system",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Full admin CMS UI",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Seed real content (resume, ventures, projects, personal, contact)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: testing_agent_v3 end-to-end pass + fixes",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 3: Comprehensive testing + hardening + fixes",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 4: Polish pass",
+    "status": "pending"
+  }
+]
