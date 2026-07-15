@@ -222,7 +222,7 @@ export default function ConnectForm({
           <SelectTrigger id={fid("reason")} data-testid={fid("reason-select")} aria-invalid={attemptedSubmit && !form.reason}>
             <SelectValue placeholder="What would you like to connect about?" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="!z-[80]">
             {REASON_OPTIONS.map((opt) => (
               <SelectItem key={opt} value={opt} data-testid={fid(`reason-option-${slugify(opt)}`)}>
                 {opt}
@@ -241,7 +241,7 @@ export default function ConnectForm({
               <SelectTrigger id={fid("project-type")} data-testid={fid("project-type-select")}>
                 <SelectValue placeholder="Select a type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="!z-[80]">
                 {PROJECT_TYPE_OPTIONS.map((opt) => (
                   <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                 ))}
@@ -254,7 +254,7 @@ export default function ConnectForm({
               <SelectTrigger id={fid("project-stage")} data-testid={fid("project-stage-select")}>
                 <SelectValue placeholder="Select a stage" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="!z-[80]">
                 {PROJECT_STAGE_OPTIONS.map((opt) => (
                   <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                 ))}
@@ -302,7 +302,7 @@ export default function ConnectForm({
               <SelectTrigger id={fid("speaking-mode")} data-testid={fid("speaking-mode-select")}>
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="!z-[80]">
                 {SPEAKING_MODE_OPTIONS.map((opt) => (
                   <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                 ))}
@@ -327,7 +327,7 @@ export default function ConnectForm({
             <SelectTrigger id={fid("use-app")} data-testid={fid("use-app-select")}>
               <SelectValue placeholder={inquiryProjects.length ? "Select a project" : "No projects currently open for inquiries"} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="!z-[80]">
               {inquiryProjects.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
               ))}
@@ -343,7 +343,7 @@ export default function ConnectForm({
             <SelectTrigger id={fid("partnership-type")} data-testid={fid("partnership-type-select")}>
               <SelectValue placeholder="Select a type" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="!z-[80]">
               {PARTNERSHIP_TYPE_OPTIONS.map((opt) => (
                 <SelectItem key={opt} value={opt}>{opt}</SelectItem>
               ))}
