@@ -20,8 +20,8 @@
   - Minimal floating SiteNav (desktop rail + progress line + mobile drawer + persistent quick actions)
   - ThoughtsRoom accordion (expandable articles) + image/video support + pagination logic
   - Persistent “Let’s Connect” system (floating button + responsive dialog + shared ConnectForm + privacy policy + consent recordkeeping)
-- Comprehensive testing previously completed with a 100% pass rate (backend + public + admin) and zero open issues.
-- Remaining work is **launch content operations** (replace stock imagery + add verified testimonials) and optional Phase 4 polish.
+- Comprehensive testing completed with a 100% pass rate (backend + public + admin) and **zero open issues**.
+- Remaining work is **optional Phase 4 launch content operations** (replace stock imagery + add verified testimonials + set resume PDF URL) and minor polish.
 
 ---
 
@@ -159,7 +159,7 @@ Implemented and verified a navigation system that is entirely CMS-derived:
   - label position shift
   - font-weight change
   - animated underline
-- **Theme adaptation:** nav colors automatically switch light↔dark based on the currently-visible room theme, read from new RoomWrapper attributes (`data-theme-dark`).
+- **Theme adaptation:** nav colors automatically switch light↔dark based on the currently-visible room theme, read from RoomWrapper attributes (`data-theme-dark`).
 - **Keyboard:** roving navigation support (ArrowUp/Down/Home/End) and native anchor semantics.
 - **Deep links:** clicking updates URL hash; home page supports hash scrolling on load.
 - **Persistent actions:** View Work + conditional actions from Global Settings:
@@ -177,7 +177,7 @@ Key implementation notes:
 - Remaining articles render as an **Accordion**, expanding inline per article.
 - Expansion supports:
   - image (`featured_image`)
-  - or video (`video_url`) via `resolveVideoEmbed()` supporting YouTube/Vimeo/direct file.
+  - or video (`video_url`) via `resolveVideoEmbed()` supporting YouTube/Vimeo/direct file
 - Category filter preserved; changing category resets pagination.
 - Pagination: appears once non-featured filtered article count exceeds 5 (PAGE_SIZE=5).
 
@@ -185,7 +185,7 @@ Backend/schema updates to support media:
 - Backend `ThoughtCreate` model: added optional `video_url`.
 - Admin thought CRUD schema (`collectionSchemas.js`) updated to allow editing `video_url`.
 
-#### NEW: Persistent “Let’s Connect” + unified Contact System ✅
+#### Persistent “Let’s Connect” + unified Contact System ✅
 Implemented a shared contact/inquiry experience with strict consent and recordkeeping.
 
 **Backend updates (models.py, server.py) ✅**
@@ -211,9 +211,9 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - Consent recordkeeping persisted: contact_consent_at, marketing_consent_at, and version defaulting to `contact-consent-v1`
 
 **Frontend implementation ✅**
-- Shared single-source config: `/app/frontend/src/lib/connectOptions.js` (exact reason labels + conditional option lists + consent text defaults + contextual success next steps).
+- Shared single-source config: `/app/frontend/src/lib/connectOptions.js` (exact reason labels + conditional option lists + consent defaults + contextual success next steps).
 - `ConnectForm` component (shared): `/app/frontend/src/components/connect/ConnectForm.js`
-  - Exact field order per spec, conditional fields per reason
+  - Exact field order per spec; conditional fields per reason
   - Message length counter + max 1500
   - Preferred contact method hides phone/text options unless phone present
   - Required consent checkbox (unchecked by default) with programmatic error association + screen-reader alert
@@ -221,7 +221,7 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - Submit disabled until required fields valid + consent checked
   - Success state copy per spec + contextual next steps by reason
   - Failure state preserves data and shows generic error banner
-  - `idPrefix` support to avoid duplicate DOM ids when embedded twice on page
+  - `idPrefix` support to avoid duplicate DOM ids when embedded twice (Contact room + dialog)
 - Responsive dialog shell: `/app/frontend/src/components/connect/ConnectDialog.js`
   - Variants: fullscreen (<400px), bottom sheet (<768px), modal (<1536px), drawer (>=1536px)
   - Focus trap + Escape-to-close + background scroll lock via Radix Dialog
@@ -231,32 +231,32 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - Visible across public routes; hidden on `/admin/*` and while dialog open
   - Safe-area aware offsets; 44px+ target; no pulsing/bouncing
   - Auto theme contrast by sampling nearest `[data-theme-dark]` under button via `elementFromPoint`
-  - Project-page prefill support: detects `/projects/:slug` and passes project id into dialog for "Use your app(s)"
-- Contact room refactor: `ContactRoom.js` now embeds the same ConnectForm (no duplicated inquiry table or logic).
+  - Project-page prefill support: detects `/projects/:slug` and passes project id into dialog for “Use your app(s)”
+- Contact room refactor: `ContactRoom.js` now embeds the same ConnectForm (one inquiries system; no duplicate tables/records).
 - Privacy policy: new page `/privacy` (`PrivacyPolicy.js`), linked near consent.
 - Admin settings: `AdminSettings.js` extended with a “Let’s Connect & Privacy” section (editable dialog + consent copy, newsletter toggle, privacy URL) and guidance to bump consent version when wording changes.
 - App integration: `App.js` mounts `FloatingConnectButton` globally for public routes and adds `/privacy` route.
 
-**Manual verification performed ✅**
-- Button visibility + theme adaptation + admin-route hiding verified.
-- Inquiry submission confirmed end-to-end: created inquiry doc includes consent text/version/timestamps + source tracking.
-- Honeypot verified (fake success, not persisted).
-- Rate limiting verified (429 after 5 requests/15 minutes).
-- Test inquiries removed after verification; backend restarted to clear in-memory limiter state.
-
-**Known simplification (documented) ✅**
-- Reason/type/stage option lists are constants matching the spec verbatim (meets “must appear exactly unless changed in CMS” default). CMS-array editing can be added later if requested.
-- No CAPTCHA/Turnstile: honeypot + rate limiting implemented; CAPTCHA can be added if spam is observed.
+**Bug fix round (Connect system) ✅**
+- **Issue discovered (testing_agent iteration_4):** 3 CRITICAL frontend bugs:
+  1) Discard confirmation dialog buttons not clickable
+  2) Conditional fields not appearing when selecting a reason
+  3) Submit button never enabling
+- **Root cause:** a single z-index stacking conflict:
+  - custom `ConnectDialog` overlay/content (`z-[65]` / `z-[70]`) sat above nested Radix Select dropdown (`z-50`) and shared AlertDialog (`z-50`), making click targets unreachable.
+- **Fix applied:**
+  - Added `!z-[80]` to all `SelectContent` instances inside `ConnectForm.js`
+  - Raised `alert-dialog.jsx` default z-index from `z-50` to `z-[100]` (confirmation dialogs should outrank regular dialogs app-wide)
+- **Re-verification:** confirmed fixed using real (non-forced) Playwright clicks.
 
 #### Testing performed ✅
-- Prior testing iterations achieved 100% pass rate.
-- **New recommended test run:** run `testing_agent_v3` specifically for:
-  - Mobile dialog variants (bottom sheet / fullscreen)
-  - Escape-to-close behavior + discard-warning confirmation
-  - Focus return to the floating button after close
-  - Regression of public pages + admin CMS
+- Initial comprehensive test suite: prior iterations achieved 100% pass.
+- **Connect bug-fix re-test:** `testing_agent_v3` iteration_5 re-ran the full suite:
+  - 100% pass across backend inquiry validations, frontend connect dialog critical fixes, mobile dialog variants (bottom sheet + full-screen), full site regression, and admin CMS.
+  - No remaining action items.
+- Data hygiene: all test inquiries removed; backend restarted to clear in-memory limiter state.
 
-**Phase 3 exit criteria:** ✅ Met for implemented functionality; additional automated verification recommended for mobile dialog variants.
+**Phase 3 exit criteria:** ✅ Fully met (including mobile dialog variants + critical bug-fix round).
 
 ---
 
@@ -273,7 +273,7 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - ensure photography masking remains subtle and consistent
 - Performance/accessibility:
   - lazy-loading checks, focus states, keyboard navigation, aria labels
-  - ensure Connect dialog variants feel consistent across breakpoints
+  - ensure Connect dialog variants remain consistent across breakpoints
 - SEO:
   - confirm global settings defaults applied (title/description/og)
 - Optional motion polish:
@@ -283,14 +283,11 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
 ---
 
 ## 3. Next Actions
-1. **Run a focused E2E pass for the new Connect system (P0, recommended)**
-   - Validate mobile dialog variants (sheet/fullscreen), Escape close, focus return, discard-warning flow.
-   - Validate that both ContactRoom form and Floating dialog submit identical payloads and store identical consent recordkeeping.
-2. **Launch content operations (P0, non-dev)**
+1. **Launch content operations (P0, non-dev)**
    - Upload real imagery via Admin → Media Library and swap image URLs in sections/projects.
    - Add real testimonials; mark them `verified=true` and `status=published`.
    - Upload résumé PDF and set `resume_pdf_url` in Global Settings to enable the nav quick action.
-3. **Optional polish (P1)**
+2. **Optional polish (P1)**
    - Minor typography/spacing refinements and motion tuning per guidelines.
    - Final SEO/OG review in Global Settings.
    - If spam observed, add Turnstile/CAPTCHA behind a feature flag.
@@ -314,6 +311,7 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - Spam protection via honeypot + rate limiting + dedupe guard.
   - Privacy Policy page exists and is linked near consent.
 - Content hygiene maintained (no stray test data in public collections).
+- **Bug fix round completed:** z-index stacking conflict resolved; re-tested with `testing_agent_v3` iteration_5 at 100% pass rate.
 
 ⏳ **Remaining (optional / launch ops):**
 - Replace placeholder imagery with real assets.
