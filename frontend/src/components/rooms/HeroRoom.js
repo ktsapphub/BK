@@ -25,7 +25,7 @@ export default function HeroRoom({ section, onSkipIntro }) {
 
       {c.bg_image_url ? (
         <div className="absolute inset-0">
-          <img src={c.bg_image_url} alt="" className="w-full h-full object-cover opacity-[0.28]" loading="eager" />
+          <img src={c.bg_image_url} alt="" className="w-full h-full object-cover object-[center_15%] opacity-[0.28]" loading="eager" />
           <div className="absolute inset-0 bg-[var(--surface-blue-dark)] mix-blend-multiply opacity-60" />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface-blue-dark)] via-transparent to-transparent" />
         </div>
@@ -73,7 +73,7 @@ export default function HeroRoom({ section, onSkipIntro }) {
                   }
                 }}
                 data-testid="hero-primary-cta-button"
-                className="focus-ring inline-flex items-center rounded-[var(--radius-sm)] bg-[var(--surface-blue)] px-6 py-3 font-display text-sm font-semibold text-white hover:bg-[var(--accent-highlight)] transition-colors"
+                className="focus-ring inline-flex items-center rounded-[var(--radius-sm)] bg-gradient-to-b from-zinc-600 via-zinc-800 to-black px-6 py-3 font-display text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-1px_0_rgba(0,0,0,0.4),0_8px_18px_-6px_rgba(0,0,0,0.65)] hover:from-zinc-500 hover:via-zinc-700 hover:to-zinc-900 active:shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)] transition-colors"
               >
                 {c.primary_cta.label}
               </a>
@@ -84,7 +84,7 @@ export default function HeroRoom({ section, onSkipIntro }) {
                 target={c.secondary_cta.href?.startsWith("http") ? "_blank" : undefined}
                 rel="noopener noreferrer"
                 data-testid="hero-secondary-cta-button"
-                className="focus-ring inline-flex items-center rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-6 py-3 font-display text-sm font-semibold text-[var(--text-on-blue)] hover:bg-white/10 transition-colors"
+                className="focus-ring inline-flex items-center rounded-[var(--radius-sm)] bg-gradient-to-b from-slate-200 via-slate-300 to-slate-400 px-6 py-3 font-display text-sm font-semibold text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-1px_0_rgba(0,0,0,0.12),0_8px_18px_-6px_rgba(15,23,42,0.4)] hover:from-slate-100 hover:via-slate-200 hover:to-slate-300 active:shadow-[inset_0_1px_2px_rgba(0,0,0,0.25)] transition-colors"
               >
                 {c.secondary_cta.label}
               </a>
