@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { themeFor } from "@/lib/theme";
 import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
@@ -127,11 +127,15 @@ export default function PersonalRoom({ section }) {
           <DialogContent
             data-testid="personal-gallery-lightbox"
             className="bg-black/95 border-none max-w-4xl p-0"
+            aria-describedby={undefined}
             onKeyDown={(e) => {
               if (e.key === "ArrowRight") showNext();
               if (e.key === "ArrowLeft") showPrev();
             }}
           >
+            <DialogTitle className="sr-only">
+              {lightboxIdx !== null ? images[lightboxIdx]?.alt || "Photo preview" : "Photo preview"}
+            </DialogTitle>
             <button
               type="button"
               onClick={() => setLightboxIdx(null)}

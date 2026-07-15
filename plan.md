@@ -1,4 +1,4 @@
-# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–6)
+# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–7)
 
 ## Objectives
 - Deliver the requested UI polish pass across the original **4 items**:
@@ -35,7 +35,7 @@
       - Nav “Schedule a Conversation” = `utm_content=schedule_a_conversation`
       - Services CTAs = `utm_content=01_Agile`, `02_PO`, `03_Speaking`, `04_Tech`
 
-- Deliver **Round 6 (NEW)**: Section reorganization + room merge to reduce section count
+- Deliver **Round 6**: Section reorganization + room merge to reduce section count
   22) **Swap Thoughts** so it appears **immediately before Contact**.
   23) **Merge “Beyond the Work” + “Through My Eyes”** into a single room that contains:
       - Header + sub-header + paragraph text
@@ -43,6 +43,10 @@
       - Replaces the old **Faith / Family / Community** theme pills with an **auto-moving image carousel** (using the former gallery images)
   24) Place the merged “Beyond the Work / Through My Eyes” room **immediately after Projects / Solutions** (in Thoughts’ previous slot).
   25) Ensure the **left navigation rail** reflects the new ordering.
+
+- Deliver **Round 7 (NEW)**: Layout + contrast refinements after section merge/reorder
+  26) Ensure the **Beyond the Work** carousel sits **below** the header+text+image grid (full-width), not nested in the text column.
+  27) Fix **blue-on-blue hover/links** readability in deep_royal_blue rooms by making link/label hover colors theme-aware (white/light on dark rooms).
 
 - Ensure contrast/legibility stays correct regardless of CMS theme choices and keep the “gallery rooms” feel.
 - Prove changes via automated UI verification (`testing_agent_v3`) and minimal visual spot checks.
@@ -71,6 +75,8 @@
 14. As a visitor, “Let’s Talk” CTAs open a **Calendly popup** and each booking is tagged with origin.
 15. As a visitor, “Beyond the Work” contains a “Through My Eyes” carousel and there is no duplicate standalone gallery room.
 16. As a visitor, Thoughts appears directly before Contact.
+17. As a visitor, the **Beyond the Work** carousel appears **below** the header+text+image grid (full-width).
+18. As a visitor, links in dark-blue rooms remain legible on hover (no blue-on-blue).
 
 **Steps**
 - Confirm CMS section themes reflect desired alternation.
@@ -89,6 +95,9 @@
     - Move personal to immediately after projects.
     - Move thoughts to immediately before contact.
     - Verify nav is derived from section order and reflects changes.
+  - **Round 7 refinements**:
+    - Restructure PersonalRoom so carousel is full-width below the 2-col grid.
+    - Make ThoughtsRoom blue accents theme-aware (`t.isDark`) to avoid blue-on-blue.
 
 **POC Exit**
 - Run `testing_agent_v3` covering:
@@ -101,8 +110,8 @@
   - Services expand/collapse + Calendly popup + UTM correctness
   - Projects carousel
   - Media & Impact category switching
-  - **Merged Beyond the Work**: carousel autoplay + lightbox
-  - Thoughts placement (directly before Contact)
+  - **Merged Beyond the Work**: carousel autoplay + lightbox + placement below grid
+  - Thoughts placement (directly before Contact) + hover contrast
   - Contact UX
 
 **POC Status (Current)**
@@ -112,6 +121,7 @@
 - ✅ Round 4 changes implemented and verified (iterations_11–14).
 - ✅ Round 5 (Calendly + expandable Services) implemented and verified (iteration_15).
 - ✅ Round 6 (Section reorg + merge Beyond the Work + Through My Eyes) implemented and verified (iteration_16).
+- ✅ Round 7 (carousel placement + blue-on-blue hover contrast fixes) implemented and verified (iteration_17).
 
 ---
 
@@ -119,9 +129,9 @@
 
 **User stories (V1)**
 1. As a visitor, I experience consistent blue/white alternation through the final section order.
-2. As a visitor, I can read typography on royal-blue rooms (eyebrows, headings, body, buttons).
+2. As a visitor, I can read typography on royal-blue rooms (eyebrows, headings, body, buttons, links, hover states).
 3. As a visitor, Projects/Solutions carousel navigation remains accessible and visible.
-4. As a reader, Thoughts section is easy to scan and now correctly placed before Contact.
+4. As a reader, Thoughts section is easy to scan and correctly placed before Contact.
 5. As a visitor, I can use the Contact form comfortably on desktop and mobile.
 6. As a visitor, the Organizations marquee scrolls smoothly, pauses on hover, and is accessible.
 7. As a visitor, the Voices & Impact carousel feels premium and stable across devices.
@@ -130,11 +140,12 @@
 10. As a visitor, the merged “Beyond the Work / Through My Eyes” room’s carousel and lightbox work across devices.
 
 **Steps**
-- Audit theme-dependent styling regressions after the reorder.
+- Audit theme-dependent styling regressions after reorder.
 - Verify merged room responsiveness:
   - Carousel sizing on mobile
   - Lightbox controls and keyboard behavior
   - No overflow of captions
+  - Dialog accessibility basics (title present, aria attributes clean)
 - Verify nav scroll targets after reorder.
 - Verify Calendly popup unaffected.
 
@@ -162,7 +173,8 @@
 ## Next Actions
 1. ✅ Completed: Expandable Services + Calendly popup integration with source-tracked UTM parameters.
 2. ✅ Completed: Section reorganization + merge Beyond the Work with Through My Eyes + nav reflects new order.
-3. Optional (if requested): apply Calendly popup to remaining CTAs (Contact scheduling link, FloatingConnectButton) with additional identifier tags.
+3. ✅ Completed: Beyond the Work carousel placement below grid + dark-theme hover contrast fixes.
+4. Optional (if requested): apply Calendly popup to remaining CTAs (Contact scheduling link, FloatingConnectButton) with additional identifier tags.
 
 ---
 
@@ -183,7 +195,11 @@
 - **Beyond the Work merged room**:
   - Shows eyebrow/sub-header, heading, paragraph text, image on right
   - Replaces Faith/Family/Community pills with an auto-moving image carousel sourced from former gallery images
+  - Carousel sits **below** the header/text/image row as a full-width block
   - No duplicate standalone gallery room appears
+- **Thoughts dark-theme readability**:
+  - No blue-on-blue hover states; uses white/light variants on deep_royal_blue rooms
+  - Light-themed rooms remain unchanged (blue link styling preserved)
 - **Services**:
   - Expandable containers show image + number + title + “Explore More”
   - Expanded view reveals description + bullets + CTA
@@ -218,8 +234,17 @@
 - `/app/frontend/src/components/rooms/PersonalRoom.js`: rebuilt to render header/sub-header/paragraph/image-right + autoplay carousel + lightbox
 - `/app/frontend/src/lib/contentSchemas.js`: updated `personal` schema fields to match merged structure
 
+### Round 7 (Placement + contrast fixes)
+- `/app/frontend/src/components/rooms/PersonalRoom.js`:
+  - Carousel moved to a full-width block below the 2-column grid
+  - Added visually-hidden `DialogTitle` to lightbox to address minor Radix a11y warning
+- `/app/frontend/src/components/rooms/ThoughtsRoom.js`:
+  - Made link/label colors theme-aware via `t.isDark` to avoid blue-on-blue
+  - Updated featured label, featured title hover, filter pill borders/hover, read-more link color, and divider/separator borders for dark theme
+
 ---
 
 ## Test Artifacts
 - `/app/test_reports/iteration_15.json`: 100% pass (Services expand/collapse + Calendly popup + UTM attribution + regressions)
 - `/app/test_reports/iteration_16.json`: 100% pass (section reorder + merged Beyond the Work room + nav order + regressions)
+- `/app/test_reports/iteration_17.json`: 100% pass (Beyond the Work carousel placement + Thoughts hover contrast + regressions)
