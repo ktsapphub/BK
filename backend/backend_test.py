@@ -38,13 +38,13 @@ class BrettonKeyCMSTester:
                 print(f"✅ Passed - Status: {response.status_code}")
                 try:
                     return success, response.json()
-                except:
+                except Exception:
                     return success, {}
             else:
                 print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
                 try:
                     print(f"   Response: {response.text[:200]}")
-                except:
+                except Exception:
                     pass
                 self.failed_tests.append(f"{name} - Expected {expected_status}, got {response.status_code}")
                 return False, {}
