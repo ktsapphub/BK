@@ -14,6 +14,10 @@
   - Strict consent collection + server-side re-validation + consent recordkeeping + spam protection.
   - A real Privacy Policy page linked near consent.
 - Maintain a consistent **cinematic hero** presentation with correct portrait framing and premium CTA treatments.
+- Ensure the **Values** and **Solutions** rooms match the latest UX direction:
+  - Values (What Drives Me) uses **uniform nodes** and a **media-backed highlight card**.
+  - Projects is reframed as **Solutions** using an immersive **3D parallax carousel** (no card-to-detail navigation).
+  - Founder Story room is removed.
 
 **Current status:** ✅ V1 objectives achieved **and end-to-end verified**.
 - Public site, admin CMS, and all APIs are functioning with seeded real content.
@@ -22,6 +26,9 @@
   - ThoughtsRoom accordion (expandable articles) + image/video support + pagination logic
   - Persistent “Let’s Connect” system (floating button + responsive dialog + shared ConnectForm + privacy policy + consent recordkeeping)
   - Hero room CTA visual polish + hero portrait framing fix (iteration_6 100% verified)
+  - ValuesRoom uniform circles + media highlight card (iteration_7 100% verified)
+  - Founder Story fully removed from code + CMS + DB (iteration_7 100% verified)
+  - ProjectsRoom reframed as “Solutions” with 3D parallax carousel + autoplay + no navigation (iteration_7 100% verified)
 - Comprehensive testing completed with a 100% pass rate (backend + public + admin) and **zero open issues**.
 - Remaining work is **optional Phase 4 launch content operations** (replace stock imagery + add verified testimonials + set resume PDF URL) and minor polish.
 
@@ -95,14 +102,15 @@
 #### Frontend public site (all “rooms”) ✅
 - Dynamic room assembly from `GET /api/public/page/home` + supplementary collection fetches.
 - Room renderer + components:
-  - `hero, introduction, values, founder_story, resume, services, projects, testimonials, thoughts, impact, personal, gallery, contact`.
+  - **Current rooms:** `hero, introduction, values, resume, services, projects, testimonials, thoughts, impact, personal, gallery, contact`.
   - `CustomRoom` fallback for unknown types.
+  - **Founder Story removed** (code, schema, and DB section deleted).
 - Motion/transition system:
   - CMS `transition_style` mapped to Framer Motion variants.
   - Reduced-motion fallback implemented.
   - Lenis integration retained as an API-compatible no-op (`lenisSingleton.js`), with **native smooth scrolling** for reliability.
 - Extra public pages:
-  - `/projects/:slug` (ProjectDetail)
+  - `/projects/:slug` (ProjectDetail) still exists but is no longer linked from the Solutions carousel (per latest UX direction).
   - `/thoughts/:slug` (ArticleReader)
 - Contact + newsletter:
   - Contact form → `POST /api/public/inquiries`
@@ -130,8 +138,7 @@
 
 #### Seeded real content ✅
 - Resume-derived: 8 career entries with achievements.
-- Founder story: Date Jar narrative chapters.
-- Projects:
+- Projects (now framed as Solutions in UI):
   - Date Jar (Live)
   - KeyTech Solutions (Live)
 - Thoughts: 3 authored thought-leadership articles published.
@@ -140,7 +147,7 @@
 
 ---
 
-### Phase 3 — Testing + hardening + navigation/thoughts/connect + hero polish ✅ COMPLETE
+### Phase 3 — Testing + hardening + navigation/thoughts/connect + hero polish + values/solutions refresh ✅ COMPLETE
 
 #### Critical regressions prevented / fixes verified ✅
 - Fixed and verified a **React rules-of-hooks** compile regression (`TestimonialsRoom.js` early return before a hook) that previously broke the entire frontend.
@@ -246,25 +253,41 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
 - Re-tested: `testing_agent_v3` iteration_5 at 100% pass.
 
 #### Hero room visual polish bug-fix ✅
-**Context:** User reported 3 hero issues:
-1) “See the Work” fill should be smokey glossy black
-2) “Let’s Talk” fill should be cool glossy gray
-3) hero portrait image cropping/position needed fixing
-
 **Fixes applied (HeroRoom.js only) ✅**
-- Primary CTA (“See the Work”) updated to smokey glossy black gradient (zinc-600 → zinc-800 → black) with inset highlight shadow.
-- Secondary CTA (“Let’s Talk”) updated to cool glossy gray gradient (slate-200 → slate-300 → slate-400) with inset highlight shadow.
-- Hero background image crop fixed by setting `object-[center_15%]` to shift the visible crop upward so Bretton’s face/head is visible.
+- Primary CTA (“See the Work”) updated to smokey glossy black gradient with inset highlight shadow.
+- Secondary CTA (“Let’s Talk”) updated to cool glossy gray gradient with inset highlight shadow.
+- Hero background image crop fixed by setting `object-[center_15%]` so Bretton’s face/head is visible.
 
 **Verification ✅**
-- Verified by `testing_agent_v3` iteration_6:
-  - Desktop (1920px) and mobile (390px) confirmed
-  - Button hover + focus states intact
-  - CTA functionality intact (scroll-to-projects + Calendly external)
-  - Zero console errors
-  - No regressions
+- Verified by `testing_agent_v3` iteration_6 (desktop + mobile) with zero regressions.
 
-**Phase 3 exit criteria:** ✅ Fully met (including hero polish verification).
+#### Values + Solutions refresh + Founder Story removal ✅
+**ValuesRoom ✅**
+- All 4 “What Drives Me” nodes are now **uniform size** (116×116).
+- Click-to-highlight reveals a **media-backed highlight card** (image on top + description text below), toggleable and switchable between nodes.
+- Content schema updated to include `values.items[].image`.
+- Seed updated to include value images.
+
+**Founder Story removal ✅**
+- `FounderStoryRoom.js` deleted.
+- Removed from `RoomRenderer.js`, `SECTION_TYPES`, and `CONTENT_SCHEMAS`.
+- Underlying `founder_story` section deleted from DB.
+- Seed script updated to no longer create a founder_story section.
+
+**Projects → Solutions ✅**
+- Projects room heading changed from “Selected Work” → “Solutions” (live DB + seed).
+- Rebuilt as an immersive **3D parallax carousel**:
+  - Uses Embla via shadcn `Carousel`.
+  - Visual depth via `scale + rotateY + translateZ` based on distance from active slide.
+  - Autoplay every ~4.5s; pauses on hover/focus; respects reduced motion.
+  - Slides support image OR video (via `resolveVideoEmbed`) plus a 2–4 sentence description.
+  - Removed click-to-navigate to project detail pages.
+- Fixed a real edge-case bug: with only 2 seed projects, prior slide width percentages allowed both slides to fit with no overflow, preventing Embla scroll/autoplay. Resolved by increasing slide `basis` values so overflow always exists.
+
+**Verification ✅**
+- Verified by `testing_agent_v3` iteration_7 at 100% pass (desktop + mobile), including autoplay, pause-on-hover, keyboard navigation, and full regression.
+
+**Phase 3 exit criteria:** ✅ Fully met.
 
 ---
 
@@ -275,6 +298,7 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - Replace stock imagery with Bretton’s real photos via Admin → Media Library.
   - Replace testimonial placeholders with real quotes and set `verified=true` + `status=published` (to make the Testimonials room appear publicly).
   - Optional: set `resume_pdf_url` in Global Settings to enable the persistent “Download Résumé” nav action.
+  - Optional: add short-form video URLs to projects (`projects.video_url`) to power video-first slides in Solutions.
 - Visual refinement per `/app/design_guidelines.md`:
   - tighten room rhythm, spacing, type scale
   - ensure blue highlight used only for short phrases
@@ -285,7 +309,6 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
 - SEO:
   - confirm global settings defaults applied (title/description/og)
 - Optional motion polish:
-  - refine Founder Story GSAP behavior if desired (ensure reduced-motion fallback remains stable)
   - consider reintroducing subtle inertia only if it does not break deep links/testing (current native scrolling is reliable)
 
 ---
@@ -295,6 +318,7 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
    - Upload real imagery via Admin → Media Library and swap image URLs in sections/projects.
    - Add real testimonials; mark them `verified=true` and `status=published`.
    - Upload résumé PDF and set `resume_pdf_url` in Global Settings to enable the nav quick action.
+   - (Optional) Add short-form videos for Solutions carousel and populate `projects.video_url`.
 2. **Optional polish (P1)**
    - Minor typography/spacing refinements and motion tuning per guidelines.
    - Final SEO/OG review in Global Settings.
@@ -322,10 +346,21 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - “See the Work” CTA has smokey glossy black fill
   - “Let’s Talk” CTA has cool glossy gray fill
   - Hero portrait framing shows Bretton’s face/head (not cropped)
+- ValuesRoom refresh:
+  - What Drives Me circles are uniform size
+  - Highlight reveals image + description card
+- Founder Story removal:
+  - Founder Story removed from code, CMS schema, site, nav, and DB
+- Solutions refresh:
+  - Projects room reframed as “Solutions” with a 3D parallax carousel
+  - Autoplay + pause-on-hover + keyboard navigation
+  - No card-to-detail navigation
+  - Works even with only 2 seed projects (overflow ensured)
 - Content hygiene maintained (no stray test data in public collections).
-- Comprehensive testing complete with **zero open issues**, including hero polish verification (testing iteration_6).
+- Comprehensive testing complete with **zero open issues**, including values/solutions/founder-story verification (testing iteration_7).
 
 ⏳ **Remaining (optional / launch ops):**
 - Replace placeholder imagery with real assets.
 - Add verified testimonials to make the Testimonials room appear publicly.
 - (Optional) Add resume PDF URL to enable “Download Résumé” persistent action.
+- (Optional) Add short-form solution videos by populating `projects.video_url`.
