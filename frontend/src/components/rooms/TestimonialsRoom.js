@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Quote, X, Linkedin } from "lucide-react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
+import { themeFor } from "@/lib/theme";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 function Portrait({ testimonial, size = "h-full" }) {
@@ -25,6 +26,7 @@ function Portrait({ testimonial, size = "h-full" }) {
 export default function TestimonialsRoom({ section, testimonials }) {
   const c = section.content || {};
   const list = Array.isArray(testimonials) ? testimonials : [];
+  const t = themeFor(section.theme);
   const [idx, setIdx] = useState(0);
   const [archiveOpen, setArchiveOpen] = useState(false);
 
@@ -86,7 +88,7 @@ export default function TestimonialsRoom({ section, testimonials }) {
       <RoomContainer>
         <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
           <div>
-            <RoomEyebrow dark>Testimonials</RoomEyebrow>
+            <RoomEyebrow dark={t.isDark}>Testimonials</RoomEyebrow>
             <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em]">{c.heading || "Voices From the Work"}</h2>
           </div>
           {list.length > 1 && (

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
+import { themeFor } from "@/lib/theme";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export default function GalleryRoom({ section }) {
   const c = section.content || {};
   const images = Array.isArray(c.images) ? c.images : [];
+  const t = themeFor(section.theme);
   const [lightboxIdx, setLightboxIdx] = useState(null);
 
   if (images.length === 0) return null;
@@ -16,7 +18,7 @@ export default function GalleryRoom({ section }) {
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="gallery-room" sectionType={section.section_type} className="py-24 md:py-32">
       <RoomContainer>
-        <RoomEyebrow>{c.title || "Gallery"}</RoomEyebrow>
+        <RoomEyebrow dark={t.isDark}>{c.title || "Gallery"}</RoomEyebrow>
         {c.description && <p className="font-body text-base md:text-lg max-w-[62ch] mb-10 opacity-90">{c.description}</p>}
         <div data-testid="gallery-strip" className="flex gap-4 overflow-x-auto custom-scrollbar pb-3 -mx-1 px-1">
           {images.map((img, i) => (

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Linkedin } from "lucide-react";
 import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
+import { themeFor } from "@/lib/theme";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 function formatRange(entry) {
@@ -13,6 +14,7 @@ function formatRange(entry) {
 export default function ResumeRoom({ section, careerEntries, settings }) {
   const c = section.content || {};
   const entries = Array.isArray(careerEntries) ? careerEntries : [];
+  const t = themeFor(section.theme);
   const [activeId, setActiveId] = useState(entries[0]?.id);
   const active = entries.find((e) => e.id === activeId) || entries[0];
 
@@ -21,7 +23,7 @@ export default function ResumeRoom({ section, careerEntries, settings }) {
       <RoomContainer>
         <div className="flex flex-wrap items-end justify-between gap-6 mb-4">
           <div>
-            <RoomEyebrow>Résumé</RoomEyebrow>
+            <RoomEyebrow dark={t.isDark}>Résumé</RoomEyebrow>
             <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em]">{c.heading || "Twenty Years in Motion"}</h2>
           </div>
           <div className="flex gap-3">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
+import { themeFor } from "@/lib/theme";
 
 // Deterministic pseudo-random offsets so the constellation looks organic
 // but never shifts between renders.
@@ -14,13 +15,14 @@ const NODE_SIZE = 116; // px — every node is now the same size
 export default function ValuesRoom({ section }) {
   const c = section.content || {};
   const items = Array.isArray(c.items) ? c.items : [];
+  const t = themeFor(section.theme);
   const [active, setActive] = useState(null);
   const activeItem = active !== null ? items[active] : null;
 
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="values-room" sectionType={section.section_type} className="py-24 md:py-36">
       <RoomContainer>
-        <RoomEyebrow>Values</RoomEyebrow>
+        <RoomEyebrow dark={t.isDark}>Values</RoomEyebrow>
         <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-4">{c.heading || "What Drives Me"}</h2>
         {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-16 opacity-90">{c.intro}</p>}
 

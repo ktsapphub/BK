@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Play, ArrowUpRight } from "lucide-react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
+import { themeFor } from "@/lib/theme";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 import { resolveVideoEmbed } from "@/lib/mediaEmbed";
@@ -12,7 +13,7 @@ function ArticleMedia({ article }) {
   const embed = resolveVideoEmbed(article.video_url);
   if (embed) {
     return (
-      <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden bg-black" data-testid="thought-video-embed">
+      <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden bg-black border border-[var(--border-blue)]" data-testid="thought-video-embed">
         {embed.type === "video" ? (
           <video src={embed.src} controls className="w-full h-full object-cover" preload="metadata" />
         ) : (
@@ -30,7 +31,7 @@ function ArticleMedia({ article }) {
   }
   if (article.featured_image) {
     return (
-      <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden">
+      <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-blue)]">
         <img src={article.featured_image} alt="" className="w-full h-full object-cover" loading="lazy" />
       </div>
     );
@@ -41,6 +42,7 @@ function ArticleMedia({ article }) {
 export default function ThoughtsRoom({ section, thoughts }) {
   const c = section.content || {};
   const list = Array.isArray(thoughts) ? thoughts : [];
+  const t = themeFor(section.theme);
   const [category, setCategory] = useState("All");
   const [page, setPage] = useState(1);
 
@@ -68,7 +70,7 @@ export default function ThoughtsRoom({ section, thoughts }) {
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="thoughts-room" sectionType={section.section_type} className="py-24 md:py-32">
       <RoomContainer>
-        <RoomEyebrow>{c.heading || "Notes From the Work"}</RoomEyebrow>
+        <RoomEyebrow dark={t.isDark}>{c.heading || "Notes From the Work"}</RoomEyebrow>
         {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-10 opacity-90">{c.intro}</p>}
 
         {/* Featured article, editorial spread */}
@@ -77,7 +79,7 @@ export default function ThoughtsRoom({ section, thoughts }) {
           data-testid="thoughts-featured-article"
           className="focus-ring group grid md:grid-cols-2 gap-8 items-center mb-14 pb-10 border-b border-[var(--border-primary)]"
         >
-          <div className="relative aspect-[16/10] rounded-[var(--radius-md)] overflow-hidden order-1 md:order-none">
+          <div className="relative aspect-[16/10] rounded-[var(--radius-md)] overflow-hidden order-1 md:order-none border border-[var(--border-blue)]">
             {featured.featured_image && (
               <img src={featured.featured_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
             )}
@@ -124,7 +126,7 @@ export default function ThoughtsRoom({ section, thoughts }) {
                 <AccordionTrigger data-testid="thoughts-accordion-trigger" className="hover:no-underline items-start gap-4 py-5">
                   <div className="flex items-start gap-4 flex-1 text-left">
                     {article.featured_image && (
-                      <div className="hidden sm:block w-20 h-20 rounded-[var(--radius-sm)] overflow-hidden shrink-0">
+                      <div className="hidden sm:block w-20 h-20 rounded-[var(--radius-sm)] overflow-hidden shrink-0 border border-[var(--border-blue)]">
                         <img src={article.featured_image} alt="" className="w-full h-full object-cover" loading="lazy" />
                       </div>
                     )}

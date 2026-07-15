@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
+import { themeFor } from "@/lib/theme";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { X } from "lucide-react";
 
 export default function ServicesRoom({ section, services }) {
   const c = section.content || {};
   const list = Array.isArray(services) ? services : [];
+  const t = themeFor(section.theme);
   const [open, setOpen] = useState(null);
 
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="services-room" sectionType={section.section_type} className="py-24 md:py-32">
       <RoomContainer>
-        <RoomEyebrow dark>Services</RoomEyebrow>
+        <RoomEyebrow dark={t.isDark}>Services</RoomEyebrow>
         <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-4">{c.heading || "How I Can Help"}</h2>
         {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-12 opacity-90">{c.intro}</p>}
 

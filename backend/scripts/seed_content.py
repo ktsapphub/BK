@@ -153,7 +153,7 @@ def main():
     })
 
     # -------------------------------------------------------------- VALUES
-    create_section(page_id, "values", "Values", "Values", 3, "pale_blue", "fade", {
+    create_section(page_id, "values", "Values", "Values", 3, "deep_royal_blue", "fade", {
         "heading": "What Drives Me",
         "intro": "Long ago I realized achieving the life you desire takes faith, focus, and a clear sense of purpose.",
         "items": [
@@ -165,7 +165,7 @@ def main():
     })
 
     # -------------------------------------------------------------- RESUME
-    create_section(page_id, "resume", "Résumé", "Résumé", 5, "soft_white", "fade", {
+    create_section(page_id, "resume", "Résumé", "Résumé", 5, "true_white", "fade", {
         "heading": "Career Timeline",
         "intro": "Twenty-plus years leading mission-critical programs — from the Pentagon to NATO to city government.",
     })
@@ -294,7 +294,7 @@ def main():
     print(f"Created {len(projects_data)} projects.")
 
     # ---------------------------------------------------------- TESTIMONIALS
-    create_section(page_id, "testimonials", "Testimonials", "Testimonials", 8, "pale_blue", "soft-focus-reveal", {
+    create_section(page_id, "testimonials", "Testimonials", "Testimonials", 8, "deep_royal_blue", "soft-focus-reveal", {
         "heading": "Voices",
         "intro": "What colleagues and partners say about working with Bretton.",
     })
@@ -314,13 +314,13 @@ def main():
     print(f"Created {len(testimonials_data)} DRAFT/unverified testimonial placeholders (won't render publicly).")
 
     # ------------------------------------------------------------- THOUGHTS
-    create_section(page_id, "thoughts", "Thoughts", "Thoughts", 9, "soft_white", "fade", {
+    create_section(page_id, "thoughts", "Thoughts", "Thoughts", 9, "true_white", "fade", {
         "heading": "Thoughts",
         "intro": "Notes on delivery, leadership, and building things that ship.",
     })
 
     # ------------------------------------------------------------- IMPACT
-    create_section(page_id, "impact", "Media & Impact", "In the Field", 10, "true_white", "fade", {
+    create_section(page_id, "impact", "Media & Impact", "In the Field", 10, "deep_royal_blue", "fade", {
         "heading": "Where You May Have Seen Me",
         "intro": "Highlights from federal programs, allied operations, and independent ventures.",
     })
@@ -340,7 +340,7 @@ def main():
     print(f"Created {len(impact_data)} impact/media items.")
 
     # ------------------------------------------------------------ PERSONAL
-    create_section(page_id, "personal", "Personal", "Beyond the Work", 11, "deep_royal_blue", "fade", {
+    create_section(page_id, "personal", "Personal", "Beyond the Work", 11, "true_white", "fade", {
         "heading": "Beyond the Work",
         "themes": ["Faith", "Family", "Community"],
         "statement": "I'm a Norfolk native, a self-described super nerd, and above all a devoted father of three. I don't have all the answers, but I believe in showing up — for my family, my faith, and the people I get to serve.",
@@ -348,7 +348,7 @@ def main():
     })
 
     # ------------------------------------------------------------- GALLERY
-    create_section(page_id, "gallery", "Gallery", "Field Notes", 12, "soft_white", "fade", {
+    create_section(page_id, "gallery", "Gallery", "Field Notes", 12, "deep_royal_blue", "fade", {
         "title": "Field Notes",
         "description": "Moments from two decades of service, leadership, and building.",
         "images": [
@@ -360,7 +360,7 @@ def main():
     })
 
     # ------------------------------------------------------------- CONTACT
-    create_section(page_id, "contact", "Contact", "Contact", 13, "deep_royal_blue", "fade", {
+    create_section(page_id, "contact", "Contact", "Contact", 13, "true_white", "fade", {
         "heading": "Build Together",
         "description": "Accomplish your goals and find your keys to success — let's connect.",
         "email": "brettonjkey@icloud.com",

@@ -1,9 +1,11 @@
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
+import { themeFor } from "@/lib/theme";
 import ConnectForm from "@/components/connect/ConnectForm";
 import { Mail, Phone, MapPin, CalendarClock, Linkedin, Download } from "lucide-react";
 
 export default function ContactRoom({ section, settings, projects }) {
   const c = section.content || {};
+  const t = themeFor(section.theme);
 
   const actions = [
     c.scheduling_url && { label: "Schedule a Conversation", href: c.scheduling_url, icon: CalendarClock, external: true },
@@ -13,10 +15,10 @@ export default function ContactRoom({ section, settings, projects }) {
   ].filter(Boolean);
 
   return (
-    <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="contact-room" sectionType={section.section_type} className="py-24 md:py-32">
-      <RoomContainer className="grid md:grid-cols-2 gap-14">
+    <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="contact-room" sectionType={section.section_type} className="py-20 md:py-24">
+      <RoomContainer className="grid md:grid-cols-2 gap-10 md:gap-12 items-start">
         <div>
-          <RoomEyebrow dark>Contact</RoomEyebrow>
+          <RoomEyebrow dark={t.isDark}>Contact</RoomEyebrow>
           <h2 className="font-display font-bold text-3xl md:text-4xl mb-5">{c.heading || "What Could We Move Forward Together?"}</h2>
           {c.description && <p className="font-body text-base md:text-lg opacity-90 max-w-md mb-8">{c.description}</p>}
 
@@ -29,7 +31,9 @@ export default function ContactRoom({ section, settings, projects }) {
                   target={a.external ? "_blank" : undefined}
                   rel={a.external ? "noopener noreferrer" : undefined}
                   data-testid={`contact-action-${i}`}
-                  className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-4 py-2.5 font-display text-xs font-semibold uppercase tracking-wide hover:bg-white/10"
+                  className={`focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-4 py-2.5 font-display text-xs font-semibold uppercase tracking-wide transition-colors ${
+                    t.isDark ? "hover:bg-white/10" : "hover:bg-[var(--background-blue-soft)]"
+                  }`}
                 >
                   <a.icon className="h-3.5 w-3.5" /> {a.label}
                 </a>
@@ -52,7 +56,11 @@ export default function ContactRoom({ section, settings, projects }) {
           </div>
         </div>
 
-        <div id="contact-form-anchor" data-testid="contact-form-panel" className="bg-[var(--background-primary)] text-[var(--text-primary)] rounded-[var(--radius-md)] p-6 md:p-8 shadow-[var(--shadow-room)]">
+        <div
+          id="contact-form-anchor"
+          data-testid="contact-form-panel"
+          className="w-full max-w-lg md:ml-auto bg-[var(--background-primary)] text-[var(--text-primary)] rounded-[var(--radius-md)] p-5 md:p-6 border border-[var(--border-primary)] shadow-[var(--shadow-room)]"
+        >
           <ConnectForm
             settings={settings}
             projects={projects}
@@ -60,6 +68,7 @@ export default function ContactRoom({ section, settings, projects }) {
             sourceSection={section.id}
             sourceChannel="contact_section"
             idPrefix="contact-connect"
+            className="space-y-3.5"
           />
         </div>
       </RoomContainer>

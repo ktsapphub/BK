@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
+import { themeFor } from "@/lib/theme";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ExternalLink, Mic, Award, Newspaper, Users } from "lucide-react";
 
@@ -17,6 +18,7 @@ const CATEGORY_ICON = {
 export default function ImpactRoom({ section, impactItems }) {
   const c = section.content || {};
   const list = Array.isArray(impactItems) ? impactItems : [];
+  const t = themeFor(section.theme);
   const [open, setOpen] = useState(null);
 
   if (list.length === 0) return null;
@@ -24,7 +26,7 @@ export default function ImpactRoom({ section, impactItems }) {
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="media-impact-room" sectionType={section.section_type} className="py-24 md:py-32">
       <RoomContainer>
-        <RoomEyebrow>{c.heading || "Evidence of Impact"}</RoomEyebrow>
+        <RoomEyebrow dark={t.isDark}>{c.heading || "Evidence of Impact"}</RoomEyebrow>
         {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-12 opacity-90">{c.intro}</p>}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--border-primary)] rounded-[var(--radius-md)] overflow-hidden" data-testid="media-impact-list">
           {list.map((item) => {

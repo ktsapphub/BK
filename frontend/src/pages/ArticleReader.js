@@ -93,7 +93,7 @@ export default function ArticleReader() {
         <h1 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-6">{article.title}</h1>
         {article.excerpt && <p className="font-editorial italic text-lg md:text-xl opacity-90 mb-8">{article.excerpt}</p>}
         {article.featured_image && (
-          <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden mb-10">
+          <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden mb-10 border border-[var(--border-blue)]">
             <img src={article.featured_image} alt={article.title} className="w-full h-full object-cover" loading="lazy" />
           </div>
         )}
@@ -147,7 +147,7 @@ export default function ArticleReader() {
                   className="focus-ring group block"
                 >
                   {rel.featured_image && (
-                    <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden mb-4">
+                    <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden mb-4 border border-[var(--border-blue)]">
                       <img src={rel.featured_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                     </div>
                   )}
