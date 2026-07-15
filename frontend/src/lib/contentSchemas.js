@@ -85,10 +85,11 @@ export const CONTENT_SCHEMAS = {
     { name: "intro", type: "textarea", label: "Intro" },
   ],
   personal: [
+    { name: "eyebrow", type: "text", label: "Sub-header / Eyebrow" },
     { name: "heading", type: "text", label: "Heading" },
-    { name: "statement", type: "textarea", label: "Statement" },
-    { name: "themes", type: "array_string", label: "Themes" },
-    { name: "image", type: "image", label: "Image" },
+    { name: "statement", type: "textarea", label: "Paragraph Text" },
+    { name: "image", type: "image", label: "Image (right side)" },
+    { name: "gallery_images", type: "array_object", label: "Auto-Moving Carousel Images", fields: [{ name: "url", type: "image" }, { name: "caption", type: "text" }, { name: "alt", type: "text" }] },
   ],
   gallery: [
     { name: "title", type: "text", label: "Title" },
