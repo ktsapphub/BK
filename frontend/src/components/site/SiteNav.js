@@ -129,14 +129,14 @@ export default function SiteNav({ navItems, sections, settings }) {
                   onKeyDown={(e) => handleRailKeyDown(e, idx)}
                   data-testid="site-nav-item"
                   aria-current={isActive ? "true" : undefined}
-                  className="focus-ring group relative flex items-center gap-2.5 py-0.5"
+                  className="focus-ring group relative flex items-center gap-3.5 py-0.5"
                 >
                   <span
                     className={`relative h-1.5 w-1.5 rounded-full shrink-0 transition-all duration-300 ${
                       isActive
                         ? activeDark
-                          ? "bg-white scale-[1.7]"
-                          : "bg-[var(--surface-blue)] scale-[1.7]"
+                          ? "bg-white scale-[1.4]"
+                          : "bg-[var(--surface-blue)] scale-[1.4]"
                         : activeDark
                         ? "bg-white/35 group-hover:bg-white/70"
                         : "bg-[var(--border-primary)] group-hover:bg-[var(--accent-highlight)]"
@@ -145,7 +145,7 @@ export default function SiteNav({ navItems, sections, settings }) {
                     {isActive && (
                       <motion.span
                         layoutId="site-nav-active-marker"
-                        className={`absolute -inset-1.5 rounded-full border ${
+                        className={`absolute -inset-1 rounded-full border ${
                           activeDark ? "border-white/50" : "border-[var(--surface-blue)]/50"
                         }`}
                         transition={{ type: "spring", stiffness: 400, damping: 32 }}
