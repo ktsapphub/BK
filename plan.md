@@ -1,4 +1,4 @@
-# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–4)
+# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–5)
 
 ## Objectives
 - Deliver the requested UI polish pass across the original **4 items**:
@@ -31,6 +31,14 @@
       - A below-the-tiles **autoplay carousel** with edge arrows that displays rich media items (title/date/source, image or video/play option, short description, external link opens new tab).
       - Ensure CMS-editability of these items (schema support for video embeds).
 
+- Deliver **Round 5 (NEW)**: Expandable Services UI + Calendly popup scheduling with source tracking
+  19) Services containers become **expandable** (collapsed summary + “Explore More” affordance).
+  20) All prominent CTAs route to a **Calendly pop-up widget** (no navigation away).
+  21) Calendly bookings capture **source attribution** via UTM parameters reflecting which container/button triggered the booking:
+      - Hero “Let’s Talk” = `utm_content=opener`
+      - Nav “Schedule a Conversation” = `utm_content=schedule_a_conversation`
+      - Services CTAs = `utm_content=01_Agile`, `02_PO`, `03_Speaking`, `04_Tech`
+
 - Ensure contrast/legibility stays correct regardless of CMS theme choices (eyebrows, text, buttons) and keep the “gallery rooms” feel.
 - Prove changes via automated UI verification (testing_agent) and minimal visual spot checks.
 
@@ -57,6 +65,8 @@
 13. As a visitor, “Where You May Have Seen Me” (Media & Impact) shows a fast **30+** counter and three category tiles.
 14. As a visitor, selecting Features/Podcasts/TV & Video changes the carousel content below.
 15. As a visitor, the Media & Impact carousel auto-plays, pauses on hover/focus, has edge arrows, and each card opens its external link in a new tab.
+16. As a visitor, I can expand a service tile via **“Explore More”** and collapse it via **“Show Less”**.
+17. As a visitor, “Let’s Talk” CTAs open a **Calendly popup** (not a new tab), and each booking is tagged with the originating CTA.
 
 **Steps**
 - Confirm CMS section themes reflect the desired alternation (DB + seed script alignment).
@@ -66,13 +76,21 @@
 - Hero:
   - Rotating word styling is **solid shiny black** (subtle shine via text-shadow/stroke; no gradient).
   - Skip Intro jumps to **Services**.
+  - Secondary CTA “Let’s Talk” opens **Calendly popup** with `utm_source=HeroRoom` + `utm_content=opener`.
 - Values:
   - Titles: Faith / Connection / Service / Growth.
   - Glossy black active/hover circles.
   - Highlight card is explicit white with black text.
 - Services:
   - Ensure 4 services exist including “Tech Solutions, Built Around You”.
-  - Cards show image + full pain-point description + 3–4 bullets inline.
+  - Default/collapsed state shows: image + number (01–04) + title + **Explore More**.
+  - Expanded state shows: description + 3–4 bullets + CTA.
+  - Accordion behavior: only one service open at a time.
+  - Service CTA opens Calendly popup with `utm_source=ServicesRoom` and `utm_content` mapping:
+    - 01 Agile Delivery Leadership → `01_Agile`
+    - 02 Product Ownership & Strategy → `02_PO`
+    - 03 Mentorship & Public Speaking → `03_Speaking`
+    - 04 Tech Solutions, Built Around You → `04_Tech`
 - Organizations:
   - Confirm `logos` room exists and marquee renders 21 placeholder tiles (swap CMS logos later).
 - Voices & Impact:
@@ -89,6 +107,8 @@
   - Add autoplay carousel with arrows.
   - Support items with **video embeds** and/or images.
   - Ensure admin schema supports `category` (select) and `video_url`.
+- Navigation:
+  - Nav “Schedule a Conversation” opens Calendly popup with `utm_source=NavBar` + `utm_content=schedule_a_conversation`.
 
 **POC Exit**
 - Run `testing_agent` for a targeted pass over:
@@ -97,35 +117,26 @@
   - Values renames + interaction + highlight card readability
   - Organizations marquee presence
   - Voices & Impact carousel interaction + autoplay
-  - Services cards (image + full description + bullets)
+  - Services expand/collapse behavior + CTA popup
   - Solutions carousel (white cards + dark text + 7 slides)
   - Thoughts + ArticleReader media borders
   - Gallery carousel autoplay + arrows
   - Media & Impact: counter, category tiles switching, carousel autoplay/arrows, external links
   - Contact UX
+  - Nav quick-actions Calendly popup
 - If failures: fix immediately and re-run until green.
 
 **POC Status (Current)**
 - ✅ Original 4 UI polish items implemented and verified (iteration_8).
 - ✅ Logos + Voices & Impact batch implemented and verified (iteration_9).
-- ✅ Round 3 changes implemented and verified (iteration_10):
-  - Hero rotating word solid shiny black (no gradient)
-  - Skip Intro jumps to Services
-  - Services cards show image + full description + bullets (sheet removed)
-  - Solutions slides white + dark text
-  - Gallery updated to “Through My Eyes” with Embla autoplay + arrows (no scrollbar)
-- ✅ Round 4 changes implemented:
-  - Values updated to Faith / Connection / Service / Growth with updated descriptions
-  - Solutions expanded to 7 projects total (added 5 placeholders)
-  - Media & Impact rebuilt: 30+ counter, 3 category tiles, content carousel with autoplay + arrows
-  - Added backend/admin schema support for `impact_items.video_url` and category select
-  - DB cleanup: removed old junk impact_items; inserted 22 curated media items extracted from Bretton_Key_Media_Portfolio.pdf
-  - seed_content.py updated to mirror Values/Projects/Impact changes
-- ✅ Build checks: `esbuild` PASS; backend AST parse PASS.
-- ✅ Manual visual spot-checks completed:
-  - Values: Faith / Connection / Service / Growth rendering confirmed
-  - Media & Impact: layout confirmed (counter + tiles + carousel) via screenshot
-- ⏳ Pending: **testing_agent verification for Round 4** (tile switching, autoplay/pause behavior, mobile view, Solutions carousel now showing 7 slides) + regression check.
+- ✅ Round 3 changes implemented and verified (iteration_10).
+- ✅ Round 4 changes implemented and verified (iterations_11–14).
+- ✅ Round 5 (Calendly + expandable Services) implemented and verified (iteration_15):
+  - Added Calendly popup integration with UTM source tracking.
+  - Converted Hero “Let’s Talk” to Calendly popup (`utm_content=opener`).
+  - Converted Nav “Schedule a Conversation” to Calendly popup (`utm_content=schedule_a_conversation`).
+  - Rebuilt Services as expandable accordion cards with Explore More / Show Less.
+  - Services CTAs open Calendly popup with required identifiers (`01_Agile`, `02_PO`, `03_Speaking`, `04_Tech`).
 
 ---
 
@@ -139,9 +150,10 @@
 5. As a visitor, I can use the Contact form comfortably on desktop and mobile.
 6. As a visitor, the Organizations marquee scrolls smoothly, pauses on hover, and is accessible.
 7. As a visitor, the Voices & Impact carousel feels premium and stable across devices.
-8. As a visitor, Services content is immediately scannable and actionable.
+8. As a visitor, Services are scannable in collapsed form and informative when expanded.
 9. As a visitor, Gallery autoplay is smooth, controllable via arrows, and does not interfere with lightbox.
 10. As a visitor, Media & Impact tiles and carousel are responsive, accessible, and link-out behavior is correct.
+11. As a visitor, all “Let’s Talk / Schedule” CTAs open Calendly in a popup quickly, reliably, and do not break smooth scroll.
 
 **Steps**
 - Audit remaining rooms for theme-dependent styling regressions (borders, text colors, hover states).
@@ -153,8 +165,13 @@
   - No z-index issues with floating Connect dialog.
 - Verify Services cards:
   - Images load and crop correctly.
+  - Expand/collapse animation is smooth; keyboard focus states visible.
   - Descriptions and bullets don’t overflow on mobile.
-  - CTA links scroll correctly via Lenis.
+  - CTA opens Calendly popup; UTM identifiers match the service number.
+- Verify Calendly integration:
+  - Calendly script is loaded once at app mount.
+  - Popup overlay opens from Hero/Nav/Services.
+  - If script fails to load, fallback opens the scheduling URL in a new tab.
 - Verify Organizations marquee:
   - Placeholder tiles render; later swap via CMS `logo_url`.
   - Animation does not break layout; mask gradient looks correct.
@@ -183,12 +200,13 @@
   - Values interaction
   - Organizations marquee
   - Voices & Impact carousel
-  - Services cards
+  - Services expandable cards
   - Solutions carousel (7 slides)
   - Thoughts room + article reader
   - Gallery carousel
   - Media & Impact (counter + tiles + carousel)
   - Contact form basic interaction
+  - Calendly popup from Hero/Nav/Services (UTM verification)
 
 ---
 
@@ -202,6 +220,7 @@
 5. As a visitor, I experience consistent spacing rhythm between rooms (no overly tall sections).
 6. As a visitor, the floating Connect dialog layers correctly over all rooms.
 7. As a maintainer, reseeding the DB reproduces the new room order and content without manual edits.
+8. (Optional) As a visitor, CTAs in additional areas (e.g., Contact room and FloatingConnectButton) also open Calendly in a popup with source tracking.
 
 **Steps**
 - Confirm CMS fields and guidance for:
@@ -209,21 +228,18 @@
   - Testimonials: `portrait_url` optional field.
   - Services: `image_url`, `description`, `capabilities` (bullets).
   - Media & Impact: `category` (Feature/Podcast/TV & Video), `org`, `date`, `image_url`, `video_url`, `external_link`, `description`.
+  - Scheduling: `global_settings.scheduling_url` (Calendly base URL).
 - Optional: tune marquee and autoplay timings based on feedback.
 - Replace placeholder org tiles with real uploaded logos.
 - Add real thumbnails/images for media appearances where available.
+- If requested: route Contact room scheduling link + FloatingConnectButton through `openCalendlyPopup()` with dedicated `utm_content` tags.
 
 ---
 
 ## Next Actions
-1. Run `testing_agent` now to validate **Round 4** additions:
-   - Skip Intro still lands on Services
-   - Values renamed to Connection/Growth and descriptions match selection
-   - Solutions carousel renders 7 slides
-   - Media & Impact: 30+ counter, category tiles switching, carousel autoplay/arrows, links open new tab
-   - Mobile responsiveness for Media & Impact and Solutions
-2. Fix any issues found (contrast, spacing, overflow, carousel controls, dialog layering), then re-run `testing_agent`.
-3. Produce a short test report artifact (iteration JSON) summarizing pass/fail + screenshots.
+1. ✅ Completed: Expandable Services + Calendly popup integration with source-tracked UTM parameters.
+2. Optional (if requested): apply Calendly popup to any remaining CTAs (Contact room scheduling link, FloatingConnectButton) with additional identifier tags.
+3. Keep `testing_agent` as mandatory after any further UI behavior changes.
 
 ---
 
@@ -234,10 +250,30 @@
 - **Values**: Titles are **Faith / Connection / Service / Growth**; active/hover circles use glossy black fill with white text; highlight card is white with black description text.
 - **Organizations marquee**: Room exists between Values and Résumé, shows infinite horizontal scroll of 21 placeholder tiles; logos can be swapped later via CMS.
 - **Voices & Impact**: Renders as a compact 3D carousel with 4 real verified/published testimonials.
-- **Services**: All four service cards show an image, full pain-point description, and **3–4 bullet points** of deliverables.
+- **Services (NEW)**:
+  - Collapsed view shows **image + number + title + Explore More**.
+  - Expandable accordion behavior (only one open at a time) reveals description + bullets + CTA.
+- **Calendly (NEW)**:
+  - All tested CTAs open Calendly as a **popup widget**, not a navigation:
+    - Hero “Let’s Talk”: `utm_source=HeroRoom`, `utm_content=opener`
+    - Nav schedule action: `utm_source=NavBar`, `utm_content=schedule_a_conversation`
+    - Services CTAs: `utm_source=ServicesRoom`, `utm_content=01_Agile/02_PO/03_Speaking/04_Tech`
+  - Calendly script loads once at app mount; fallback opens the URL in a new tab if blocked.
 - **Solutions**: Each slide uses a **white surface with dark text**, with controls visible; **7 published projects** visible.
 - **Thoughts**: All image/video containers in Thoughts + ArticleReader show a subtle `--border-blue` outline.
 - **Gallery**: Title/subtext updated; uses autoplay carousel (~3s) with arrows; no scrollbar; lightbox still works.
 - **Media & Impact**: Counter animates quickly to **30+**; exactly 3 category tiles; selecting tiles updates the carousel; carousel autoplays with arrows; items show source/date/title/description and open external links in a new tab; supports video embeds via `video_url`.
 - **Contact scale**: Contact room is appropriately sized; form panel constrained and readable.
 - **Regression-free**: No broken navigation, no z-index/dialog issues, no layout overflow introduced.
+
+## Implementation Notes / File Map (Round 5)
+- `/app/frontend/src/lib/calendly.js`: `loadCalendlyScript()` + `openCalendlyPopup({ baseUrl, utm, prefill })`
+- `/app/frontend/src/App.js`: preloads Calendly script on mount
+- `/app/frontend/src/components/rooms/RoomRenderer.js`: passes `settings` to HeroRoom/ServicesRoom
+- `/app/frontend/src/components/rooms/HeroRoom.js`: “Let’s Talk” opens Calendly popup with UTM
+- `/app/frontend/src/components/site/SiteNav.js`: schedule action opens Calendly popup with UTM
+- `/app/frontend/src/components/rooms/ServicesRoom.js`: expandable/accordion services + Calendly CTAs
+- `/app/frontend/tailwind.config.js`: added `collapsible-down/up` animations
+
+## Test Artifact
+- `/app/test_reports/iteration_15.json`: 100% pass (Services expand/collapse + Calendly popup + UTM attribution + regression checks)
