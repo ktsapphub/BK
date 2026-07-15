@@ -13,6 +13,7 @@
   - A shared form component used both in the dialog and the Contact room.
   - Strict consent collection + server-side re-validation + consent recordkeeping + spam protection.
   - A real Privacy Policy page linked near consent.
+- Maintain a consistent **cinematic hero** presentation with correct portrait framing and premium CTA treatments.
 
 **Current status:** ✅ V1 objectives achieved **and end-to-end verified**.
 - Public site, admin CMS, and all APIs are functioning with seeded real content.
@@ -20,6 +21,7 @@
   - Minimal floating SiteNav (desktop rail + progress line + mobile drawer + persistent quick actions)
   - ThoughtsRoom accordion (expandable articles) + image/video support + pagination logic
   - Persistent “Let’s Connect” system (floating button + responsive dialog + shared ConnectForm + privacy policy + consent recordkeeping)
+  - Hero room CTA visual polish + hero portrait framing fix (iteration_6 100% verified)
 - Comprehensive testing completed with a 100% pass rate (backend + public + admin) and **zero open issues**.
 - Remaining work is **optional Phase 4 launch content operations** (replace stock imagery + add verified testimonials + set resume PDF URL) and minor polish.
 
@@ -138,7 +140,7 @@
 
 ---
 
-### Phase 3 — Testing + hardening + navigation/thoughts/connect feature completion ✅ COMPLETE
+### Phase 3 — Testing + hardening + navigation/thoughts/connect + hero polish ✅ COMPLETE
 
 #### Critical regressions prevented / fixes verified ✅
 - Fixed and verified a **React rules-of-hooks** compile regression (`TestimonialsRoom.js` early return before a hook) that previously broke the entire frontend.
@@ -232,31 +234,37 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - Safe-area aware offsets; 44px+ target; no pulsing/bouncing
   - Auto theme contrast by sampling nearest `[data-theme-dark]` under button via `elementFromPoint`
   - Project-page prefill support: detects `/projects/:slug` and passes project id into dialog for “Use your app(s)”
-- Contact room refactor: `ContactRoom.js` now embeds the same ConnectForm (one inquiries system; no duplicate tables/records).
+- Contact room refactor: `ContactRoom.js` embeds the same ConnectForm (one inquiries system; no duplicate tables/records).
 - Privacy policy: new page `/privacy` (`PrivacyPolicy.js`), linked near consent.
-- Admin settings: `AdminSettings.js` extended with a “Let’s Connect & Privacy” section (editable dialog + consent copy, newsletter toggle, privacy URL) and guidance to bump consent version when wording changes.
-- App integration: `App.js` mounts `FloatingConnectButton` globally for public routes and adds `/privacy` route.
+- Admin settings: `AdminSettings.js` extended with a “Let’s Connect & Privacy” section.
 
 **Bug fix round (Connect system) ✅**
-- **Issue discovered (testing_agent iteration_4):** 3 CRITICAL frontend bugs:
-  1) Discard confirmation dialog buttons not clickable
-  2) Conditional fields not appearing when selecting a reason
-  3) Submit button never enabling
-- **Root cause:** a single z-index stacking conflict:
-  - custom `ConnectDialog` overlay/content (`z-[65]` / `z-[70]`) sat above nested Radix Select dropdown (`z-50`) and shared AlertDialog (`z-50`), making click targets unreachable.
-- **Fix applied:**
+- Root issue: z-index stacking conflict between ConnectDialog overlay and nested Select/AlertDialog.
+- Fix applied:
   - Added `!z-[80]` to all `SelectContent` instances inside `ConnectForm.js`
-  - Raised `alert-dialog.jsx` default z-index from `z-50` to `z-[100]` (confirmation dialogs should outrank regular dialogs app-wide)
-- **Re-verification:** confirmed fixed using real (non-forced) Playwright clicks.
+  - Raised `alert-dialog.jsx` default z-index to `z-[100]`
+- Re-tested: `testing_agent_v3` iteration_5 at 100% pass.
 
-#### Testing performed ✅
-- Initial comprehensive test suite: prior iterations achieved 100% pass.
-- **Connect bug-fix re-test:** `testing_agent_v3` iteration_5 re-ran the full suite:
-  - 100% pass across backend inquiry validations, frontend connect dialog critical fixes, mobile dialog variants (bottom sheet + full-screen), full site regression, and admin CMS.
-  - No remaining action items.
-- Data hygiene: all test inquiries removed; backend restarted to clear in-memory limiter state.
+#### Hero room visual polish bug-fix ✅
+**Context:** User reported 3 hero issues:
+1) “See the Work” fill should be smokey glossy black
+2) “Let’s Talk” fill should be cool glossy gray
+3) hero portrait image cropping/position needed fixing
 
-**Phase 3 exit criteria:** ✅ Fully met (including mobile dialog variants + critical bug-fix round).
+**Fixes applied (HeroRoom.js only) ✅**
+- Primary CTA (“See the Work”) updated to smokey glossy black gradient (zinc-600 → zinc-800 → black) with inset highlight shadow.
+- Secondary CTA (“Let’s Talk”) updated to cool glossy gray gradient (slate-200 → slate-300 → slate-400) with inset highlight shadow.
+- Hero background image crop fixed by setting `object-[center_15%]` to shift the visible crop upward so Bretton’s face/head is visible.
+
+**Verification ✅**
+- Verified by `testing_agent_v3` iteration_6:
+  - Desktop (1920px) and mobile (390px) confirmed
+  - Button hover + focus states intact
+  - CTA functionality intact (scroll-to-projects + Calendly external)
+  - Zero console errors
+  - No regressions
+
+**Phase 3 exit criteria:** ✅ Fully met (including hero polish verification).
 
 ---
 
@@ -310,8 +318,12 @@ Implemented a shared contact/inquiry experience with strict consent and recordke
   - Consent is required and re-validated server-side; consent wording/version/timestamps are recorded per submission.
   - Spam protection via honeypot + rate limiting + dedupe guard.
   - Privacy Policy page exists and is linked near consent.
+- Hero room polish:
+  - “See the Work” CTA has smokey glossy black fill
+  - “Let’s Talk” CTA has cool glossy gray fill
+  - Hero portrait framing shows Bretton’s face/head (not cropped)
 - Content hygiene maintained (no stray test data in public collections).
-- **Bug fix round completed:** z-index stacking conflict resolved; re-tested with `testing_agent_v3` iteration_5 at 100% pass rate.
+- Comprehensive testing complete with **zero open issues**, including hero polish verification (testing iteration_6).
 
 ⏳ **Remaining (optional / launch ops):**
 - Replace placeholder imagery with real assets.
