@@ -77,7 +77,7 @@ export default function ThoughtsRoom({ section, thoughts }) {
         <Link
           to={`/thoughts/${featured.slug || featured.id}`}
           data-testid="thoughts-featured-article"
-          className="focus-ring group grid md:grid-cols-2 gap-8 items-center mb-14 pb-10 border-b border-[var(--border-primary)]"
+          className={`focus-ring group grid md:grid-cols-2 gap-8 items-center mb-14 pb-10 border-b ${t.isDark ? "border-white/15" : "border-[var(--border-primary)]"}`}
         >
           <div className="relative aspect-[16/10] rounded-[var(--radius-md)] overflow-hidden order-1 md:order-none border border-[var(--border-blue)]">
             {featured.featured_image && (
@@ -92,8 +92,14 @@ export default function ThoughtsRoom({ section, thoughts }) {
             )}
           </div>
           <div>
-            <span className="font-display text-[10px] uppercase tracking-[0.14em] text-[var(--surface-blue)]">{`Featured · ${featured.category || ""}`}</span>
-            <h3 className="font-display font-bold text-2xl md:text-3xl mt-2 group-hover:text-[var(--surface-blue)] transition-colors">{featured.title}</h3>
+            <span className={`font-display text-[10px] uppercase tracking-[0.14em] ${t.isDark ? "text-[var(--text-on-blue-muted)]" : "text-[var(--surface-blue)]"}`}>{`Featured · ${featured.category || ""}`}</span>
+            <h3
+              className={`font-display font-bold text-2xl md:text-3xl mt-2 transition-colors ${
+                t.isDark ? "group-hover:text-white group-hover:underline" : "group-hover:text-[var(--surface-blue)]"
+              }`}
+            >
+              {featured.title}
+            </h3>
             {featured.excerpt && <p className="font-editorial italic text-base md:text-lg opacity-80 mt-3">{featured.excerpt}</p>}
             {featured.reading_time && <span className="font-body text-xs opacity-50 mt-3 block">{featured.reading_time}</span>}
           </div>
@@ -108,7 +114,11 @@ export default function ThoughtsRoom({ section, thoughts }) {
                 data-testid={`thoughts-category-${cat.toLowerCase().replace(/\s+/g, "-")}`}
                 aria-pressed={category === cat}
                 className={`focus-ring font-display text-xs uppercase tracking-wide rounded-full px-3 py-1.5 border transition-colors ${
-                  category === cat ? "bg-[var(--surface-blue)] text-white border-transparent" : "border-[var(--border-blue)] hover:bg-[var(--background-blue-soft)]"
+                  category === cat
+                    ? "bg-[var(--surface-blue)] text-white border-transparent"
+                    : t.isDark
+                    ? "border-white/25 text-[var(--text-on-blue-muted)] hover:bg-white/15 hover:text-white"
+                    : "border-[var(--border-blue)] hover:bg-[var(--background-blue-soft)]"
                 }`}
               >
                 {cat}
@@ -122,7 +132,7 @@ export default function ThoughtsRoom({ section, thoughts }) {
         ) : (
           <Accordion type="single" collapsible className="w-full" data-testid="thoughts-accordion-list">
             {pageItems.map((article) => (
-              <AccordionItem key={article.id} value={article.id} className="border-[var(--border-primary)]">
+              <AccordionItem key={article.id} value={article.id} className={t.isDark ? "border-white/15" : "border-[var(--border-primary)]"}>
                 <AccordionTrigger data-testid="thoughts-accordion-trigger" className="hover:no-underline items-start gap-4 py-5">
                   <div className="flex items-start gap-4 flex-1 text-left">
                     {article.featured_image && (
@@ -146,7 +156,9 @@ export default function ThoughtsRoom({ section, thoughts }) {
                     <Link
                       to={`/thoughts/${article.slug || article.id}`}
                       data-testid="thoughts-accordion-read-more"
-                      className="focus-ring inline-flex items-center gap-1.5 font-display text-xs uppercase tracking-wide text-[var(--surface-blue)] hover:underline"
+                      className={`focus-ring inline-flex items-center gap-1.5 font-display text-xs uppercase tracking-wide hover:underline ${
+                        t.isDark ? "text-[var(--text-on-blue)]" : "text-[var(--surface-blue)]"
+                      }`}
                     >
                       Read full note <ArrowUpRight className="h-3.5 w-3.5" />
                     </Link>

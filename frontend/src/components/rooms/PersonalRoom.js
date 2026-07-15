@@ -37,85 +37,87 @@ export default function PersonalRoom({ section }) {
 
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="personal-room" sectionType={section.section_type} className="py-24 md:py-32">
-      <RoomContainer className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-        <div>
-          {c.eyebrow && <RoomEyebrow dark={t.isDark}>{c.eyebrow}</RoomEyebrow>}
-          {c.heading && (
-            <h2 className="font-display font-bold text-2xl md:text-3xl mb-6" data-testid="personal-heading">
-              {c.heading}
-            </h2>
-          )}
-          {c.statement && (
-            <p className="font-editorial text-xl md:text-2xl leading-relaxed" data-testid="personal-statement">
-              {c.statement}
-            </p>
-          )}
+      <RoomContainer>
+        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+          <div>
+            {c.eyebrow && <RoomEyebrow dark={t.isDark}>{c.eyebrow}</RoomEyebrow>}
+            {c.heading && (
+              <h2 className="font-display font-bold text-2xl md:text-3xl mb-6" data-testid="personal-heading">
+                {c.heading}
+              </h2>
+            )}
+            {c.statement && (
+              <p className="font-editorial text-xl md:text-2xl leading-relaxed" data-testid="personal-statement">
+                {c.statement}
+              </p>
+            )}
+          </div>
 
-          {images.length > 0 && (
-            <div
-              className="relative mt-9"
-              data-testid="personal-gallery-carousel"
-              onMouseEnter={() => setPaused(true)}
-              onMouseLeave={() => setPaused(false)}
-              onFocus={() => setPaused(true)}
-              onBlur={() => setPaused(false)}
-            >
-              <Carousel setApi={setApi} opts={{ loop: images.length > 1, align: "start" }} className="w-full">
-                <CarouselContent className="-ml-3">
-                  {images.map((img, i) => (
-                    <CarouselItem key={i} className="pl-3 basis-[62%] sm:basis-[46%]">
-                      <button
-                        type="button"
-                        onClick={() => setLightboxIdx(i)}
-                        data-testid="personal-gallery-image-button"
-                        className="focus-ring w-full aspect-[4/3] rounded-[var(--radius-md)] overflow-hidden relative group"
-                      >
-                        <img
-                          src={img.url}
-                          alt={img.alt || ""}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                        {img.caption && (
-                          <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent text-white text-[11px] font-body p-2.5 text-left">
-                            {img.caption}
-                          </span>
-                        )}
-                      </button>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-
-              {images.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => api?.scrollPrev()}
-                    aria-label="Previous image"
-                    data-testid="personal-gallery-prev-button"
-                    className="focus-ring absolute left-1 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-[var(--background-primary)]/90 border border-[var(--border-blue)] flex items-center justify-center hover:bg-[var(--background-blue-soft)] transition-colors"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => api?.scrollNext()}
-                    aria-label="Next image"
-                    data-testid="personal-gallery-next-button"
-                    className="focus-ring absolute right-1 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-[var(--background-primary)]/90 border border-[var(--border-blue)] flex items-center justify-center hover:bg-[var(--background-blue-soft)] transition-colors"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </>
-              )}
+          {c.image && (
+            <div className="aspect-[4/3] rounded-[var(--radius-md)] overflow-hidden">
+              <img src={c.image} alt="" className="w-full h-full object-cover" loading="lazy" />
             </div>
           )}
         </div>
 
-        {c.image && (
-          <div className="aspect-[4/3] rounded-[var(--radius-md)] overflow-hidden">
-            <img src={c.image} alt="" className="w-full h-full object-cover" loading="lazy" />
+        {images.length > 0 && (
+          <div
+            className="relative mt-14 md:mt-16"
+            data-testid="personal-gallery-carousel"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+          >
+            <Carousel setApi={setApi} opts={{ loop: images.length > 1, align: "start" }} className="w-full">
+              <CarouselContent className="-ml-4">
+                {images.map((img, i) => (
+                  <CarouselItem key={i} className="pl-4 basis-[78%] sm:basis-[45%] md:basis-[32%] lg:basis-[24%]">
+                    <button
+                      type="button"
+                      onClick={() => setLightboxIdx(i)}
+                      data-testid="personal-gallery-image-button"
+                      className="focus-ring w-full aspect-[4/3] rounded-[var(--radius-md)] overflow-hidden relative group"
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.alt || ""}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      {img.caption && (
+                        <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent text-white text-[11px] font-body p-2.5 text-left">
+                          {img.caption}
+                        </span>
+                      )}
+                    </button>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => api?.scrollPrev()}
+                  aria-label="Previous image"
+                  data-testid="personal-gallery-prev-button"
+                  className="focus-ring absolute left-1 md:-left-3 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-[var(--background-primary)]/90 border border-[var(--border-blue)] flex items-center justify-center hover:bg-[var(--background-blue-soft)] transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => api?.scrollNext()}
+                  aria-label="Next image"
+                  data-testid="personal-gallery-next-button"
+                  className="focus-ring absolute right-1 md:-right-3 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-[var(--background-primary)]/90 border border-[var(--border-blue)] flex items-center justify-center hover:bg-[var(--background-blue-soft)] transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </>
+            )}
           </div>
         )}
       </RoomContainer>
