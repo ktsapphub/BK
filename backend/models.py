@@ -139,6 +139,7 @@ class ImpactItemCreate(BaseModel):
     date: Optional[str] = None
     category: Optional[str] = None
     image_url: Optional[str] = None
+    video_url: Optional[str] = None
     description: Optional[str] = None
     external_link: Optional[str] = None
     role: Optional[str] = None

@@ -158,9 +158,9 @@ def main():
         "intro": "Long ago I realized achieving the life you desire takes faith, focus, and a clear sense of purpose.",
         "items": [
             {"title": "Faith", "image": "https://images.unsplash.com/photo-1618255037265-ed4e83cf3323?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "God is good — my commitment to purpose starts here."},
-            {"title": "Community", "image": "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "I believe in discovering solutions together, using our unique talents and gifts."},
+            {"title": "Connection", "image": "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "I believe in discovering solutions together, building genuine connection through our unique talents and gifts."},
             {"title": "Service", "image": "https://images.unsplash.com/photo-1461532257246-777de18cd58b?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "What gets me out of bed each day is a deep commitment to personal growth and helping others."},
-            {"title": "Simplicity", "image": "https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "I really enjoy simplifying complex processes and collaborating to reach the best outcome."},
+            {"title": "Growth", "image": "https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "I'm committed to continuous growth — pushing myself and everyone around me to learn, adapt, and become better than we were yesterday."},
         ],
     })
 
@@ -358,6 +358,20 @@ def main():
              role="Founder", status="In Development",
              featured=False, available_for_inquiry=False, is_published=False, display_order=3),
     ]
+    placeholder_project_images = [
+        "https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "https://images.unsplash.com/photo-1490093158370-1a6be674437b?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "https://images.unsplash.com/photo-1689443111130-6e9c7dfd8f9e?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "https://images.unsplash.com/photo-1516414447565-b14be0adf13e?crop=entropy&cs=srgb&fm=jpg&q=85",
+    ]
+    for i in range(5):
+        projects_data.append(dict(
+            title=f"New Venture {i + 1:02d}", slug=f"new-venture-{i + 1:02d}", category="Concept",
+            summary="Placeholder — details coming soon. Update this project with real content via the Admin CMS.",
+            role="Founder", status="Concept", thumbnail_url=placeholder_project_images[i],
+            featured=False, available_for_inquiry=False, is_published=True, display_order=4 + i,
+        ))
     for p in projects_data:
         create_project(**p)
     print(f"Created {len(projects_data)} projects.")
@@ -371,18 +385,77 @@ def main():
     # ------------------------------------------------------------- IMPACT
     create_section(page_id, "impact", "Media & Impact", "In the Field", 10, "deep_royal_blue", "fade", {
         "heading": "Where You May Have Seen Me",
-        "intro": "Highlights from federal programs, allied operations, and independent ventures.",
+        "intro": "Press features, podcast conversations, and broadcast appearances covering my ventures and career.",
     })
     impact_data = [
-        dict(title="Purpose-Driven Entrepreneur", org="Personal Platform", date="2026", category="Feature",
-             image_url=IMG_IMPACT_SPEAKING, description="Reflections on building ventures driven by service rather than just profit.",
-             external_link="https://brettonjkey.com", role="Founder", featured=True, is_published=True, display_order=1),
-        dict(title="HQ Air Force Compliance Initiative", org="HQ Air Force", date="2025", category="Program Highlight",
-             description="Raised HQ-wide compliance from 82% to 95% in Q1 FY25 through Agile release-train checkpoints.",
-             role="Information Access Manager", featured=False, is_published=True, display_order=2),
-        dict(title="NATO ACT Innovation Vetting", org="NATO Allied Command Transformation", date="2024", category="Program Highlight",
-             description="Led vetting and approval of high-impact innovation projects, authoring business cases worth hundreds of millions of euros.",
-             role="Product Owner", featured=False, is_published=True, display_order=3),
+        # ---- Features (digital publications) ----
+        dict(category="Feature", title="The Elevator Pitch: My Date Jar Featured in StartVirginia 2025", org="Virginia Business", date="Jun 2025",
+             description="A feature in the \"Elevator Pitch\" roundup of the 2025 StartVirginia issue, covering the My Date Jar multichannel model, SWaM certification, and business traction.",
+             external_link="https://virginiabusiness.com/startups-the-elevator-pitch-3/", is_published=True, display_order=1),
+        dict(category="Feature", title="Begin Locally to Build Globally — A ValiantCEO Interview", org="ValiantCEO", date=None,
+             description="A feature interview detailing the origins of My Date Jar, advice for transitioning from corporate IT to entrepreneurship, and future plans.",
+             external_link="https://valiantceo.com/bretton-key/", is_published=True, display_order=2),
+        dict(category="Feature", title="Meet Bretton Key", org="Canvas Rebel", date=None,
+             description="A profile tracing the growth of My Date Jar from a mason jar of ideas to an app and companion product, including the Amazon Black Business Accelerator.",
+             external_link="https://canvasrebels.com/meet-bretton-key/", is_published=True, display_order=3),
+        dict(category="Feature", title="12 Best Outdoor Date Ideas in 2024", org="Best Life", date="Apr 2024",
+             description="A roundup of expert-recommended outdoor date ideas where My Date Jar was included with a suggestion for a drive-in movie experience.",
+             external_link="https://bestlifeonline.com/best-outdoor-date-ideas/", is_published=True, display_order=4),
+        dict(category="Feature", title="Meet Bretton Key | Tech Founder & App Designer", org="Shoutout Atlanta", date="Mar 2024",
+             description="A profile covering the founding story of Date Jar and early support from the Norfolk State University Innovation Center and 1863 Ventures.",
+             external_link="https://shoutoutatlanta.com/meet-bretton-key-tech-founder-app-designer/", is_published=True, display_order=5),
+        dict(category="Feature", title="My Date Jar — Client Case Study", org="BuildFire", date=None,
+             description="A case study covering the technical development of the My Date Jar mobile app, its growth trajectory, and nationwide rollout strategy.",
+             external_link="https://buildfire.com/customer-stories/my-date-jar/", is_published=True, display_order=6),
+        dict(category="Feature", title="An Entertainment Platform Is About to Shake Up 'Date Night' This Valentine's Day", org="EIN Presswire", date="Feb 2024",
+             description="A Valentine's Day press release on reimagining date night and introducing Date Cards Vol. 1 — picked up by outlets including KXAN, KSNT, and WGN Radio 720.",
+             external_link="https://www.ksnt.com/business/press-releases/ein-presswire/686728176/an-entertainment-platform-is-about-to-shake-up-date-night-this-valentines-day/", is_published=True, display_order=7),
+        dict(category="Feature", title="The Dating App to End All Dating Apps: Introducing Date Jar", org="The NYC Times", date=None,
+             description="Covers the founding and April 2022 launch of Date Jar, framing it as a tool for both singles and couples.",
+             external_link="https://www.thenyctimes.com/the-dating-app-to-end-all-dating-apps-introducing-date-jar/", is_published=True, display_order=8),
+        dict(category="Feature", title="The New Dating App Set to Change the Game: MyDateJar", org="Times LA", date=None,
+             description="A city-lifestyle feature covering how My Date Jar revolutionizes dating with curated ideas rather than swipe-based models.",
+             external_link="https://www.timesla.com/the-new-dating-app-set-to-change-the-game-mydatejar/", is_published=True, display_order=9),
+        dict(category="Feature", title="FBI Says Keep Your ID Badges Covered", org="13News Now (WVEC)", date="2012",
+             description="A security-awareness segment where Bretton Key was quoted on the importance of workplace ID badge safety.",
+             external_link="https://www.13newsnow.com/article/news/fbi-says-keep-your-id-badges-covered/291-418124553", is_published=True, display_order=10),
+        dict(category="Feature", title="Downtown Norfolk's 757 Startup Studios Attracts 18 More Startups", org="The Virginian-Pilot", date="Dec 2022",
+             description="Coverage of the 757 Startup Studios cohort which supported My Date Jar.",
+             external_link="https://www.pilotonline.com/2022/12/01/downtown-norfolks-757-startup-studios-attracts-18-more-startups/", is_published=True, display_order=11),
+        # ---- Podcasts ----
+        dict(category="Podcast", title="Founder Runs an Entertainment Platform That Redefines Dating Experiences", org="I AM CEO Podcast", date="May 2024",
+             description="Hosted by Gresham Harkless Jr., the episode discusses the origins of My Date Jar and defines the CEO role as accountability, intention, and value.",
+             external_link="https://cbnation.tv/founder-runs-an-entertainment-platform-that-redefines-dating-experiences/", is_published=True, display_order=12),
+        dict(category="Podcast", title="Ep. 243: Bretton Key — My Date Jar Mobile App", org="Kickin' It Kool Kard", date=None,
+             description="Discusses building the My Date Jar mobile app for singles and couples.",
+             external_link="https://podcasts.apple.com/nz/podcast/ep-243-bretton-key-my-date-jar-mobile-app/id1605498818?i=1000665163694", is_published=True, display_order=13),
+        dict(category="Podcast", title="Episode 132", org="Fervent Four — Innovate Hampton Roads", date=None,
+             description="Interview with Tim Ryan and Zack Miller on building My Date Jar and the founder journey.",
+             video_url="https://www.youtube.com/watch?v=1p_5fk8y8kU", is_published=True, display_order=14),
+        dict(category="Podcast", title="How Did I Get Here — Season 1, Episode 8", org="Here We Are Podcast", date=None,
+             description="Hosted by Teka Johnson, LCSW, a candid conversation on the entrepreneurial path.",
+             video_url="https://www.youtube.com/watch?v=IVDClVVmHmU", is_published=True, display_order=15),
+        # ---- TV & Video ----
+        dict(category="TV & Video", title="The Art of Dating with 'Date Jar' on Coast Live", org="Coast Live — WTKR News 3", date="Jul 2022",
+             description="A discussion on how the My Date Jar app coaches users through dating by focusing on shared experiences.",
+             external_link="https://www.wtkr.com/coast-live/the-art-of-dating-with-date-jar-on-coast-live", is_published=True, display_order=16),
+        dict(category="TV & Video", title="Get Creative with Your Dating Life with the Date Jar App on Coast Live", org="Coast Live — WTKR News 3", date=None,
+             description="A second Coast Live segment on the My Date Jar app and its approach to modern dating.",
+             external_link="https://www.wtkr.com/coast-live/get-creative-with-your-dating-life-with-the-date-jar-app-on-coast-live", is_published=True, display_order=17),
+        dict(category="TV & Video", title="Coast Live, Part 2", org="Coast Live on 3 (Facebook)", date=None,
+             description="A Facebook video segment welcoming the founder back to the show to discuss upcoming plans.",
+             external_link="https://www.facebook.com/CoastLiveon3/videos/we-were-thrilled-today-to-welcome-bretton-j-key-to-the-show-to-discuss-the-upcom/3192754887651034/?locale=ms_MY", is_published=True, display_order=18),
+        dict(category="TV & Video", title="Feature Appearance", org="Legit TV — Amazon Prime Video", date=None,
+             description="A segment hosted by Stefanie Magness featuring Bretton Key.", is_published=True, display_order=19),
+        dict(category="TV & Video", title="I Survived", org="YouTube", date=None,
+             description="A video appearance discussing lessons learned from building and launching a venture.",
+             video_url="https://www.youtube.com/watch?v=Qcby6IDIy34", is_published=True, display_order=20),
+        dict(category="TV & Video", title="Ride Along Conversations", org="YouTube", date=None,
+             description="A casual video conversation covering entrepreneurship and the My Date Jar journey.",
+             video_url="https://youtu.be/a7iL2LxmZTg", is_published=True, display_order=21),
+        dict(category="TV & Video", title="Love In The Digital Age", org="YouTube", date=None,
+             description="A video discussion on modern dating, technology, and how My Date Jar fits into the picture.",
+             video_url="https://www.youtube.com/watch?v=cY7OXLPBMgU", is_published=True, display_order=22),
     ]
     for i in impact_data:
         create_impact(**i)
