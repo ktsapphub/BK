@@ -38,8 +38,9 @@ export const CONTENT_SCHEMAS = {
   introduction: [
     { name: "portrait_url", type: "image", label: "Portrait" },
     { name: "heading", type: "text", label: "Heading" },
+    { name: "lead", type: "textarea", label: "Lead / Pull Quote (Fraunces editorial line)" },
     { name: "body", type: "textarea", label: "Body" },
-    { name: "identity_words", type: "array_string", label: "Identity Words" },
+    { name: "identity_words", type: "array_string", label: "Identity Words (kinetic sequence)" },
     { name: "badge", type: "text", label: "Badge" },
     { name: "image_position", type: "select", label: "Image Position", options: ["left", "right"] },
     { name: "layout_direction", type: "select", label: "Layout Direction", options: ["ltr", "rtl"] },

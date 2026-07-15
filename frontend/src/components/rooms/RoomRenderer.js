@@ -27,7 +27,7 @@ export default function RoomRenderer({ section, data, onSkipIntro }) {
     case "founder_story":
       return <FounderStoryRoom section={section} />;
     case "resume":
-      return <ResumeRoom section={section} careerEntries={data.careerEntries} />;
+      return <ResumeRoom section={section} careerEntries={data.careerEntries} settings={data.settings} />;
     case "services":
       return <ServicesRoom section={section} services={data.services} />;
     case "projects":
@@ -42,7 +42,7 @@ export default function RoomRenderer({ section, data, onSkipIntro }) {
     case "gallery":
       return <GalleryRoom section={section} />;
     case "contact":
-      return <ContactRoom section={section} />;
+      return <ContactRoom section={section} settings={data.settings} />;
     case "thoughts":
       return <ThoughtsRoom section={section} thoughts={data.thoughts} />;
     default:

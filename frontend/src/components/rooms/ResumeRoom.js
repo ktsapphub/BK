@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Download, Linkedin } from "lucide-react";
 import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 function formatRange(entry) {
   const start = entry.start_date || "";
   const end = entry.is_current ? "Present" : entry.end_date || "";
-  return [start, end].filter(Boolean).join(" — ");
+  return [start, end].filter(Boolean).join(" \u2014 ");
 }
 
-export default function ResumeRoom({ section, careerEntries }) {
+export default function ResumeRoom({ section, careerEntries, settings }) {
   const c = section.content || {};
   const entries = Array.isArray(careerEntries) ? careerEntries : [];
   const [activeId, setActiveId] = useState(entries[0]?.id);
@@ -18,28 +19,50 @@ export default function ResumeRoom({ section, careerEntries }) {
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="resume-room" sectionType={section.section_type} className="py-24 md:py-32">
       <RoomContainer>
-        <RoomEyebrow>Résumé</RoomEyebrow>
-        <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-4">{c.heading || "Career Timeline"}</h2>
-        {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-12 opacity-90">{c.intro}</p>}
+        <div className="flex flex-wrap items-end justify-between gap-6 mb-4">
+          <div>
+            <RoomEyebrow>Résumé</RoomEyebrow>
+            <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em]">{c.heading || "Twenty Years in Motion"}</h2>
+          </div>
+          <div className="flex gap-3">
+            {settings?.resume_pdf_url && (
+              <a href={settings.resume_pdf_url} target="_blank" rel="noopener noreferrer" data-testid="resume-download-button" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-4 py-2 font-display text-xs font-semibold uppercase tracking-wide hover:bg-[var(--background-blue-soft)]">
+                <Download className="h-3.5 w-3.5" /> Résumé
+              </a>
+            )}
+            {settings?.social_linkedin && (
+              <a href={settings.social_linkedin} target="_blank" rel="noopener noreferrer" data-testid="resume-linkedin-link" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-4 py-2 font-display text-xs font-semibold uppercase tracking-wide hover:bg-[var(--background-blue-soft)]">
+                <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+              </a>
+            )}
+          </div>
+        </div>
+        {c.intro && <p className="font-body text-base md:text-lg max-w-[64ch] mb-12 opacity-90">{c.intro}</p>}
 
         {entries.length === 0 ? (
           <EmptyRoomNotice message="Résumé currently being curated — reach out via the contact room for details." />
         ) : (
           <>
-            {/* Desktop: split timeline */}
-            <div className="hidden md:grid grid-cols-[220px_1fr] gap-10" data-testid="resume-timeline">
-              <div className="space-y-1 border-l border-[var(--border-blue)] pl-5">
+            {/* Desktop: milestone rail + detail panel */}
+            <div className="hidden md:grid grid-cols-[260px_1fr] gap-10" data-testid="resume-timeline">
+              <div className="relative pl-7">
+                <div className="absolute left-[7px] top-1 bottom-1 w-px bg-[var(--border-blue)]" aria-hidden="true" />
                 {entries.map((entry) => (
                   <button
                     key={entry.id}
                     onClick={() => setActiveId(entry.id)}
                     data-testid="resume-entry"
-                    className={`focus-ring block w-full text-left py-2.5 font-display text-sm transition-colors ${
-                      activeId === entry.id ? "text-[var(--surface-blue)] font-semibold" : "opacity-70 hover:opacity-100"
-                    }`}
+                    className="focus-ring relative block w-full text-left pb-7 group"
                   >
-                    {formatRange(entry)}
-                    {entry.is_current && <span className="ml-2 text-[10px] uppercase tracking-wide rounded-full bg-[var(--background-blue-soft)] text-[var(--surface-blue)] px-2 py-0.5">Current</span>}
+                    <span
+                      className={`absolute -left-7 top-1 h-3.5 w-3.5 rounded-full border-2 transition-all ${
+                        activeId === entry.id ? "bg-[var(--surface-blue)] border-[var(--surface-blue)] scale-110" : "bg-[var(--background-primary)] border-[var(--border-blue)] group-hover:border-[var(--surface-blue)]"
+                      }`}
+                    />
+                    <span className={`font-display text-sm block transition-colors ${activeId === entry.id ? "text-[var(--surface-blue)] font-semibold" : "opacity-70 group-hover:opacity-100"}`}>
+                      {formatRange(entry)}
+                    </span>
+                    <span className={`font-display text-xs block mt-0.5 ${activeId === entry.id ? "opacity-90" : "opacity-50"}`}>{entry.title}</span>
                   </button>
                 ))}
               </div>
@@ -54,7 +77,7 @@ export default function ResumeRoom({ section, careerEntries }) {
                   >
                     <h3 className="font-display font-bold text-xl md:text-2xl">{active.title}</h3>
                     <p className="font-body text-sm opacity-80 mt-1">
-                      {active.org}{active.location ? ` · ${active.location}` : ""}
+                      {active.org}{active.location ? ` \u00b7 ${active.location}` : ""}
                     </p>
                     {active.description && <p className="font-body text-sm md:text-base mt-4 opacity-90 max-w-[62ch]">{active.description}</p>}
                     {Array.isArray(active.achievements) && active.achievements.length > 0 && (

@@ -34,7 +34,7 @@ export default function Home() {
           ]);
         if (!mounted) return;
         setPageData(page);
-        setSupplementary({ careerEntries, testimonials, projects, services, thoughts, impactItems });
+        setSupplementary({ careerEntries, testimonials, projects, services, thoughts, impactItems, settings: siteSettings });
         setNavItems(nav);
         setSettings(siteSettings);
         if (siteSettings?.seo_default_title) document.title = siteSettings.seo_default_title;

@@ -12,22 +12,25 @@ export default function IntroductionRoom({ section }) {
       <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-6" data-testid="intro-heading">
         {c.heading || "Introduction"}
       </h2>
+      {c.lead && (
+        <p className="font-editorial italic text-xl md:text-2xl leading-snug mb-5 max-w-[56ch]" data-testid="intro-lead">
+          {c.lead}
+        </p>
+      )}
       {c.body && (
         <p className="font-body text-base md:text-lg leading-relaxed max-w-[62ch]" data-testid="intro-manifesto">
           {c.body}
         </p>
       )}
       {Array.isArray(c.identity_words) && c.identity_words.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-7">
+        <p className="font-display text-sm md:text-base mt-8 leading-relaxed" data-testid="intro-kinetic-words">
           {c.identity_words.map((w, i) => (
-            <span
-              key={i}
-              className="font-display text-xs uppercase tracking-[0.1em] rounded-full border border-[var(--border-blue)] px-3 py-1.5"
-            >
-              {w}
+            <span key={i} className="inline-block">
+              <span className={i % 2 === 0 ? "text-[var(--surface-blue)] font-semibold" : "opacity-70"}>{w}</span>
+              {i < c.identity_words.length - 1 && <span className="opacity-30 mx-2">/</span>}
             </span>
           ))}
-        </div>
+        </p>
       )}
       {Array.isArray(c.metrics) && c.metrics.length > 0 && (
         <div className="grid grid-cols-3 gap-6 mt-10 max-w-md" data-testid="intro-metrics">

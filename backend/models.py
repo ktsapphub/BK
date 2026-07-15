@@ -179,6 +179,10 @@ class InquiryCreate(BaseModel):
     message: str
 
 
+class NewsletterSignup(BaseModel):
+    email: str
+
+
 class ReorderItem(BaseModel):
     id: str
     display_order: int

@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Mic, Award, Newspaper, Users } from "lucide-react";
+
+const CATEGORY_ICON = {
+  Feature: Newspaper,
+  Press: Newspaper,
+  Podcast: Mic,
+  Speaking: Mic,
+  Award: Award,
+  "Program Highlight": Award,
+  Mentorship: Users,
+  Community: Users,
+};
 
 export default function ImpactRoom({ section, impactItems }) {
   const c = section.content || {};
@@ -13,24 +24,34 @@ export default function ImpactRoom({ section, impactItems }) {
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="media-impact-room" sectionType={section.section_type} className="py-24 md:py-32">
       <RoomContainer>
-        <RoomEyebrow>{c.heading || "Media & Impact"}</RoomEyebrow>
-        {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-10 opacity-90">{c.intro}</p>}
-        <ul className="divide-y divide-[var(--border-blue)]" data-testid="media-impact-list">
-          {list.map((item) => (
-            <li key={item.id}>
+        <RoomEyebrow>{c.heading || "Evidence of Impact"}</RoomEyebrow>
+        {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-12 opacity-90">{c.intro}</p>}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--border-primary)] rounded-[var(--radius-md)] overflow-hidden" data-testid="media-impact-list">
+          {list.map((item) => {
+            const Icon = CATEGORY_ICON[item.category] || Newspaper;
+            return (
               <button
+                key={item.id}
                 onClick={() => setOpen(item)}
                 data-testid="media-impact-open-dialog"
-                className="focus-ring w-full flex flex-wrap items-center gap-3 py-5 text-left group"
+                className="focus-ring bg-[var(--background-primary)] p-6 text-left flex flex-col gap-3 hover:bg-[var(--background-blue-soft)] transition-colors min-h-[160px]"
               >
-                <span className="font-display text-[10px] uppercase tracking-wide rounded-full border border-[var(--border-blue)] px-2.5 py-1">{item.category}</span>
-                <span className="font-display text-base md:text-lg font-semibold group-hover:text-[var(--surface-blue)] transition-colors">{item.title}</span>
-                <span className="font-body text-sm opacity-60">{item.org}</span>
-                <span className="font-body text-xs opacity-50 ml-auto">{item.date}</span>
+                {item.image_url ? (
+                  <img src={item.image_url} alt="" className="h-10 w-10 rounded-full object-cover" loading="lazy" />
+                ) : (
+                  <span className="h-10 w-10 rounded-full bg-[var(--background-blue-soft)] text-[var(--surface-blue)] flex items-center justify-center">
+                    <Icon className="h-4.5 w-4.5" />
+                  </span>
+                )}
+                <div>
+                  <p className="font-display text-[10px] uppercase tracking-wide text-[var(--surface-blue)] mb-1">{item.category}</p>
+                  <p className="font-display text-sm md:text-base font-semibold leading-snug">{item.title}</p>
+                  <p className="font-body text-xs opacity-60 mt-1">{[item.org, item.date].filter(Boolean).join(" \u00b7 ")}</p>
+                </div>
               </button>
-            </li>
-          ))}
-        </ul>
+            );
+          })}
+        </div>
       </RoomContainer>
 
       <Dialog open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
@@ -39,7 +60,7 @@ export default function ImpactRoom({ section, impactItems }) {
             <>
               <DialogHeader>
                 <DialogTitle className="font-display text-xl">{open.title}</DialogTitle>
-                <DialogDescription className="font-body">{[open.org, open.date].filter(Boolean).join(" · ")}</DialogDescription>
+                <DialogDescription className="font-body">{[open.org, open.date].filter(Boolean).join(" \u00b7 ")}</DialogDescription>
               </DialogHeader>
               {open.image_url && <img src={open.image_url} alt={open.title} className="w-full rounded-[var(--radius-md)] aspect-video object-cover" loading="lazy" />}
               {open.description && <p className="font-body text-sm opacity-90 mt-2">{open.description}</p>}

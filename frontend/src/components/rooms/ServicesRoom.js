@@ -20,21 +20,32 @@ export default function ServicesRoom({ section, services }) {
             <p className="font-editorial italic text-xl">Consulting by request.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-[var(--border-blue)]" data-testid="services-list">
-            {list.map((svc) => (
-              <li key={svc.id} className="py-6 md:py-7 flex items-center justify-between group">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="services-list">
+            {list.map((svc, i) => {
+              const variant = i % 3;
+              const spanClass = variant === 0 ? "lg:col-span-2" : "";
+              const cardStyle =
+                variant === 0
+                  ? "bg-white/[0.07] border border-white/15"
+                  : variant === 1
+                  ? "bg-transparent border border-[var(--border-blue)]"
+                  : "bg-[var(--surface-blue)]/90 border border-transparent";
+              return (
                 <button
+                  key={svc.id}
                   onClick={() => setOpen(svc)}
                   data-testid="service-open-sheet-button"
-                  className="focus-ring text-left font-display text-lg md:text-2xl font-semibold relative inline-block"
+                  className={`focus-ring group text-left rounded-[var(--radius-md)] p-6 md:p-7 flex flex-col justify-between min-h-[180px] transition-transform hover:-translate-y-1 ${spanClass} ${cardStyle}`}
                 >
-                  {svc.title}
-                  <span className="absolute left-0 -bottom-1 h-px w-0 bg-[var(--accent-highlight)] transition-all duration-300 group-hover:w-full" />
+                  <div>
+                    <span className="font-display text-xs uppercase tracking-[0.14em] text-[var(--text-on-blue-muted)] block mb-3">{String(i + 1).padStart(2, "0")}</span>
+                    <h3 className="font-display text-lg md:text-xl font-semibold">{svc.title}</h3>
+                  </div>
+                  <p className="font-body text-sm text-[var(--text-on-blue-muted)] mt-4 line-clamp-2">{svc.description}</p>
                 </button>
-                <span className="font-body text-sm opacity-60 hidden sm:block max-w-md text-right">{svc.description}</span>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         )}
       </RoomContainer>
 

@@ -16,7 +16,7 @@ from models import (
     LoginRequest, PageCreate, SectionCreate, SectionUpdate,
     CareerEntryCreate, TestimonialCreate, ProjectCreate, ServiceCreate,
     ThoughtCreate, ImpactItemCreate, NavigationItemCreate,
-    GlobalSettingsUpdate, InquiryCreate, ReorderRequest,
+    GlobalSettingsUpdate, InquiryCreate, NewsletterSignup, ReorderRequest,
     VALID_SECTION_TYPES, VALID_STATUS,
 )
 
@@ -603,6 +603,27 @@ async def update_inquiry(iid: str, body: dict, admin=Depends(get_current_admin))
 async def delete_inquiry(iid: str, admin=Depends(get_current_admin)):
     await db.inquiries.delete_one({"id": iid})
     return {"success": True}
+
+
+# ===========================================================================
+# NEWSLETTER SIGNUP
+# ===========================================================================
+@api_router.post("/public/newsletter")
+async def newsletter_signup(body: NewsletterSignup):
+    existing = await db.newsletter_subscribers.find_one({"email": body.email})
+    if existing:
+        return {"success": True, "message": "You're already subscribed."}
+    await db.newsletter_subscribers.insert_one({
+        "id": str(uuid.uuid4()),
+        "email": body.email,
+        "created_at": now_iso(),
+    })
+    return {"success": True, "message": "Subscribed. Thank you for following along."}
+
+
+@api_router.get("/admin/newsletter-subscribers")
+async def list_newsletter_subscribers(admin=Depends(get_current_admin)):
+    return await db.newsletter_subscribers.find({}, {"_id": 0}).sort("created_at", -1).to_list(2000)
 
 
 # ===========================================================================

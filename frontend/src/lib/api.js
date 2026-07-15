@@ -29,6 +29,7 @@ export const publicApi = {
   getNavigation: () => api.get(`/public/navigation`).then((r) => r.data),
   getGlobalSettings: () => api.get(`/public/global-settings`).then((r) => r.data),
   submitInquiry: (payload) => api.post(`/public/inquiries`, payload).then((r) => r.data),
+  subscribeNewsletter: (email) => api.post(`/public/newsletter`, { email }).then((r) => r.data),
 };
 
 // ---------------------------------------------------------------------------
@@ -106,4 +107,6 @@ export const adminApi = {
   listInquiries: () => api.get(`/admin/inquiries`).then((r) => r.data),
   updateInquiry: (id, status) => api.put(`/admin/inquiries/${id}`, { status }).then((r) => r.data),
   deleteInquiry: (id) => api.delete(`/admin/inquiries/${id}`).then((r) => r.data),
+
+  listNewsletterSubscribers: () => api.get(`/admin/newsletter-subscribers`).then((r) => r.data),
 };

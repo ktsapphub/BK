@@ -27,7 +27,7 @@ export default function AdminSectionEditor() {
 
   useEffect(() => { load(); }, [id]);
 
-  if (!section) return <p className="text-sm text-muted-foreground">Loading\u2026</p>;
+  if (!section) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
   const updateField = (name, value) => setSection((s) => ({ ...s, [name]: value }));
 

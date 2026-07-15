@@ -4,9 +4,9 @@
 - Deliver a cinematic “gallery rooms” personal site for Bretton J. Key where **all** content (copy/media/order/visibility/transitions) is CMS-driven from MongoDB.
 - Provide a custom CMS on FastAPI + MongoDB that replicates Supabase-like capabilities: **JWT admin auth**, **draft/publish/archived**, **RLS-equivalent gating** (public reads published+visible only; testimonials require verified), **Object Storage media library**, and **publish-time version snapshots + rollback**.
 - Ensure public experience is editorial/cinematic (not a template), using the exact design tokens + typography system, with accessible motion and reduced-motion fallback.
-- Ensure admin can manage everything without code changes: sections/rooms, global settings, projects/services/thoughts/resume entries/testimonials, media uploads, inquiries.
+- Ensure admin can manage everything without code changes: sections/rooms, global settings, projects/services/thoughts/resume entries/testimonials, media uploads, inquiries, newsletter subscribers.
 
-**Current status:** Objectives above are achieved in V1. Remaining work is validation/spot-checks + content/asset replacement + optional polish.
+**Current status:** V1 objectives are achieved. Site + CMS are functional and rendering correctly with seeded real content. Remaining work is **final comprehensive UI verification** (admin flows + reduced-motion + mobile) and **launch content ops** (replace stock imagery, add verified testimonials).
 
 ---
 
@@ -56,18 +56,19 @@
 - Global CSS variables implemented exactly per spec; no forbidden color tints used.
 - Typography implemented:
   - **Fraunces** (editorial/pull quotes), **Urbanist** (display), **Lexend** (body).
-- design_agent guidelines produced and applied: `/app/design_guidelines.md`.
-- Stock imagery used as placeholders (user-approved), replaceable via CMS Media Library.
+- Design guidelines produced and applied: `/app/design_guidelines.md`.
+- Stock imagery used as placeholders (user-approved), replaceable via the CMS Media Library.
 
 #### Backend (complete CMS APIs) ✅
 - Expanded to full set of collections + endpoints:
-  - `users`, `pages`, `sections`, `career_entries`, `testimonials`, `projects`, `services`, `thoughts`, `impact_items`, `navigation_items`, `global_settings`, `inquiries`, `content_versions`, `media_items`.
+  - `users`, `pages`, `sections`, `career_entries`, `testimonials`, `projects`, `services`, `thoughts`, `impact_items`, `navigation_items`, `global_settings`, `inquiries`, `newsletter_subscribers`, `content_versions`, `media_items`.
 - Admin features:
   - CRUD across all collections
   - Draft/publish/archive + visibility
   - Reorder endpoint
   - Version history + rollback for sections
   - Inquiries inbox + status updates
+  - Newsletter subscriber list
   - Navigation endpoint (auto-derived; optional manual override)
   - Global settings endpoint
 - Public endpoints enforce RLS-equivalent rules:
@@ -82,12 +83,13 @@
 - Motion/transition system:
   - CMS `transition_style` mapped to Framer Motion variants.
   - Reduced-motion fallback implemented.
-  - **Lenis removed** to preserve deep links / scroll restoration / programmatic navigation reliability; native `scrollIntoView` + `scroll-behavior:smooth` used.
+  - Lenis integration retained as an API-compatible no-op (`lenisSingleton.js`), with **native smooth scrolling** for reliability.
 - Extra public pages:
   - `/projects/:slug` (ProjectDetail)
   - `/thoughts/:slug` (ArticleReader)
-- Contact flow:
-  - Real form → `POST /api/public/inquiries` → success feedback.
+- Contact + newsletter:
+  - Contact form → `POST /api/public/inquiries`
+  - Newsletter opt-in → `POST /api/public/newsletter`
 
 #### Frontend admin CMS ✅
 - `/admin/login` JWT login + protected routes.
@@ -111,22 +113,22 @@
 
 #### Seeded real content ✅
 - Resume-derived: 8 career entries with achievements.
-- Old site-derived: personal/values/founder story elements, ventures.
+- Founder story: Date Jar narrative chapters.
 - Projects:
-  - Date Jar (live)
-  - KeyTech Solutions (consulting)
+  - Date Jar (Live)
+  - KeyTech Solutions (Live)
 - Thoughts: 3 authored thought-leadership articles published.
-- Testimonials: seeded as **draft + unverified placeholders** (by design; do not render publicly until user supplies real quotes and sets verified).
+- Testimonials: seeded as **draft + unverified placeholders** (by design; will not render publicly until replaced + verified).
 - Contact: real email/phone/location + Calendly scheduling URL.
 
 ---
 
-### Phase 3 — Comprehensive testing + hardening ✅ PARTIALLY COMPLETE
+### Phase 3 — Comprehensive testing + hardening ⏳ IN PROGRESS
 
 #### Testing performed ✅
 - testing_agent_v3 executed (two iterations).
 - Backend automated coverage: **100% (43/43 tests passed)**.
-- Frontend end-to-end coverage validated:
+- Frontend end-to-end coverage previously validated:
   - room rendering and navigation
   - skip-intro and CTA scrolling
   - mobile nav drawer
@@ -135,25 +137,45 @@
   - admin login/logout/route protection
   - testimonials verified-gate behavior
 
-#### Bugs found and fixed ✅
-1. **Rooms invisible due to Framer Motion whileInView not firing** → RoomWrapper now animates on mount (`animate="show"`).
-2. **Lenis breaking programmatic scroll / nav clicks / skip intro** → Lenis removed; native smooth scrolling used.
-3. **Dialog/Sheet close buttons not closing (blocking site after modal open)** → added explicit close buttons:
-   - `service-sheet-close-button`
-   - `gallery-lightbox-close-button`
+#### Critical bugs found and fixed ✅
+1. **React rules-of-hooks compile failure** (entire app failed to compile/render):
+   - Cause: `TestimonialsRoom.js` had an early `return null` **before** a `useEffect` hook.
+   - Fix: moved the early return **after all hooks are declared**.
+2. **Unicode escape sequences rendered literally in JSX text nodes** (`\u00b7`, `\u2026`):
+   - Fix: wrapped affected text in JS string/template literals.
+   - Fixed occurrences:
+     - `ThoughtsRoom.js` featured label
+     - `AdminSectionEditor.js` loading text
+   - Audited all other `\u` occurrences in `frontend/src` and confirmed remaining usages are safe.
+3. **Content hygiene**: removed stray test data leaked from prior CRUD tests:
+   - Deleted: 2 duplicate “Test Article” thoughts, 2 “Test Service” services, 2 “Test Impact Item” impact items.
 
-All three fixes were verified by testing_agent.
+#### Additional product completion ✅
+- **ArticleReader upgraded** to match “Thoughts & Field Notes” requirements:
+  - Share block (LinkedIn, X/Twitter, Copy Link w/ clipboard API + Sonner toast feedback)
+  - Related articles section (prioritizes same-category, max 3)
+  - Scroll-to-top on slug change
 
-#### Not yet independently re-verified end-to-end in UI (lower risk; backend already verified) ⏳
-These flows are built and API-tested, but not fully click-tested in the second iteration due to time constraints:
+#### Verification performed (manual/screenshot) ✅
+- Confirmed via screenshot pass that all rooms render correctly with seeded content:
+  - Hero, Introduction, Values, Founder Story, Resume, Services, Projects, Thoughts, Impact, Personal, Gallery, Contact.
+- **TestimonialsRoom intentionally hidden** until real verified testimonials exist (RLS-equivalent gate + seeded draft/unverified placeholders).
+
+#### Not yet independently re-verified end-to-end in UI ⏳
+These flows are built and API-tested, but should be click-tested once more after the recent fixes:
 - Admin Section Editor: publish toggle, reorder persistence, version rollback UI interactions.
 - Admin Media Library: upload/copy-url/delete interactions.
 - Admin CRUD pages: reorder + persistence confirmation for all collections.
 - Admin Settings: edit + persist confirmation.
 - Reduced-motion emulation (prefers-reduced-motion) end-to-end.
+- ArticleReader share actions + related navigation.
 
 **Phase 3 exit criteria (updated):**
-- Run one more short testing pass (or manual QA checklist) to confirm the UI-level items above.
+- Run one comprehensive testing_agent pass covering:
+  - Public site: navigation, rooms, project detail, thoughts reader, contact + newsletter
+  - Admin: login, sections CRUD, publish/visibility, reorder, version rollback
+  - Media library: upload/list/copy/delete
+  - Reduced-motion + mobile responsiveness
 
 ---
 
@@ -166,21 +188,21 @@ These flows are built and API-tested, but not fully click-tested in the second i
   - lazy-loading checks, focus states, keyboard navigation, aria labels
 - SEO:
   - confirm global settings defaults applied (title/description/og)
-- Optional: refine Founder Story GSAP pin behavior if desired (ensure reduced-motion fallback remains stable).
+- Optional motion polish:
+  - refine Founder Story GSAP behavior if desired (ensure reduced-motion fallback remains stable)
+  - consider reintroducing subtle Lenis-style inertia only if it does not break deep links/testing (current native scrolling is reliable)
 
 ---
 
 ## 3. Next Actions
-1. **Quick QA/verification pass (recommended):**
-   - Admin Section Editor: publish/unpublish + version rollback
-   - Media library: upload/copy/delete
-   - Global settings: save + persist
-   - Reduced-motion emulation
-2. **Content operations for launch:**
+1. **Run testing_agent (P0)**
+   - Full E2E pass (public + admin) using the updated UI (ArticleReader share/related) and recent compile fixes.
+2. **Launch content operations (P0)**
    - Replace stock imagery with Bretton’s real photos via Admin → Media Library.
    - Replace testimonial placeholders with real quotes and set `verified=true` + `status=published`.
-3. **Optional polish:**
-   - Fine-tune room transitions and Founder Story pin effect per guidelines.
+3. **Optional polish (P1)**
+   - Fine-tune room transitions and Founder Story effect per guidelines.
+   - Add minor editorial enhancements (e.g., reading time consistency, OG meta verification).
 
 ---
 
@@ -189,8 +211,10 @@ These flows are built and API-tested, but not fully click-tested in the second i
 - POC proven: JWT auth, media upload round-trip, draft→publish→public render, testimonial verified gate, version snapshot + rollback.
 - V1 site renders **only** CMS-published content; no primary content hardcoded in React.
 - Admin can manage all key collections, reorder rooms, publish, and roll back.
-- Public experience meets motion/visual constraints, supports navigation/deep links, and has a working contact form.
+- Public experience meets motion/visual constraints, supports navigation/deep links, and has a working contact form + newsletter subscription.
+- ArticleReader includes share tools + related-articles module.
+- Content hygiene maintained (no stray test data in public collections).
 
 ⏳ **Remaining (verification/polish):**
-- UI-level spot-check of remaining admin flows + reduced-motion emulation.
+- Final comprehensive UI click-test (admin flows + media + reduced-motion + mobile) via testing_agent.
 - Replace placeholders (images/testimonials) with real assets for final launch.
