@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { RoomWrapper, RoomContainer } from "./RoomWrapper";
 import { scrollToElement } from "@/lib/lenisSingleton";
+import { openCalendlyPopup } from "@/lib/calendly";
 
-export default function HeroRoom({ section, onSkipIntro }) {
+export default function HeroRoom({ section, onSkipIntro, settings }) {
   const c = section.content || {};
   const words = Array.isArray(c.rotating_words) && c.rotating_words.length ? c.rotating_words : null;
   const [idx, setIdx] = useState(0);
@@ -80,15 +81,19 @@ export default function HeroRoom({ section, onSkipIntro }) {
               </a>
             )}
             {c.secondary_cta?.label && (
-              <a
-                href={c.secondary_cta.href || "#"}
-                target={c.secondary_cta.href?.startsWith("http") ? "_blank" : undefined}
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() =>
+                  openCalendlyPopup({
+                    baseUrl: settings?.scheduling_url || c.secondary_cta.href,
+                    utm: { utm_source: "HeroRoom", utm_medium: "cta", utm_campaign: "Homepage", utm_content: "opener" },
+                  })
+                }
                 data-testid="hero-secondary-cta-button"
                 className="focus-ring inline-flex items-center rounded-[var(--radius-sm)] bg-gradient-to-b from-slate-200 via-slate-300 to-slate-400 px-6 py-3 font-display text-sm font-semibold text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-1px_0_rgba(0,0,0,0.12),0_8px_18px_-6px_rgba(15,23,42,0.4)] hover:from-slate-100 hover:via-slate-200 hover:to-slate-300 active:shadow-[inset_0_1px_2px_rgba(0,0,0,0.25)] transition-colors"
               >
                 {c.secondary_cta.label}
-              </a>
+              </button>
             )}
           </div>
           {c.availability_badge && (

@@ -1,8 +1,10 @@
 import "@/App.css";
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
+import { loadCalendlyScript } from "@/lib/calendly";
 
 import Home from "@/pages/Home";
 import ProjectDetail from "@/pages/ProjectDetail";
@@ -26,6 +28,12 @@ import AdminInquiries from "@/pages/admin/AdminInquiries";
 import AdminSettings from "@/pages/admin/AdminSettings";
 
 function App() {
+  // Preload the Calendly widget script/stylesheet once at the app root so
+  // every "Let's Talk" / "Schedule" CTA can open the popup scheduler instantly.
+  useEffect(() => {
+    loadCalendlyScript();
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter>

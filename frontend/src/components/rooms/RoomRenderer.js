@@ -19,7 +19,7 @@ import CustomRoom from "./CustomRoom";
 export default function RoomRenderer({ section, data, onSkipIntro }) {
   switch (section.section_type) {
     case "hero":
-      return <HeroRoom section={section} onSkipIntro={onSkipIntro} />;
+      return <HeroRoom section={section} onSkipIntro={onSkipIntro} settings={data.settings} />;
     case "introduction":
       return <IntroductionRoom section={section} />;
     case "values":
@@ -31,7 +31,7 @@ export default function RoomRenderer({ section, data, onSkipIntro }) {
     case "resume":
       return <ResumeRoom section={section} careerEntries={data.careerEntries} settings={data.settings} />;
     case "services":
-      return <ServicesRoom section={section} services={data.services} />;
+      return <ServicesRoom section={section} services={data.services} settings={data.settings} />;
     case "projects":
       return <ProjectsRoom section={section} projects={data.projects} />;
     case "testimonials":

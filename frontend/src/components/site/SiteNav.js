@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { scrollToElement } from "@/lib/lenisSingleton";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
+import { openCalendlyPopup } from "@/lib/calendly";
 
 // Minimal floating site navigation.
 // - Desktop: vertical chapter-index edge rail + progress line (left), and a
@@ -88,7 +89,19 @@ export default function SiteNav({ navItems, sections, settings }) {
       list.push({ key: "connect-linkedin", label: "Connect on LinkedIn", icon: Linkedin, href: settings.social_linkedin, external: true });
     }
     if (settings?.scheduling_url) {
-      list.push({ key: "schedule-call", label: "Schedule a Conversation", icon: CalendarClock, href: settings.scheduling_url, external: true });
+      list.push({
+        key: "schedule-call",
+        label: "Schedule a Conversation",
+        icon: CalendarClock,
+        href: settings.scheduling_url,
+        onClick: (e) => {
+          e.preventDefault();
+          openCalendlyPopup({
+            baseUrl: settings.scheduling_url,
+            utm: { utm_source: "NavBar", utm_medium: "cta", utm_campaign: "Site_Wide", utm_content: "schedule_a_conversation" },
+          });
+        },
+      });
     }
     return list;
   }, [sections, settings, goTo]);
