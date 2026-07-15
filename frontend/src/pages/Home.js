@@ -64,9 +64,9 @@ export default function Home() {
 
   const handleSkipIntro = () => {
     sessionStorage.setItem("bk_skip_intro", "1");
-    const second = sections[1];
-    if (second) {
-      scrollToElement(second.id);
+    const target = sections.find((s) => s.section_type === "services") || sections[1];
+    if (target) {
+      scrollToElement(target.id);
     }
   };
 

@@ -1,14 +1,11 @@
-import { useState } from "react";
-import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
+import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { themeFor } from "@/lib/theme";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { X } from "lucide-react";
+import { Check } from "lucide-react";
 
 export default function ServicesRoom({ section, services }) {
   const c = section.content || {};
   const list = Array.isArray(services) ? services : [];
   const t = themeFor(section.theme);
-  const [open, setOpen] = useState(null);
 
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="services-room" sectionType={section.section_type} className="py-24 md:py-32">
@@ -22,69 +19,52 @@ export default function ServicesRoom({ section, services }) {
             <p className="font-editorial italic text-xl">Consulting by request.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="services-list">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6" data-testid="services-list">
             {list.map((svc, i) => {
-              const variant = i % 3;
-              const spanClass = variant === 0 ? "lg:col-span-2" : "";
-              const cardStyle = "bg-gradient-to-b from-zinc-700 via-zinc-900 to-black border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_18px_-6px_rgba(0,0,0,0.5)]";
+              const bullets = (Array.isArray(svc.capabilities) ? svc.capabilities : []).slice(0, 4);
               return (
-                <button
+                <div
                   key={svc.id}
-                  onClick={() => setOpen(svc)}
-                  data-testid="service-open-sheet-button"
-                  className={`focus-ring group text-left rounded-[var(--radius-md)] p-6 md:p-7 flex flex-col justify-between min-h-[180px] transition-transform hover:-translate-y-1 text-white ${spanClass} ${cardStyle}`}
+                  data-testid="service-card"
+                  className="rounded-[var(--radius-md)] overflow-hidden flex flex-col bg-gradient-to-b from-zinc-700 via-zinc-900 to-black border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_18px_-6px_rgba(0,0,0,0.5)] text-white"
                 >
-                  <div>
+                  {svc.image_url && (
+                    <div className="aspect-video overflow-hidden">
+                      <img src={svc.image_url} alt={svc.title} className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  )}
+                  <div className="p-6 md:p-7 flex flex-col flex-1">
                     <span className="font-display text-xs uppercase tracking-[0.14em] text-white/60 block mb-3">{String(i + 1).padStart(2, "0")}</span>
-                    <h3 className="font-display text-lg md:text-xl font-semibold text-white">{svc.title}</h3>
+                    <h3 className="font-display text-lg md:text-xl font-semibold text-white mb-3">{svc.title}</h3>
+                    {svc.description && (
+                      <p className="font-body text-sm md:text-base text-white/75 leading-relaxed mb-5">{svc.description}</p>
+                    )}
+                    {bullets.length > 0 && (
+                      <ul className="space-y-2.5 mb-6" data-testid="service-bullets">
+                        {bullets.map((cap, ci) => (
+                          <li key={ci} className="flex gap-2.5 font-body text-sm text-white/85">
+                            <Check className="h-4 w-4 text-white/50 shrink-0 mt-0.5" aria-hidden="true" />
+                            {cap}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {svc.cta_label && (
+                      <a
+                        href={`#${svc.cta_href || "contact"}`}
+                        data-testid="service-cta-link"
+                        className="focus-ring mt-auto inline-flex w-fit items-center rounded-[var(--radius-sm)] border border-white/20 px-5 py-2.5 font-display text-xs font-semibold uppercase tracking-wide text-white hover:bg-white/10 transition-colors"
+                      >
+                        {svc.cta_label}
+                      </a>
+                    )}
                   </div>
-                  <p className="font-body text-sm text-white/70 mt-4 line-clamp-2">{svc.description}</p>
-                </button>
+                </div>
               );
             })}
           </div>
         )}
       </RoomContainer>
-
-      <Sheet open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
-        <SheetContent side="right" className="bg-[var(--background-primary)] text-[var(--text-primary)] w-full sm:max-w-lg overflow-y-auto">
-          <button
-            type="button"
-            onClick={() => setOpen(null)}
-            aria-label="Close"
-            data-testid="service-sheet-close-button"
-            className="focus-ring absolute right-4 top-4 z-50 rounded-full p-1.5 bg-[var(--background-secondary)] text-[var(--text-primary)] hover:bg-[var(--background-blue-soft)] transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          {open && (
-            <>
-              <SheetHeader>
-                <SheetTitle className="font-display text-2xl">{open.title}</SheetTitle>
-                <SheetDescription className="font-body">{open.description}</SheetDescription>
-              </SheetHeader>
-              {open.image_url && (
-                <img src={open.image_url} alt={open.title} className="w-full rounded-[var(--radius-md)] mt-4 aspect-video object-cover" loading="lazy" />
-              )}
-              {Array.isArray(open.capabilities) && open.capabilities.length > 0 && (
-                <div className="mt-6">
-                  <p className="font-display text-xs uppercase tracking-[0.14em] text-[var(--text-muted)] mb-3">Capabilities</p>
-                  <ul className="space-y-2">
-                    {open.capabilities.map((cap, i) => (
-                      <li key={i} className="font-body text-sm flex gap-2"><span className="text-[var(--surface-blue)]">—</span>{cap}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {open.cta_label && (
-                <a href={`#${open.cta_href || "contact"}`} className="focus-ring inline-flex mt-8 items-center rounded-[var(--radius-sm)] bg-[var(--surface-blue)] px-5 py-2.5 font-display text-sm font-semibold text-white hover:bg-[var(--accent-highlight)]">
-                  {open.cta_label}
-                </a>
-              )}
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
     </RoomWrapper>
   );
 }

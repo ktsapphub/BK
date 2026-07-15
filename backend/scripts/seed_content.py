@@ -282,17 +282,46 @@ def main():
         "intro": "Through KeyTech Solutions, I bring the same delivery discipline I use on mission-critical programs to organizations of any size.",
     })
     services_data = [
-        dict(title="Agile Delivery Leadership", description="Program and project rescue, scope/schedule/risk management, and stakeholder communication systems that keep delivery on track.",
-             image_url=IMG_SERVICES, capabilities=["Program & project rescue", "Scope/schedule/risk management", "Stakeholder communication systems"],
+        dict(title="Agile Delivery Leadership",
+             description="Is your program stalled, over budget, or losing the confidence of stakeholders? Delivery teams often lose momentum when scope, schedule, and risk aren't managed with discipline — and by the time it's visible, trust has already eroded. I step into stuck or at-risk programs and rebuild the delivery engine so leadership can see real progress again.",
+             image_url="https://images.unsplash.com/photo-1568992687947-868a62a9f521?crop=entropy&cs=srgb&fm=jpg&q=85",
+             capabilities=[
+                 "A clear-eyed audit of what is actually blocking delivery",
+                 "A realistic, re-baselined schedule and risk register",
+                 "Stakeholder communication rhythms that rebuild trust",
+                 "Hands-on coaching for your delivery team through recovery",
+             ],
              cta_label="Discuss a Delivery Challenge", cta_href="contact", is_published=True, display_order=1),
-        dict(title="Product Ownership & Strategy", description="Roadmapping, backlog and release planning, and cross-functional alignment for teams shipping complex products.",
-             capabilities=["Roadmapping", "Backlog & release planning", "Cross-functional alignment"],
+        dict(title="Product Ownership & Strategy",
+             description="Struggling to turn a big product vision into a backlog your team can actually ship? Too many teams stall between strategy and execution — priorities shift weekly, releases slip, and cross-functional teams pull in different directions. I bring structure that turns ambiguity into a roadmap people can rally around.",
+             image_url="https://images.unsplash.com/photo-1532619675605-1ede6c2ed2b0?crop=entropy&cs=srgb&fm=jpg&q=85",
+             capabilities=[
+                 "A prioritized roadmap tied to real business outcomes",
+                 "A groomed, release-ready backlog",
+                 "Cross-functional alignment across eng, design, and stakeholders",
+                 "A repeatable release planning cadence",
+             ],
              cta_label="Talk Product Strategy", cta_href="contact", is_published=True, display_order=2),
-        dict(title="Mentorship & Public Speaking", description="Career mentorship for veterans and early-career project leaders, plus conference and panel speaking engagements.",
-             capabilities=["Career mentorship for veterans & early-career PMs", "Conference & panel speaking", "Workshop facilitation"],
+        dict(title="Mentorship & Public Speaking",
+             description="Are you a veteran or early-career leader trying to find your footing in project or product management? Breaking into delivery leadership can feel like an uphill climb without someone who has walked the path. I offer direct mentorship and speak at conferences and panels to help others translate discipline and experience into career growth.",
+             image_url="https://images.pexels.com/photos/8761514/pexels-photo-8761514.jpeg",
+             capabilities=[
+                 "One-on-one career mentorship sessions",
+                 "Practical guidance translating military/ops experience into PM careers",
+                 "Conference, panel, and workshop speaking engagements",
+                 "An honest sounding board for career decisions",
+             ],
              cta_label="Book a Session", cta_href="contact", is_published=True, display_order=3),
-        dict(title="Tech Solutions, Built Around You", description="I simplify the process of creating technology solutions by helping you clarify your vision, explore proven platforms, and map out a custom solution built around your goals.",
-             capabilities=[], cta_label="Map Out a Solution", cta_href="contact", is_published=True, display_order=4),
+        dict(title="Tech Solutions, Built Around You",
+             description="I simplify the process of creating technology solutions by helping you clarify your vision, explore proven platforms, and map out a custom solution built around your goals.",
+             image_url="https://images.unsplash.com/photo-1498050108023-c5249f4df085?crop=entropy&cs=srgb&fm=jpg&q=85",
+             capabilities=[
+                 "A clarified vision and requirements you can act on",
+                 "An evaluation of proven platforms and tools that fit your goals",
+                 "A custom solution roadmap built around your budget and timeline",
+                 "Ongoing guidance as your solution takes shape",
+             ],
+             cta_label="Map Out a Solution", cta_href="contact", is_published=True, display_order=4),
     ]
     for s in services_data:
         create_service(**s)
@@ -369,8 +398,8 @@ def main():
 
     # ------------------------------------------------------------- GALLERY
     create_section(page_id, "gallery", "Gallery", "Field Notes", 12, "deep_royal_blue", "fade", {
-        "title": "Field Notes",
-        "description": "Moments from two decades of service, leadership, and building.",
+        "title": "Through My Eyes",
+        "description": "Moments that shape and mold me.",
         "images": [
             {"url": IMG_GALLERY_CORRIDOR, "caption": "Every program is a room to walk through, one milestone at a time.", "alt": "Modern blue-lit corridor"},
             {"url": IMG_GALLERY_VETERAN, "caption": "Service before self — from the Guard to the Pentagon.", "alt": "American flag on military uniform"},

@@ -27,7 +27,7 @@ function SolutionSlide({ project, distance }) {
     <div
       data-testid="solutions-slide"
       data-active={distance === 0 ? "true" : "false"}
-      className="mx-2 md:mx-4 rounded-[var(--radius-md)] overflow-hidden border border-white/10 bg-gradient-to-b from-zinc-700 via-zinc-900 to-black shadow-[var(--shadow-room)] transition-transform duration-500 ease-out will-change-transform"
+      className="mx-2 md:mx-4 rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-blue)] bg-[var(--background-primary)] shadow-[var(--shadow-room)] transition-transform duration-500 ease-out will-change-transform"
       style={{
         transform: `scale(${1 - magnitude * 0.14}) rotateY(${clampedDistance * -22}deg) translateZ(${-magnitude * 70}px)`,
         opacity: 1 - magnitude * 0.35,
@@ -58,15 +58,15 @@ function SolutionSlide({ project, distance }) {
           </div>
         )}
       </div>
-      <div className="p-5 md:p-6 text-white">
+      <div className="p-5 md:p-6">
         <div className="flex items-center gap-2.5 mb-2.5 flex-wrap">
           <Badge data-testid="solutions-slide-status" className={`border font-display text-[10px] uppercase tracking-wide ${STATUS_STYLES[project.status] || STATUS_STYLES.Concept}`}>
             {project.status}
           </Badge>
-          {project.category && <span className="font-display text-[11px] text-white/50">{project.category}</span>}
+          {project.category && <span className="font-display text-[11px] text-[var(--text-muted)]">{project.category}</span>}
         </div>
-        <h3 className="font-display font-bold text-xl md:text-2xl mb-2 text-white">{project.title}</h3>
-        {project.summary && <p className="font-body text-sm md:text-base text-white/80 leading-relaxed">{project.summary}</p>}
+        <h3 className="font-display font-bold text-xl md:text-2xl mb-2 text-[var(--text-primary)]">{project.title}</h3>
+        {project.summary && <p className="font-body text-sm md:text-base text-[var(--text-secondary)] leading-relaxed">{project.summary}</p>}
       </div>
     </div>
   );

@@ -1,14 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { themeFor } from "@/lib/theme";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
+
+const AUTOPLAY_INTERVAL_MS = 3000;
 
 export default function GalleryRoom({ section }) {
   const c = section.content || {};
   const images = Array.isArray(c.images) ? c.images : [];
   const t = themeFor(section.theme);
+  const reduced = useReducedMotionPref();
   const [lightboxIdx, setLightboxIdx] = useState(null);
+  const [api, setApi] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (!api) return;
+    const onSelect = () => setSelectedIndex(api.selectedScrollSnap());
+    onSelect();
+    api.on("select", onSelect);
+    api.on("reInit", onSelect);
+    return () => api.off("select", onSelect);
+  }, [api]);
+
+  useEffect(() => {
+    if (!api || reduced || paused || lightboxIdx !== null || images.length <= 1) return;
+    const id = setInterval(() => {
+      if (api.canScrollNext()) api.scrollNext();
+      else api.scrollTo(0);
+    }, AUTOPLAY_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [api, reduced, paused, lightboxIdx, images.length]);
 
   if (images.length === 0) return null;
 
@@ -18,23 +44,60 @@ export default function GalleryRoom({ section }) {
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="gallery-room" sectionType={section.section_type} className="py-24 md:py-32">
       <RoomContainer>
-        <RoomEyebrow dark={t.isDark}>{c.title || "Gallery"}</RoomEyebrow>
+        <RoomEyebrow dark={t.isDark}>{c.title || "Through My Eyes"}</RoomEyebrow>
         {c.description && <p className="font-body text-base md:text-lg max-w-[62ch] mb-10 opacity-90">{c.description}</p>}
-        <div data-testid="gallery-strip" className="flex gap-4 overflow-x-auto custom-scrollbar pb-3 -mx-1 px-1">
-          {images.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => setLightboxIdx(i)}
-              className="focus-ring shrink-0 w-64 md:w-80 aspect-[4/3] rounded-[var(--radius-md)] overflow-hidden relative group"
-            >
-              <img src={img.url} alt={img.alt || ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-              {img.caption && (
-                <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent text-white text-xs font-body p-3 text-left">
-                  {img.caption}
-                </span>
-              )}
-            </button>
-          ))}
+
+        <div
+          className="relative"
+          data-testid="gallery-carousel"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocus={() => setPaused(true)}
+          onBlur={() => setPaused(false)}
+        >
+          <Carousel setApi={setApi} opts={{ loop: images.length > 1, align: "start" }} className="w-full">
+            <CarouselContent className="-ml-4">
+              {images.map((img, i) => (
+                <CarouselItem key={i} className="pl-4 basis-[78%] sm:basis-[52%] md:basis-[36%] lg:basis-[30%]">
+                  <button
+                    onClick={() => setLightboxIdx(i)}
+                    data-testid="gallery-image-button"
+                    className="focus-ring w-full aspect-[4/3] rounded-[var(--radius-md)] overflow-hidden relative group"
+                  >
+                    <img src={img.url} alt={img.alt || ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                    {img.caption && (
+                      <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent text-white text-xs font-body p-3 text-left">
+                        {img.caption}
+                      </span>
+                    )}
+                  </button>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => api?.scrollPrev()}
+                aria-label="Previous image"
+                data-testid="gallery-carousel-prev"
+                className="focus-ring absolute left-1 md:-left-3 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-[var(--background-primary)]/90 border border-[var(--border-blue)] flex items-center justify-center hover:bg-[var(--background-blue-soft)] transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => api?.scrollNext()}
+                aria-label="Next image"
+                data-testid="gallery-carousel-next"
+                className="focus-ring absolute right-1 md:-right-3 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-[var(--background-primary)]/90 border border-[var(--border-blue)] flex items-center justify-center hover:bg-[var(--background-blue-soft)] transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       </RoomContainer>
 
