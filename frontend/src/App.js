@@ -7,6 +7,8 @@ import ProtectedRoute from "@/components/admin/ProtectedRoute";
 import Home from "@/pages/Home";
 import ProjectDetail from "@/pages/ProjectDetail";
 import ArticleReader from "@/pages/ArticleReader";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import FloatingConnectButton from "@/components/connect/FloatingConnectButton";
 
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminLayout from "@/pages/admin/AdminLayout";
@@ -28,10 +30,12 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Toaster position="top-center" richColors />
+        <FloatingConnectButton />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/projects/:slug" element={<ProjectDetail />} />
           <Route path="/thoughts/:slug" element={<ArticleReader />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route

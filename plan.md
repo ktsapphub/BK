@@ -7,13 +7,20 @@
 - Ensure admin can manage everything without code changes: sections/rooms, global settings, projects/services/thoughts/resume entries/testimonials, media uploads, inquiries, newsletter subscribers.
 - Provide a **minimal floating navigation system** that is fully CMS-derived (published + visible + in-nav), supports deep links and keyboard navigation, and adapts automatically to room theme.
 - Provide a **thought-leadership “Thoughts” index** that is immersive (expandable per-article), supports image/video media, and paginates beyond 5.
+- Provide a **persistent “Let’s Connect” + unified Contact System**:
+  - A floating connect button across public routes.
+  - A responsive, accessible dialog (drawer/modal/bottom sheet/fullscreen) with discard-warning.
+  - A shared form component used both in the dialog and the Contact room.
+  - Strict consent collection + server-side re-validation + consent recordkeeping + spam protection.
+  - A real Privacy Policy page linked near consent.
 
-**Current status:** ✅ V1 objectives achieved **and fully end-to-end verified**.
+**Current status:** ✅ V1 objectives achieved **and end-to-end verified**.
 - Public site, admin CMS, and all APIs are functioning with seeded real content.
 - New features completed and verified:
   - Minimal floating SiteNav (desktop rail + progress line + mobile drawer + persistent quick actions)
   - ThoughtsRoom accordion (expandable articles) + image/video support + pagination logic
-- Comprehensive testing completed with a 100% pass rate (backend + public + admin) and zero open issues.
+  - Persistent “Let’s Connect” system (floating button + responsive dialog + shared ConnectForm + privacy policy + consent recordkeeping)
+- Comprehensive testing previously completed with a 100% pass rate (backend + public + admin) and zero open issues.
 - Remaining work is **launch content operations** (replace stock imagery + add verified testimonials) and optional Phase 4 polish.
 
 ---
@@ -131,7 +138,7 @@
 
 ---
 
-### Phase 3 — Testing + hardening + navigation/thoughts feature completion ✅ COMPLETE
+### Phase 3 — Testing + hardening + navigation/thoughts/connect feature completion ✅ COMPLETE
 
 #### Critical regressions prevented / fixes verified ✅
 - Fixed and verified a **React rules-of-hooks** compile regression (`TestimonialsRoom.js` early return before a hook) that previously broke the entire frontend.
@@ -144,7 +151,7 @@
   - Related articles section
   - Scroll-to-top on slug change
 
-#### NEW: Minimal floating SiteNav ✅
+#### Minimal floating SiteNav ✅
 Implemented and verified a navigation system that is entirely CMS-derived:
 - **Desktop:** vertical chapter index edge rail (left) + **progress line** filling 0–100% based on scroll.
 - **Active section indicator** uses multiple signals beyond color:
@@ -162,10 +169,10 @@ Implemented and verified a navigation system that is entirely CMS-derived:
 - **Mobile:** accessible drawer (Sheet) with visible close control, large tap targets, logical focus, and Escape-to-close.
 
 Key implementation notes:
-- `RoomWrapper.js` now emits `data-theme` and `data-theme-dark` attributes.
+- `RoomWrapper.js` emits `data-theme` and `data-theme-dark` attributes.
 - `Home.js` passes `sections` + `settings` into SiteNav, and supports initial hash scroll.
 
-#### NEW: ThoughtsRoom immersive accordion + media + pagination ✅
+#### ThoughtsRoom immersive accordion + media + pagination ✅
 - Featured article stays as a showcase card.
 - Remaining articles render as an **Accordion**, expanding inline per article.
 - Expansion supports:
@@ -178,20 +185,78 @@ Backend/schema updates to support media:
 - Backend `ThoughtCreate` model: added optional `video_url`.
 - Admin thought CRUD schema (`collectionSchemas.js`) updated to allow editing `video_url`.
 
-#### Testing performed ✅
-- `testing_agent_v3` executed a comprehensive E2E pass for the new features (see `/app/test_reports/iteration_3.json`).
-- **Backend:** 100% pass rate (43/43 endpoint tests).
-- **Frontend:** 100% pass rate validating:
-  - SiteNav rail + progress line + active state signals
-  - theme auto-adaptation
-  - keyboard navigation
-  - deep-link hash navigation
-  - persistent actions (conditional rendering)
-  - mobile drawer accessibility
-  - ThoughtsRoom accordion + video embed + pagination
-  - full regression of all rooms + ArticleReader
+#### NEW: Persistent “Let’s Connect” + unified Contact System ✅
+Implemented a shared contact/inquiry experience with strict consent and recordkeeping.
 
-**Phase 3 exit criteria:** ✅ Met (comprehensive automated + UI verification complete with zero issues).
+**Backend updates (models.py, server.py) ✅**
+- `InquiryCreate` fully rewritten to support:
+  - Core fields: name, email, phone, reason, message
+  - Conditional fields: project_type/stage, pick_brain_topic, speaking_* fields, use_app_project_id, partnership_type
+  - Consent fields: contact_consent + text + version, marketing_consent + text
+  - Source tracking: source_page, source_section, source_channel, related_project_id, submission_id
+  - Spam field: `hp` honeypot
+- `GlobalSettingsUpdate` extended with:
+  - connect dialog heading/copy
+  - contact consent text + supporting text + version
+  - marketing consent text
+  - newsletter_enabled
+  - privacy_policy_url
+- Startup backfill: new global settings keys are added without overwriting existing values.
+- `POST /api/public/inquiries` rewritten:
+  - Honeypot: silent fake-success when `hp` filled (not persisted)
+  - Rate limiting: in-memory IP limiter (5 requests / 15 minutes → 429)
+  - Consent re-validation server-side: rejects without consent with **exact required error**
+  - Sanitization: strips control characters; caps message at 1500
+  - Dedupe guard: identical email+message within 2 minutes returns prior id (no duplicate row)
+  - Consent recordkeeping persisted: contact_consent_at, marketing_consent_at, and version defaulting to `contact-consent-v1`
+
+**Frontend implementation ✅**
+- Shared single-source config: `/app/frontend/src/lib/connectOptions.js` (exact reason labels + conditional option lists + consent text defaults + contextual success next steps).
+- `ConnectForm` component (shared): `/app/frontend/src/components/connect/ConnectForm.js`
+  - Exact field order per spec, conditional fields per reason
+  - Message length counter + max 1500
+  - Preferred contact method hides phone/text options unless phone present
+  - Required consent checkbox (unchecked by default) with programmatic error association + screen-reader alert
+  - Optional marketing checkbox only if newsletter enabled
+  - Submit disabled until required fields valid + consent checked
+  - Success state copy per spec + contextual next steps by reason
+  - Failure state preserves data and shows generic error banner
+  - `idPrefix` support to avoid duplicate DOM ids when embedded twice on page
+- Responsive dialog shell: `/app/frontend/src/components/connect/ConnectDialog.js`
+  - Variants: fullscreen (<400px), bottom sheet (<768px), modal (<1536px), drawer (>=1536px)
+  - Focus trap + Escape-to-close + background scroll lock via Radix Dialog
+  - Discard-warning confirmation via AlertDialog when dirty
+  - Returns focus to trigger on close
+- Persistent button: `/app/frontend/src/components/connect/FloatingConnectButton.js`
+  - Visible across public routes; hidden on `/admin/*` and while dialog open
+  - Safe-area aware offsets; 44px+ target; no pulsing/bouncing
+  - Auto theme contrast by sampling nearest `[data-theme-dark]` under button via `elementFromPoint`
+  - Project-page prefill support: detects `/projects/:slug` and passes project id into dialog for "Use your app(s)"
+- Contact room refactor: `ContactRoom.js` now embeds the same ConnectForm (no duplicated inquiry table or logic).
+- Privacy policy: new page `/privacy` (`PrivacyPolicy.js`), linked near consent.
+- Admin settings: `AdminSettings.js` extended with a “Let’s Connect & Privacy” section (editable dialog + consent copy, newsletter toggle, privacy URL) and guidance to bump consent version when wording changes.
+- App integration: `App.js` mounts `FloatingConnectButton` globally for public routes and adds `/privacy` route.
+
+**Manual verification performed ✅**
+- Button visibility + theme adaptation + admin-route hiding verified.
+- Inquiry submission confirmed end-to-end: created inquiry doc includes consent text/version/timestamps + source tracking.
+- Honeypot verified (fake success, not persisted).
+- Rate limiting verified (429 after 5 requests/15 minutes).
+- Test inquiries removed after verification; backend restarted to clear in-memory limiter state.
+
+**Known simplification (documented) ✅**
+- Reason/type/stage option lists are constants matching the spec verbatim (meets “must appear exactly unless changed in CMS” default). CMS-array editing can be added later if requested.
+- No CAPTCHA/Turnstile: honeypot + rate limiting implemented; CAPTCHA can be added if spam is observed.
+
+#### Testing performed ✅
+- Prior testing iterations achieved 100% pass rate.
+- **New recommended test run:** run `testing_agent_v3` specifically for:
+  - Mobile dialog variants (bottom sheet / fullscreen)
+  - Escape-to-close behavior + discard-warning confirmation
+  - Focus return to the floating button after close
+  - Regression of public pages + admin CMS
+
+**Phase 3 exit criteria:** ✅ Met for implemented functionality; additional automated verification recommended for mobile dialog variants.
 
 ---
 
@@ -208,6 +273,7 @@ Backend/schema updates to support media:
   - ensure photography masking remains subtle and consistent
 - Performance/accessibility:
   - lazy-loading checks, focus states, keyboard navigation, aria labels
+  - ensure Connect dialog variants feel consistent across breakpoints
 - SEO:
   - confirm global settings defaults applied (title/description/og)
 - Optional motion polish:
@@ -217,13 +283,17 @@ Backend/schema updates to support media:
 ---
 
 ## 3. Next Actions
-1. **Launch content operations (P0, non-dev)**
+1. **Run a focused E2E pass for the new Connect system (P0, recommended)**
+   - Validate mobile dialog variants (sheet/fullscreen), Escape close, focus return, discard-warning flow.
+   - Validate that both ContactRoom form and Floating dialog submit identical payloads and store identical consent recordkeeping.
+2. **Launch content operations (P0, non-dev)**
    - Upload real imagery via Admin → Media Library and swap image URLs in sections/projects.
    - Add real testimonials; mark them `verified=true` and `status=published`.
    - Upload résumé PDF and set `resume_pdf_url` in Global Settings to enable the nav quick action.
-2. **Optional polish (P1, dev or design)**
+3. **Optional polish (P1)**
    - Minor typography/spacing refinements and motion tuning per guidelines.
    - Final SEO/OG review in Global Settings.
+   - If spam observed, add Turnstile/CAPTCHA behind a feature flag.
 
 ---
 
@@ -232,12 +302,18 @@ Backend/schema updates to support media:
 - POC proven: JWT auth, media upload round-trip, draft→publish→public render, testimonial verified gate, version snapshot + rollback.
 - V1 site renders **only** CMS-published content; no primary content hardcoded in React.
 - Admin can manage all key collections, reorder rooms, publish, and roll back.
-- Public experience meets motion/visual constraints, supports navigation/deep links, and has a working contact form + newsletter subscription.
+- Public experience meets motion/visual constraints, supports navigation/deep links.
 - **Minimal floating navigation** is CMS-derived, supports keyboard + anchors, shows active section with multi-signal indicators, adapts light/dark automatically, and collapses to an accessible mobile drawer.
 - **ThoughtsRoom** provides expandable per-article previews, supports image/video URLs, and paginates beyond 5.
 - ArticleReader includes share tools + related-articles module.
+- **Persistent “Let’s Connect” system**:
+  - Floating connect button persists across public routes and is hidden on admin/auth routes.
+  - Responsive dialog variants implemented with focus trapping, Escape close, discard-warning, and focus return.
+  - Shared ConnectForm used by both floating dialog and ContactRoom; no duplicated inquiry storage.
+  - Consent is required and re-validated server-side; consent wording/version/timestamps are recorded per submission.
+  - Spam protection via honeypot + rate limiting + dedupe guard.
+  - Privacy Policy page exists and is linked near consent.
 - Content hygiene maintained (no stray test data in public collections).
-- Comprehensive E2E pass completed with **100% success** and **zero open issues**.
 
 ⏳ **Remaining (optional / launch ops):**
 - Replace placeholder imagery with real assets.

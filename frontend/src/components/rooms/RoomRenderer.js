@@ -42,7 +42,7 @@ export default function RoomRenderer({ section, data, onSkipIntro }) {
     case "gallery":
       return <GalleryRoom section={section} />;
     case "contact":
-      return <ContactRoom section={section} settings={data.settings} />;
+      return <ContactRoom section={section} settings={data.settings} projects={data.projects} />;
     case "thoughts":
       return <ThoughtsRoom section={section} thoughts={data.thoughts} />;
     default:

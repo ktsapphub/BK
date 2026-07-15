@@ -1,9 +1,12 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Request
 from fastapi.responses import Response
 from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
 import uuid
+import time
+import re
+from datetime import datetime, timezone
 from typing import Optional, List
 
 from database import db, client, clean_doc, clean_docs
@@ -77,6 +80,23 @@ async def startup():
             "is_published": True,
             "created_at": now_iso(),
         })
+
+    # Backfill any newly-introduced global settings keys without overwriting existing values.
+    connect_defaults = {
+        "connect_dialog_heading": "Let's Connect.",
+        "connect_dialog_copy": "Tell me what brought you here, and I'll follow up to learn more.",
+        "contact_consent_text": "I agree that Bretton Key may contact me by email, phone call, or text message regarding this inquiry. Message and data rates may apply.",
+        "contact_consent_supporting_text": "Consent applies only to communications related to this request unless you separately choose to receive marketing updates. You may ask not to be contacted by phone or text at any time.",
+        "contact_consent_version": "contact-consent-v1",
+        "marketing_consent_text": "Yes, I would also like to receive occasional updates from Bretton about projects, applications, services, and events.",
+        "newsletter_enabled": True,
+        "privacy_policy_url": "/privacy",
+    }
+    current_settings = await db.global_settings.find_one({"key": "site"}) or {}
+    missing_fields = {k: v for k, v in connect_defaults.items() if k not in current_settings}
+    if missing_fields:
+        missing_fields["updated_at"] = now_iso()
+        await db.global_settings.update_one({"key": "site"}, {"$set": missing_fields}, upsert=True)
 
 
 @app.on_event("shutdown")
@@ -573,14 +593,82 @@ async def get_public_global_settings():
 # ===========================================================================
 # INQUIRIES (public submit + admin manage)
 # ===========================================================================
+CONTACT_CONSENT_VERSION_DEFAULT = "contact-consent-v1"
+_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
+_RATE_LIMIT_MAX_REQUESTS = 5
+_rate_limit_store: dict = {}
+
+
+def _check_rate_limit(ip: str) -> bool:
+    now = time.time()
+    timestamps = [t for t in _rate_limit_store.get(ip, []) if now - t < _RATE_LIMIT_WINDOW_SECONDS]
+    if len(timestamps) >= _RATE_LIMIT_MAX_REQUESTS:
+        _rate_limit_store[ip] = timestamps
+        return False
+    timestamps.append(now)
+    _rate_limit_store[ip] = timestamps
+    return True
+
+
+def _sanitize_text(value: Optional[str], max_len: int = 2000) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", str(value)).strip()
+    return cleaned[:max_len] if cleaned else None
+
+
 @api_router.post("/public/inquiries")
-async def submit_inquiry(body: InquiryCreate):
+async def submit_inquiry(body: InquiryCreate, request: Request):
+    # Honeypot: bots that fill this hidden field get a generic success
+    # response but nothing is persisted.
+    if body.hp:
+        return {"success": True, "message": "Thank you \u2014 your message has been received.", "id": str(uuid.uuid4())}
+
+    client_ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+
+    # Server-side consent re-validation (never trust the client alone).
+    if not body.contact_consent or not (body.contact_consent_text or "").strip():
+        raise HTTPException(status_code=400, detail="Please provide consent so Bretton can respond to your inquiry.")
+
+    name = _sanitize_text(body.name, 200)
+    email = _sanitize_text(body.email, 200)
+    message = _sanitize_text(body.message, 1500)
+    reason = _sanitize_text(body.reason, 100)
+    if not name or not email or not message or not reason:
+        raise HTTPException(status_code=400, detail="Name, email, reason, and message are required.")
+
+    # Dedupe-guard: identical email+message resubmitted within 2 minutes
+    # (double-click / retry) returns the original success without duplicating.
+    recent = await db.inquiries.find_one({"email": email, "message": message}, sort=[("created_at", -1)])
+    if recent and recent.get("created_at"):
+        try:
+            recent_dt = datetime.fromisoformat(recent["created_at"])
+            if (datetime.now(timezone.utc) - recent_dt).total_seconds() < 120:
+                return {"success": True, "message": "Thank you \u2014 your message has been received.", "id": recent["id"]}
+        except Exception:
+            pass
+
     doc = body.model_dump()
-    doc["id"] = str(uuid.uuid4())
-    doc["status"] = "new"
-    doc["created_at"] = now_iso()
+    doc.pop("hp", None)
+    doc.update({
+        "name": name,
+        "email": email,
+        "message": message,
+        "reason": reason,
+        "phone": _sanitize_text(body.phone, 40),
+        "pick_brain_topic": _sanitize_text(body.pick_brain_topic, 1500),
+        "speaking_topic": _sanitize_text(body.speaking_topic, 1500),
+        "id": str(uuid.uuid4()),
+        "status": "new",
+        "contact_consent_version": body.contact_consent_version or CONTACT_CONSENT_VERSION_DEFAULT,
+        "contact_consent_at": now_iso(),
+        "marketing_consent_at": now_iso() if body.marketing_consent else None,
+        "created_at": now_iso(),
+    })
     await db.inquiries.insert_one(doc)
-    return {"success": True, "message": "Thank you \u2014 your message has been received. Bretton will follow up soon."}
+    return {"success": True, "message": "Thank you \u2014 your message has been received.", "id": doc["id"]}
 
 
 @api_router.get("/admin/inquiries")

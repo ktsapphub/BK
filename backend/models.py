@@ -170,14 +170,46 @@ class GlobalSettingsUpdate(BaseModel):
     seo_default_description: Optional[str] = None
     seo_og_image: Optional[str] = None
     resume_pdf_url: Optional[str] = None
+    connect_dialog_heading: Optional[str] = None
+    connect_dialog_copy: Optional[str] = None
+    contact_consent_text: Optional[str] = None
+    contact_consent_supporting_text: Optional[str] = None
+    contact_consent_version: Optional[str] = None
+    marketing_consent_text: Optional[str] = None
+    newsletter_enabled: Optional[bool] = None
+    privacy_policy_url: Optional[str] = None
 
 
 class InquiryCreate(BaseModel):
     name: str
     email: str
     phone: Optional[str] = None
-    subject: Optional[str] = None
+    reason: str
+    project_type: Optional[str] = None
+    project_stage: Optional[str] = None
+    pick_brain_topic: Optional[str] = None
+    speaking_org: Optional[str] = None
+    speaking_event: Optional[str] = None
+    speaking_date: Optional[str] = None
+    speaking_location: Optional[str] = None
+    speaking_mode: Optional[str] = None
+    speaking_audience_size: Optional[str] = None
+    speaking_topic: Optional[str] = None
+    use_app_project_id: Optional[str] = None
+    partnership_type: Optional[str] = None
     message: str
+    preferred_contact_method: Optional[str] = None
+    contact_consent: bool = False
+    contact_consent_text: Optional[str] = None
+    contact_consent_version: Optional[str] = None
+    marketing_consent: bool = False
+    marketing_consent_text: Optional[str] = None
+    source_page: Optional[str] = None
+    source_section: Optional[str] = None
+    source_channel: Optional[str] = None
+    related_project_id: Optional[str] = None
+    submission_id: Optional[str] = None
+    hp: Optional[str] = None
 
 
 class NewsletterSignup(BaseModel):

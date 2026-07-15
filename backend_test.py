@@ -475,17 +475,34 @@ class BackendTester:
         print("11. GLOBAL SETTINGS TESTS")
         print("=" * 70)
         
-        self.test(
+        success, settings_resp = self.test(
             "Get global settings (admin)",
             "GET", "/admin/global-settings", 200,
             check_response=lambda r: isinstance(r, dict)
         )
         
-        self.test(
+        success, public_settings = self.test(
             "Get global settings (public)",
             "GET", "/public/global-settings", 200,
             check_response=lambda r: isinstance(r, dict)
         )
+        
+        # Check for new "Let's Connect" fields
+        if success and public_settings:
+            required_connect_fields = [
+                "connect_dialog_heading",
+                "connect_dialog_copy",
+                "contact_consent_text",
+                "contact_consent_version",
+                "marketing_consent_text",
+                "newsletter_enabled",
+                "privacy_policy_url"
+            ]
+            missing_fields = [f for f in required_connect_fields if f not in public_settings]
+            if missing_fields:
+                self.log(f"⚠️  Missing connect fields in global settings: {missing_fields}")
+            else:
+                self.log(f"✅ All connect-related fields present in global settings")
         
         self.test(
             "Update global settings",
@@ -494,45 +511,175 @@ class BackendTester:
             check_response=lambda r: r.get("site_tagline") == "Test Tagline Updated"
         )
         
-        # 12. INQUIRIES TESTS
+        # 12. INQUIRIES / "LET'S CONNECT" TESTS
         print("\n" + "=" * 70)
-        print("12. INQUIRIES/CONTACT FORM TESTS")
+        print("12. INQUIRIES / 'LET'S CONNECT' CONTACT SYSTEM TESTS")
         print("=" * 70)
         
-        test_inquiry_data = {
-            "name": "Test User",
-            "email": "test@example.com",
-            "phone": "555-1234",
-            "subject": "Test Subject",
-            "message": "This is a test inquiry message"
-        }
+        # Test 1: Submit without consent (should fail with 400)
+        self.test(
+            "Submit inquiry without consent (should fail)",
+            "POST", "/public/inquiries", 400,
+            data={
+                "name": "Test User",
+                "email": "test@example.com",
+                "reason": "I have a project for you",
+                "message": "Test message",
+                "contact_consent": False,
+                "contact_consent_text": "",
+                "contact_consent_version": "contact-consent-v1"
+            }
+        )
         
-        success, inquiry_resp = self.test(
-            "Submit contact form inquiry (public)",
+        # Test 2: Honeypot - bot fills hidden field (should return fake success, not persist)
+        honeypot_email = f"honeypot-{datetime.now().strftime('%H%M%S')}@example.com"
+        success, honeypot_resp = self.test(
+            "Submit inquiry with honeypot filled (spam protection)",
             "POST", "/public/inquiries", 200,
-            data=test_inquiry_data,
+            data={
+                "name": "Bot User",
+                "email": honeypot_email,
+                "reason": "Something else",
+                "message": "Spam message",
+                "contact_consent": True,
+                "contact_consent_text": "I agree",
+                "contact_consent_version": "contact-consent-v1",
+                "hp": "I am a bot"  # Honeypot field
+            },
             check_response=lambda r: r.get("success") == True
         )
         
+        # Verify honeypot inquiry was NOT persisted
+        if success:
+            success_verify, inquiries_list = self.test(
+                "Verify honeypot inquiry not persisted",
+                "GET", "/admin/inquiries", 200,
+                check_response=lambda r: isinstance(r, list)
+            )
+            if success_verify:
+                honeypot_found = any(inq.get("email") == honeypot_email for inq in inquiries_list)
+                if honeypot_found:
+                    self.log(f"❌ Honeypot inquiry was persisted (should not be)")
+                    self.tests_failed += 1
+                    self.failures.append("Honeypot inquiry was persisted")
+                else:
+                    self.log(f"✅ Honeypot inquiry correctly not persisted")
+        
+        # Test 3: Valid inquiry submission with all required fields
+        test_email = f"test-{datetime.now().strftime('%H%M%S')}@example.com"
+        test_inquiry_data = {
+            "name": "Test User",
+            "email": test_email,
+            "phone": "(555) 123-4567",
+            "reason": "I have a project for you",
+            "project_type": "Web application",
+            "project_stage": "Just an idea",
+            "message": "This is a test inquiry message for the new Let's Connect system.",
+            "preferred_contact_method": "Email",
+            "contact_consent": True,
+            "contact_consent_text": "I agree that Bretton Key may contact me by email, phone call, or text message regarding this inquiry. Message and data rates may apply.",
+            "contact_consent_version": "contact-consent-v1",
+            "marketing_consent": True,
+            "marketing_consent_text": "Yes, I would also like to receive occasional updates.",
+            "source_page": "/",
+            "source_section": "contact",
+            "source_channel": "contact_section",
+            "submission_id": "test-submission-123"
+        }
+        
+        success, inquiry_resp = self.test(
+            "Submit valid inquiry with consent",
+            "POST", "/public/inquiries", 200,
+            data=test_inquiry_data,
+            check_response=lambda r: r.get("success") == True and "id" in r
+        )
+        
+        test_inquiry_id = inquiry_resp.get("id") if success else None
+        
+        # Test 4: Dedupe guard - submit same email+message again (should return same id)
+        if success and test_inquiry_id:
+            success_dedupe, dedupe_resp = self.test(
+                "Submit duplicate inquiry (dedupe guard)",
+                "POST", "/public/inquiries", 200,
+                data=test_inquiry_data,
+                check_response=lambda r: r.get("success") == True and r.get("id") == test_inquiry_id
+            )
+            if success_dedupe and dedupe_resp.get("id") == test_inquiry_id:
+                self.log(f"✅ Dedupe guard working - returned same inquiry id")
+        
+        # Test 5: List inquiries and verify consent recordkeeping
         success, inquiries_list = self.test(
             "List inquiries (admin)",
             "GET", "/admin/inquiries", 200,
             check_response=lambda r: isinstance(r, list)
         )
         
-        test_inquiry_id = None
-        if success and inquiries_list:
-            for inq in inquiries_list:
-                if inq.get("email") == "test@example.com":
-                    test_inquiry_id = inq.get("id")
-                    break
+        if success and inquiries_list and test_inquiry_id:
+            test_inquiry = next((inq for inq in inquiries_list if inq.get("id") == test_inquiry_id), None)
+            if test_inquiry:
+                # Verify consent recordkeeping fields
+                consent_fields = ["contact_consent_at", "contact_consent_text", "contact_consent_version"]
+                missing = [f for f in consent_fields if f not in test_inquiry or not test_inquiry[f]]
+                if missing:
+                    self.log(f"⚠️  Missing consent recordkeeping fields: {missing}")
+                else:
+                    self.log(f"✅ Consent recordkeeping fields present")
+                
+                # Verify marketing consent timestamp
+                if test_inquiry.get("marketing_consent_at"):
+                    self.log(f"✅ Marketing consent timestamp recorded")
         
+        # Test 6: Update inquiry status
         if test_inquiry_id:
             self.test(
                 "Update inquiry status",
                 "PUT", f"/admin/inquiries/{test_inquiry_id}", 200,
                 data={"status": "handled"},
                 check_response=lambda r: r.get("status") == "handled"
+            )
+        
+        # Test 7: Rate limiting (5 requests per 15 minutes)
+        print("\n  Testing rate limiting (5 requests per 15 min)...")
+        rate_limit_email = f"ratelimit-{datetime.now().strftime('%H%M%S')}@example.com"
+        rate_limit_hit = False
+        
+        for i in range(6):
+            rate_test_data = {
+                "name": f"Rate Test {i+1}",
+                "email": rate_limit_email,
+                "reason": "Something else",
+                "message": f"Rate limit test message {i+1}",
+                "contact_consent": True,
+                "contact_consent_text": "I agree",
+                "contact_consent_version": "contact-consent-v1"
+            }
+            
+            if i < 5:
+                # First 5 should succeed
+                self.test(
+                    f"Rate limit test {i+1}/6 (should succeed)",
+                    "POST", "/public/inquiries", 200,
+                    data=rate_test_data
+                )
+            else:
+                # 6th should hit rate limit
+                success_rate, _ = self.test(
+                    f"Rate limit test {i+1}/6 (should hit 429)",
+                    "POST", "/public/inquiries", 429,
+                    data=rate_test_data
+                )
+                if success_rate:
+                    rate_limit_hit = True
+                    self.log(f"✅ Rate limiting working correctly (429 on 6th request)")
+        
+        if not rate_limit_hit:
+            self.log(f"⚠️  Rate limiting may not be working (did not hit 429)")
+        
+        # Clean up test inquiries
+        if test_inquiry_id:
+            self.test(
+                "Delete test inquiry",
+                "DELETE", f"/admin/inquiries/{test_inquiry_id}", 200
             )
         
         # 13. PUBLIC PAGE ENDPOINT TEST
