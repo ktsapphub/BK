@@ -1,24 +1,65 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Quote, X, Linkedin } from "lucide-react";
-import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
+import { ChevronLeft, ChevronRight, Quote, Linkedin } from "lucide-react";
+import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
 import { themeFor } from "@/lib/theme";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
 
-function Portrait({ testimonial, size = "h-full" }) {
+const AUTOPLAY_INTERVAL_MS = 5000;
+
+function Avatar({ testimonial }) {
   if (testimonial.portrait_url) {
     return (
       <img
         src={testimonial.portrait_url}
         alt={testimonial.portrait_alt || testimonial.name}
-        className={`${size} w-full object-cover`}
+        className="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover border-2 border-white/20"
         loading="lazy"
       />
     );
   }
   return (
-    <div className={`${size} w-full flex items-center justify-center bg-[var(--surface-blue)]`}>
-      <span className="font-display font-bold text-5xl md:text-7xl text-white">{testimonial.name?.[0] || "?"}</span>
+    <div className="h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center bg-gradient-to-b from-zinc-600 via-zinc-800 to-black border-2 border-white/20 shrink-0">
+      <span className="font-display font-bold text-xl md:text-2xl text-white">{testimonial.name?.[0] || "?"}</span>
+    </div>
+  );
+}
+
+function VoiceSlide({ testimonial, distance }) {
+  const clampedDistance = Math.max(-2, Math.min(2, distance));
+  const magnitude = Math.abs(clampedDistance);
+  const meta = [testimonial.title, testimonial.org].filter(Boolean).join(", ");
+
+  return (
+    <div
+      data-testid="voices-slide"
+      data-active={distance === 0 ? "true" : "false"}
+      className="mx-2 md:mx-3 rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-blue)] bg-[var(--background-primary)] shadow-[var(--shadow-room)] transition-transform duration-500 ease-out will-change-transform"
+      style={{
+        transform: `scale(${1 - magnitude * 0.12}) rotateY(${clampedDistance * -18}deg) translateZ(${-magnitude * 60}px)`,
+        opacity: 1 - magnitude * 0.4,
+        zIndex: 10 - magnitude,
+      }}
+    >
+      <div className="p-6 md:p-8 flex flex-col items-center text-center min-h-[280px] justify-center">
+        <Quote className="h-6 w-6 text-[var(--surface-blue)] opacity-40 mb-3" aria-hidden="true" />
+        <p data-testid="voices-quote" className="font-editorial italic text-base md:text-lg leading-snug text-[var(--text-primary)] mb-6 max-w-sm">
+          {testimonial.full_quote}
+        </p>
+        <Avatar testimonial={testimonial} />
+        <p className="font-display text-sm font-semibold text-[var(--text-primary)] mt-3">{testimonial.name}</p>
+        {meta && <p className="font-body text-xs text-[var(--text-muted)] mt-0.5">{meta}</p>}
+        {testimonial.linkedin_url && (
+          <a
+            href={testimonial.linkedin_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring inline-flex items-center gap-1.5 mt-2 text-xs font-display text-[var(--surface-blue)] hover:underline"
+          >
+            <Linkedin className="h-3 w-3" /> View Source
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -27,156 +68,102 @@ export default function TestimonialsRoom({ section, testimonials }) {
   const c = section.content || {};
   const list = Array.isArray(testimonials) ? testimonials : [];
   const t = themeFor(section.theme);
-  const [idx, setIdx] = useState(0);
-  const [archiveOpen, setArchiveOpen] = useState(false);
-
-  const active = list[idx] || {};
-  const portraitLeft = idx % 2 === 0;
-  const next = () => setIdx((i) => (i + 1) % list.length);
-  const prev = () => setIdx((i) => (i - 1 + list.length) % list.length);
+  const reduced = useReducedMotionPref();
+  const [api, setApi] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (list.length === 0) return;
-    const handler = (e) => {
-      if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft") prev();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [list.length]);
+    if (!api) return;
+    const onSelect = () => setSelectedIndex(api.selectedScrollSnap());
+    onSelect();
+    api.on("select", onSelect);
+    api.on("reInit", onSelect);
+    return () => api.off("select", onSelect);
+  }, [api]);
+
+  useEffect(() => {
+    if (!api || reduced || paused || list.length <= 1) return;
+    const id = setInterval(() => {
+      if (api.canScrollNext()) api.scrollNext();
+      else api.scrollTo(0);
+    }, AUTOPLAY_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [api, reduced, paused, list.length]);
 
   if (list.length === 0) return null; // graceful hide: no verified testimonials yet
 
-  let touchStartX = null;
-  const onTouchStart = (e) => (touchStartX = e.touches[0].clientX);
-  const onTouchEnd = (e) => {
-    if (touchStartX === null) return;
-    const delta = e.changedTouches[0].clientX - touchStartX;
-    if (delta > 50) prev();
-    if (delta < -50) next();
-    touchStartX = null;
-  };
-
-  const portraitBlock = (
-    <div className="w-full md:w-2/5 aspect-[4/5] md:aspect-auto md:h-full">
-      <Portrait testimonial={active} />
-    </div>
-  );
-
-  const quoteBlock = (
-    <div className="flex-1 flex flex-col justify-center p-8 md:p-14 relative">
-      <Quote className="h-10 w-10 md:h-14 md:w-14 text-[var(--surface-blue)] opacity-40 mb-4" aria-hidden="true" />
-      <p data-testid="testimonial-quote" className="font-editorial italic text-xl md:text-3xl leading-snug max-w-xl">
-        {active.full_quote}
-      </p>
-      <div className="mt-8">
-        <p className="font-display text-sm font-semibold">{active.name}</p>
-        <p className="font-body text-xs opacity-70 mt-0.5">{[active.title, active.org].filter(Boolean).join(", ")}</p>
-        {active.relationship && <p className="font-body text-xs opacity-50 mt-0.5">{active.relationship}</p>}
-        {active.linkedin_url && (
-          <a href={active.linkedin_url} target="_blank" rel="noopener noreferrer" className="focus-ring inline-flex items-center gap-1.5 mt-2 text-xs font-display text-[var(--surface-blue)] hover:underline">
-            <Linkedin className="h-3 w-3" /> View Source
-          </a>
-        )}
-      </div>
-    </div>
-  );
-
   return (
-    <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="testimonials-room" sectionType={section.section_type} className="py-24 md:py-32">
+    <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="voices-impact-room" sectionType={section.section_type} className="py-24 md:py-28">
       <RoomContainer>
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
-          <div>
-            <RoomEyebrow dark={t.isDark}>Testimonials</RoomEyebrow>
-            <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em]">{c.heading || "Voices From the Work"}</h2>
-          </div>
-          {list.length > 1 && (
-            <button onClick={() => setArchiveOpen(true)} data-testid="testimonials-view-all-button" className="focus-ring font-display text-xs uppercase tracking-wide underline opacity-80 hover:opacity-100">
-              View All Testimonials
-            </button>
-          )}
-        </div>
-        {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-10 opacity-90">{c.intro}</p>}
-
-        <div
-          data-testid="testimonials-carousel"
-          className="relative rounded-[var(--radius-lg)] overflow-hidden border border-white/15 bg-black/10 min-h-[420px] md:min-h-[380px]"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={active.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.8 }}
-              className="flex flex-col md:flex-row md:min-h-[380px]"
-            >
-              {portraitLeft ? portraitBlock : null}
-              {quoteBlock}
-              {!portraitLeft ? portraitBlock : null}
-            </motion.div>
-          </AnimatePresence>
-
-          {list.length > 1 && (
-            <>
-              <button onClick={prev} aria-label="Previous testimonial" className="focus-ring absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/30 text-white p-2 hover:bg-black/50">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button onClick={next} aria-label="Next testimonial" className="focus-ring absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/30 text-white p-2 hover:bg-black/50">
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </>
-          )}
+        <div className="text-center mb-10">
+          <RoomEyebrow dark={t.isDark}>Voices &amp; Impact</RoomEyebrow>
+          <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em]">{c.heading || "Voices and Impact"}</h2>
+          {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mx-auto mt-4 opacity-90">{c.intro}</p>}
         </div>
 
-        {list.length > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-6" data-testid="testimonials-progress-dots">
-            {list.map((t, i) => (
-              <button
-                key={t.id}
-                onClick={() => setIdx(i)}
-                aria-label={`Go to testimonial ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${i === idx ? "w-8 bg-[var(--surface-blue)]" : "w-1.5 bg-white/30 hover:bg-white/50"}`}
-              />
-            ))}
-          </div>
-        )}
+        {list.length === 0 ? (
+          <EmptyRoomNotice message="Testimonials are being curated." />
+        ) : (
+          <div
+            className="relative [perspective:1400px]"
+            data-testid="voices-carousel"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+          >
+            <Carousel setApi={setApi} opts={{ loop: list.length > 1, align: "center" }} className="w-full">
+              <CarouselContent className="-ml-0 py-4">
+                {list.map((tm, i) => (
+                  <CarouselItem key={tm.id} className="pl-0 basis-[86%] sm:basis-[64%] md:basis-[46%] lg:basis-[38%]">
+                    <VoiceSlide testimonial={tm} distance={i - selectedIndex} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
 
-        {list.length > 2 && (
-          <div className="hidden md:flex items-center justify-center gap-3 mt-6" data-testid="testimonials-thumbnails">
-            {list.map((t, i) => (
-              <button
-                key={t.id}
-                onClick={() => setIdx(i)}
-                className={`h-12 w-12 rounded-full overflow-hidden border-2 transition-all ${i === idx ? "border-[var(--surface-blue)] scale-110" : "border-transparent opacity-60 hover:opacity-100"}`}
-              >
-                <Portrait testimonial={t} size="h-full" />
-              </button>
-            ))}
+            {list.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => api?.scrollPrev()}
+                  aria-label="Previous testimonial"
+                  data-testid="voices-carousel-prev"
+                  className="focus-ring absolute left-1 md:-left-3 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-[var(--background-primary)]/90 border border-[var(--border-blue)] flex items-center justify-center hover:bg-[var(--background-blue-soft)] transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => api?.scrollNext()}
+                  aria-label="Next testimonial"
+                  data-testid="voices-carousel-next"
+                  className="focus-ring absolute right-1 md:-right-3 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-[var(--background-primary)]/90 border border-[var(--border-blue)] flex items-center justify-center hover:bg-[var(--background-blue-soft)] transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+
+                <div className="flex items-center justify-center gap-2 mt-8" data-testid="voices-carousel-dots">
+                  {list.map((tm, i) => (
+                    <button
+                      key={tm.id}
+                      type="button"
+                      aria-label={`Go to testimonial from ${tm.name}`}
+                      aria-current={i === selectedIndex}
+                      data-testid="voices-carousel-dot"
+                      onClick={() => api?.scrollTo(i)}
+                      className={`focus-ring h-2 rounded-full transition-all ${
+                        i === selectedIndex ? "w-6 bg-[var(--surface-blue)]" : "w-2 bg-[var(--border-blue)] hover:bg-[var(--accent-highlight)]"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
       </RoomContainer>
-
-      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
-        <DialogContent data-testid="testimonials-archive-dialog" className="bg-[var(--background-primary)] text-[var(--text-primary)] max-w-2xl max-h-[80vh] overflow-y-auto">
-          <button onClick={() => setArchiveOpen(false)} aria-label="Close" className="focus-ring absolute right-4 top-4 rounded-full p-1.5 bg-[var(--background-secondary)] hover:bg-[var(--background-blue-soft)]">
-            <X className="h-4 w-4" />
-          </button>
-          <h3 className="font-display font-bold text-xl mb-4">All Testimonials</h3>
-          <div className="space-y-6">
-            {list.map((t) => (
-              <div key={t.id} className="border-b border-[var(--border-primary)] pb-5 last:border-0">
-                <p className="font-editorial italic text-base md:text-lg">“{t.full_quote}”</p>
-                <p className="font-display text-sm font-semibold mt-2">{t.name}</p>
-                <p className="font-body text-xs opacity-60">{[t.title, t.org].filter(Boolean).join(", ")}</p>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </RoomWrapper>
   );
 }

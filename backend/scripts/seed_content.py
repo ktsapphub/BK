@@ -164,6 +164,21 @@ def main():
         ],
     })
 
+    # -------------------------------------------------------------- LOGOS
+    logos_orgs = [
+        "Pentagon / HQ Air Force", "NATO ACT", "CACI", "HCL Technologies",
+        "City of Virginia Beach", "Entrust Government Solutions", "U.S. Air Force Reserves",
+        "U.S. Army National Guard", "Engineering Services Network", "Date Jar",
+        "KeyTech Solutions",
+    ]
+    while len(logos_orgs) < 21:
+        logos_orgs.append(f"Organization {len(logos_orgs) + 1:02d}")
+    create_section(page_id, "logos", "Organizations", "Organizations", 4, "true_white", "fade", {
+        "heading": "Trusted Across Mission-Critical Teams",
+        "intro": "A sample of the organizations and ventures Bretton has delivered for. Logos to be finalized in the CMS.",
+        "items": [{"name": name, "logo_url": None} for name in logos_orgs],
+    })
+
     # -------------------------------------------------------------- RESUME
     create_section(page_id, "resume", "Résumé", "Résumé", 5, "true_white", "fade", {
         "heading": "Career Timeline",
@@ -238,8 +253,31 @@ def main():
         create_career_entry(**entry)
     print(f"Created {len(career_entries_data)} career entries.")
 
+    # ---------------------------------------------------- VOICES & IMPACT
+    create_section(page_id, "testimonials", "Voices and Impact", "Voices and Impact", 6, "deep_royal_blue", "soft-focus-reveal", {
+        "heading": "Voices and Impact",
+        "intro": "What colleagues and partners say about working with Bretton.",
+    })
+    testimonials_data = [
+        dict(name="Michael W.", title=None, org=None, relationship=None,
+             full_quote="Brett's exceptional leadership, commitment, and expertise have left a lasting impact on our organization. He has consistently proven himself as a dedicated and knowledgeable leader who goes above and beyond to support and nurture the professional development of our Airmen. I have no doubt that he will continue to excel in any future endeavors, and I wholeheartedly recommend him for any leadership or advisory role.",
+             verified=True, status="published", display_order=1),
+        dict(name="Carolyn K.", title="PMP, ITIL, PMC", org="CACI", relationship="Colleague",
+             full_quote="I had the pleasure of partnering with Bretton while working at CACI. He was designated as a leader of one of the process areas. Bretton was willing to take on additional responsibilities and be the leader of that area. He took on the responsibility with zeal and interest and was a key delivery for the CMMI Level 5 assessment. He was a pleasure to work with.",
+             verified=True, status="published", display_order=2),
+        dict(name="Peter W.", title="PMP", org=None, relationship="Colleague",
+             full_quote="Bretton was a most diligent and helpful information technology specialist on our team supporting a NATO client bringing innovation and process to a complex area. His work was very thorough and structured and at the end of the task he made sure to leave a comprehensive set of documentation. Would like to work with him again.",
+             verified=True, status="published", display_order=3),
+        dict(name="Stefanie M.", title=None, org=None, relationship=None,
+             full_quote="Brett's boundless passion fuels his dedication and commitment to any project, and his innovative thinking consistently leads to groundbreaking solutions and advancements. His unique combination of vision, leadership, passion, and innovation makes him an invaluable asset to any team or organization.",
+             verified=True, status="published", display_order=4),
+    ]
+    for t in testimonials_data:
+        create_testimonial(**t)
+    print(f"Created {len(testimonials_data)} verified testimonials.")
+
     # ------------------------------------------------------------ SERVICES
-    create_section(page_id, "services", "Services", "Services", 6, "deep_royal_blue", "fade", {
+    create_section(page_id, "services", "Services", "Services", 7, "deep_royal_blue", "fade", {
         "heading": "How I Can Help",
         "intro": "Through KeyTech Solutions, I bring the same delivery discipline I use on mission-critical programs to organizations of any size.",
     })
@@ -253,13 +291,15 @@ def main():
         dict(title="Mentorship & Public Speaking", description="Career mentorship for veterans and early-career project leaders, plus conference and panel speaking engagements.",
              capabilities=["Career mentorship for veterans & early-career PMs", "Conference & panel speaking", "Workshop facilitation"],
              cta_label="Book a Session", cta_href="contact", is_published=True, display_order=3),
+        dict(title="Tech Solutions, Built Around You", description="I simplify the process of creating technology solutions by helping you clarify your vision, explore proven platforms, and map out a custom solution built around your goals.",
+             capabilities=[], cta_label="Map Out a Solution", cta_href="contact", is_published=True, display_order=4),
     ]
     for s in services_data:
         create_service(**s)
     print(f"Created {len(services_data)} services.")
 
     # ----------------------------------------------------------- PROJECTS
-    create_section(page_id, "projects", "Projects", "Projects", 7, "true_white", "slide", {
+    create_section(page_id, "projects", "Projects", "Projects", 8, "true_white", "slide", {
         "heading": "Solutions",
         "intro": "A mix of mission-critical delivery and independent ventures.",
     })
@@ -292,26 +332,6 @@ def main():
     for p in projects_data:
         create_project(**p)
     print(f"Created {len(projects_data)} projects.")
-
-    # ---------------------------------------------------------- TESTIMONIALS
-    create_section(page_id, "testimonials", "Testimonials", "Testimonials", 8, "deep_royal_blue", "soft-focus-reveal", {
-        "heading": "Voices",
-        "intro": "What colleagues and partners say about working with Bretton.",
-    })
-    # NOTE: seeded as DRAFT + verified=False placeholders on purpose (per spec,
-    # only verified testimonials render publicly). Bretton should replace with
-    # real quotes and mark verified=True via the admin CMS.
-    testimonials_data = [
-        dict(name="[Placeholder — Replace with real reference]", title="Title", org="Organization",
-             full_quote="This is placeholder testimonial text. Replace with a real quote from a colleague or client, then mark it verified in the admin CMS to publish it.",
-             verified=False, status="draft", display_order=1),
-        dict(name="[Placeholder — Replace with real reference]", title="Title", org="Organization",
-             full_quote="This is placeholder testimonial text. Replace with a real quote from a colleague or client, then mark it verified in the admin CMS to publish it.",
-             verified=False, status="draft", display_order=2),
-    ]
-    for t in testimonials_data:
-        create_testimonial(**t)
-    print(f"Created {len(testimonials_data)} DRAFT/unverified testimonial placeholders (won't render publicly).")
 
     # ------------------------------------------------------------- THOUGHTS
     create_section(page_id, "thoughts", "Thoughts", "Thoughts", 9, "true_white", "fade", {

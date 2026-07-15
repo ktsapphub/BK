@@ -3,7 +3,7 @@
 // Field types: text | textarea | image | boolean | select | array_string | array_object | object
 
 export const SECTION_TYPES = [
-  "hero", "introduction", "values", "thoughts", "resume", "services",
+  "hero", "introduction", "values", "logos", "thoughts", "resume", "services",
   "projects", "testimonials", "media", "impact",
   "personal", "gallery", "contact", "custom",
 ];
@@ -50,6 +50,11 @@ export const CONTENT_SCHEMAS = {
     { name: "heading", type: "text", label: "Heading" },
     { name: "intro", type: "textarea", label: "Intro" },
     { name: "items", type: "array_object", label: "Values", fields: [{ name: "title", type: "text" }, { name: "image", type: "image" }, { name: "description", type: "textarea" }] },
+  ],
+  logos: [
+    { name: "heading", type: "text", label: "Heading" },
+    { name: "intro", type: "textarea", label: "Intro" },
+    { name: "items", type: "array_object", label: "Organizations", fields: [{ name: "name", type: "text" }, { name: "logo_url", type: "image" }] },
   ],
   resume: [
     { name: "heading", type: "text", label: "Heading" },

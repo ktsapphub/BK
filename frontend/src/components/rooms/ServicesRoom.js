@@ -26,24 +26,19 @@ export default function ServicesRoom({ section, services }) {
             {list.map((svc, i) => {
               const variant = i % 3;
               const spanClass = variant === 0 ? "lg:col-span-2" : "";
-              const cardStyle =
-                variant === 0
-                  ? "bg-white/[0.07] border border-white/15"
-                  : variant === 1
-                  ? "bg-transparent border border-[var(--border-blue)]"
-                  : "bg-[var(--surface-blue)]/90 border border-transparent";
+              const cardStyle = "bg-gradient-to-b from-zinc-700 via-zinc-900 to-black border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_18px_-6px_rgba(0,0,0,0.5)]";
               return (
                 <button
                   key={svc.id}
                   onClick={() => setOpen(svc)}
                   data-testid="service-open-sheet-button"
-                  className={`focus-ring group text-left rounded-[var(--radius-md)] p-6 md:p-7 flex flex-col justify-between min-h-[180px] transition-transform hover:-translate-y-1 ${spanClass} ${cardStyle}`}
+                  className={`focus-ring group text-left rounded-[var(--radius-md)] p-6 md:p-7 flex flex-col justify-between min-h-[180px] transition-transform hover:-translate-y-1 text-white ${spanClass} ${cardStyle}`}
                 >
                   <div>
-                    <span className="font-display text-xs uppercase tracking-[0.14em] text-[var(--text-on-blue-muted)] block mb-3">{String(i + 1).padStart(2, "0")}</span>
-                    <h3 className="font-display text-lg md:text-xl font-semibold">{svc.title}</h3>
+                    <span className="font-display text-xs uppercase tracking-[0.14em] text-white/60 block mb-3">{String(i + 1).padStart(2, "0")}</span>
+                    <h3 className="font-display text-lg md:text-xl font-semibold text-white">{svc.title}</h3>
                   </div>
-                  <p className="font-body text-sm text-[var(--text-on-blue-muted)] mt-4 line-clamp-2">{svc.description}</p>
+                  <p className="font-body text-sm text-white/70 mt-4 line-clamp-2">{svc.description}</p>
                 </button>
               );
             })}

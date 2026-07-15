@@ -170,6 +170,19 @@ html {
     border-radius: 999px;
 }
 
+@keyframes marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-marquee {
+    animation: marquee 46s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

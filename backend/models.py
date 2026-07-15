@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Any, Dict
 
 VALID_SECTION_TYPES = {
-    "hero", "introduction", "values", "thoughts", "resume", "services",
+    "hero", "introduction", "values", "logos", "thoughts", "resume", "services",
     "projects", "founder_story", "testimonials", "media", "impact",
     "personal", "gallery", "contact", "custom"
 }

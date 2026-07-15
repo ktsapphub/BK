@@ -64,8 +64,8 @@ export default function ValuesRoom({ section }) {
                     <span
                       className={`block rounded-full border flex items-center justify-center text-center font-display font-semibold text-sm transition-colors ${
                         isActive
-                          ? "bg-[var(--surface-blue)] text-white border-transparent"
-                          : "bg-[var(--background-blue-soft)] text-[var(--surface-blue)] border-[var(--border-blue)] group-hover:bg-[var(--surface-blue)] group-hover:text-white"
+                          ? "bg-gradient-to-b from-zinc-600 via-zinc-800 to-black text-white border-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-1px_0_rgba(0,0,0,0.4),0_8px_18px_-6px_rgba(0,0,0,0.65)]"
+                          : "bg-[var(--background-blue-soft)] text-[var(--surface-blue)] border-[var(--border-blue)] group-hover:bg-gradient-to-b group-hover:from-zinc-600 group-hover:via-zinc-800 group-hover:to-black group-hover:text-white group-hover:border-transparent"
                       }`}
                       style={{ width: `${NODE_SIZE}px`, height: `${NODE_SIZE}px` }}
                     >
@@ -84,7 +84,7 @@ export default function ValuesRoom({ section }) {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
                   data-testid="value-highlight-card"
-                  className="mt-10 max-w-md mx-auto rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-blue)] bg-[var(--background-primary)]/60 shadow-[var(--shadow-room)]"
+                  className="mt-10 max-w-md mx-auto rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-blue)] bg-white shadow-[var(--shadow-room)]"
                 >
                   {activeItem.image && (
                     <div className="aspect-video overflow-hidden">
@@ -93,7 +93,7 @@ export default function ValuesRoom({ section }) {
                   )}
                   <div className="p-5 text-center">
                     <p className="font-display text-xs uppercase tracking-[0.14em] text-[var(--surface-blue)] mb-2">{activeItem.title}</p>
-                    {activeItem.description && <p className="font-editorial italic text-base md:text-lg">{activeItem.description}</p>}
+                    {activeItem.description && <p className="font-editorial italic text-base md:text-lg text-black">{activeItem.description}</p>}
                   </div>
                 </motion.div>
               )}

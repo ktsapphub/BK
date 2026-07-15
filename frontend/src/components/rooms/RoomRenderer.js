@@ -1,6 +1,7 @@
 import HeroRoom from "./HeroRoom";
 import IntroductionRoom from "./IntroductionRoom";
 import ValuesRoom from "./ValuesRoom";
+import LogosRoom from "./LogosRoom";
 import ResumeRoom from "./ResumeRoom";
 import ServicesRoom from "./ServicesRoom";
 import ProjectsRoom from "./ProjectsRoom";
@@ -23,6 +24,8 @@ export default function RoomRenderer({ section, data, onSkipIntro }) {
       return <IntroductionRoom section={section} />;
     case "values":
       return <ValuesRoom section={section} />;
+    case "logos":
+      return <LogosRoom section={section} />;
     case "founder_story":
       return null;
     case "resume":

@@ -50,7 +50,7 @@ export default function HeroRoom({ section, onSkipIntro }) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -14 }}
                   transition={{ duration: 0.45 }}
-                  className="font-editorial italic text-2xl md:text-4xl text-[var(--accent-highlight)]"
+                  className="font-editorial italic text-2xl md:text-4xl bg-gradient-to-b from-zinc-300 via-zinc-600 to-black bg-clip-text text-transparent drop-shadow-[0_1px_1px_rgba(255,255,255,0.25)]"
                 >
                   {words[idx]}
                 </motion.p>
