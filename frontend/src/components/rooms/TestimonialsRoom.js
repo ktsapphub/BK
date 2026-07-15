@@ -29,21 +29,23 @@ function VoiceSlide({ testimonial, distance }) {
   const clampedDistance = Math.max(-2, Math.min(2, distance));
   const magnitude = Math.abs(clampedDistance);
   const meta = [testimonial.title, testimonial.org].filter(Boolean).join(", ");
+  const scale = distance === 0 ? 1.08 : Math.max(0.72, 1 - magnitude * 0.22);
+  const opacity = distance === 0 ? 1 : Math.max(0.35, 1 - magnitude * 0.45);
 
   return (
     <div
       data-testid="voices-slide"
       data-active={distance === 0 ? "true" : "false"}
-      className="mx-2 md:mx-3 rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-blue)] bg-[var(--background-primary)] shadow-[var(--shadow-room)] transition-transform duration-500 ease-out will-change-transform"
+      className="mx-2 md:mx-3 aspect-square rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-blue)] bg-[var(--background-primary)] shadow-[var(--shadow-room)] transition-transform duration-500 ease-out will-change-transform"
       style={{
-        transform: `scale(${1 - magnitude * 0.12}) rotateY(${clampedDistance * -18}deg) translateZ(${-magnitude * 60}px)`,
-        opacity: 1 - magnitude * 0.4,
+        transform: `scale(${scale}) rotateY(${clampedDistance * -16}deg) translateZ(${-magnitude * 50}px)`,
+        opacity,
         zIndex: 10 - magnitude,
       }}
     >
-      <div className="p-6 md:p-8 flex flex-col items-center text-center min-h-[280px] justify-center">
-        <Quote className="h-6 w-6 text-[var(--surface-blue)] opacity-40 mb-3" aria-hidden="true" />
-        <p data-testid="voices-quote" className="font-editorial italic text-base md:text-lg leading-snug text-[var(--text-primary)] mb-6 max-w-sm">
+      <div className="h-full p-6 md:p-7 flex flex-col items-center text-center justify-center overflow-hidden">
+        <Quote className="h-6 w-6 text-[var(--surface-blue)] opacity-40 mb-3 shrink-0" aria-hidden="true" />
+        <p data-testid="voices-quote" className="font-editorial italic text-sm md:text-base leading-snug text-[var(--text-primary)] mb-4 max-w-xs line-clamp-5">
           {testimonial.full_quote}
         </p>
         <Avatar testimonial={testimonial} />
@@ -114,9 +116,9 @@ export default function TestimonialsRoom({ section, testimonials }) {
             onBlur={() => setPaused(false)}
           >
             <Carousel setApi={setApi} opts={{ loop: list.length > 1, align: "center" }} className="w-full">
-              <CarouselContent className="-ml-0 py-4">
+              <CarouselContent className="-ml-0 py-8">
                 {list.map((tm, i) => (
-                  <CarouselItem key={tm.id} className="pl-0 basis-[86%] sm:basis-[64%] md:basis-[46%] lg:basis-[38%]">
+                  <CarouselItem key={tm.id} className="pl-0 basis-[72%] sm:basis-[52%] md:basis-[36%] lg:basis-[28%]">
                     <VoiceSlide testimonial={tm} distance={i - selectedIndex} />
                   </CarouselItem>
                 ))}

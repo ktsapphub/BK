@@ -129,6 +129,11 @@ export default function ImpactRoom({ section, impactItems }) {
     return () => clearInterval(id);
   }, [api, reduced, paused, activeCategory]);
 
+  useEffect(() => {
+    if (!api) return;
+    api.scrollTo(0, true);
+  }, [api, activeCategory]);
+
   if (list.length === 0) return null;
 
   const active = grouped.find((g) => g.key === activeCategory) || null;
@@ -178,7 +183,6 @@ export default function ImpactRoom({ section, impactItems }) {
 
         {active && active.items.length > 0 && (
           <div
-            key={active.key}
             className="relative"
             data-testid="impact-carousel"
             onMouseEnter={() => setPaused(true)}
