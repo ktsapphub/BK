@@ -157,20 +157,10 @@ def main():
         "heading": "What Drives Me",
         "intro": "Long ago I realized achieving the life you desire takes faith, focus, and a clear sense of purpose.",
         "items": [
-            {"title": "Faith", "description": "God is good — my commitment to purpose starts here."},
-            {"title": "Community", "description": "I believe in discovering solutions together, using our unique talents and gifts."},
-            {"title": "Service", "description": "What gets me out of bed each day is a deep commitment to personal growth and helping others."},
-            {"title": "Simplicity", "description": "I really enjoy simplifying complex processes and collaborating to reach the best outcome."},
-        ],
-    })
-
-    # ------------------------------------------------------- FOUNDER STORY
-    create_section(page_id, "founder_story", "Founder Story — Date Jar", "Founder Story", 4, "true_white", "doorway-reveal", {
-        "heading": "From a Jar of Ideas to an App in Your Pocket",
-        "chapters": [
-            {"text": "It started small — literally in a jar. My family kept a simple jar of date-night ideas on the counter, pulling one out whenever we wanted to plan something spontaneous without the mental load of deciding.", "image": IMG_FOUNDER_JAR},
-            {"text": "What began as a habit became a sketchpad full of screens and flows. I started mapping out what that jar could become if it lived in everyone's pocket — instant, personal, and built for real relationships.", "image": IMG_FOUNDER_SKETCH},
-            {"text": "That sketchbook became Date Jar — an app that turns 'what do you want to do tonight?' into a two-minute decision. It's a small idea, built with the same discipline I bring to $200M mission-critical programs: define the problem, ship the solution.", "image": IMG_FOUNDER_APP},
+            {"title": "Faith", "image": "https://images.unsplash.com/photo-1618255037265-ed4e83cf3323?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "God is good — my commitment to purpose starts here."},
+            {"title": "Community", "image": "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "I believe in discovering solutions together, using our unique talents and gifts."},
+            {"title": "Service", "image": "https://images.unsplash.com/photo-1461532257246-777de18cd58b?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "What gets me out of bed each day is a deep commitment to personal growth and helping others."},
+            {"title": "Simplicity", "image": "https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?crop=entropy&cs=srgb&fm=jpg&q=85", "description": "I really enjoy simplifying complex processes and collaborating to reach the best outcome."},
         ],
     })
 
@@ -270,12 +260,12 @@ def main():
 
     # ----------------------------------------------------------- PROJECTS
     create_section(page_id, "projects", "Projects", "Projects", 7, "true_white", "slide", {
-        "heading": "Selected Work",
+        "heading": "Solutions",
         "intro": "A mix of mission-critical delivery and independent ventures.",
     })
     projects_data = [
         dict(title="Date Jar", slug="date-jar", category="Consumer App / Founder",
-             summary="An app that turns 'what should we do tonight?' into a two-minute decision for couples and singles alike.",
+             summary="An app that turns 'what should we do tonight?' into a two-minute decision for couples and singles alike. Planning meaningful time together often stalls at the decision stage, so Date Jar packages curated date ideas into a simple pick-and-go experience. It's live on app stores today, conceived, designed, and shipped independently.",
              problem="Planning meaningful time together often stalls at the decision-making stage — too many options, not enough momentum.",
              solution="Date Jar packages curated date ideas into a simple pick-and-go experience, removing decision fatigue from spontaneity.",
              role="Founder / Product Lead",
@@ -285,7 +275,7 @@ def main():
              status="Live", thumbnail_url=IMG_PROJECT_DATEJAR, live_url="https://mydatejar.com/",
              featured=True, available_for_inquiry=False, is_published=True, display_order=1),
         dict(title="KeyTech Solutions", slug="keytech-solutions", category="IT & Delivery Consulting",
-             summary="Independent consulting practice bringing federal-grade Agile delivery discipline to organizations of any size.",
+             summary="Independent consulting practice bringing federal-grade Agile delivery discipline to organizations of any size. Many teams struggle to translate strategy into shippable, well-governed technical delivery — KeyTech applies 20 years of program leadership across scope, schedule, risk, and stakeholders to help them ship reliably. Multiple engagements delivered on schedule and within budget.",
              problem="Many organizations struggle to translate strategy into shippable, well-governed technical delivery.",
              solution="KeyTech Solutions applies 20 years of Agile program leadership — scope, schedule, risk, stakeholders — to help teams ship reliably.",
              role="Founder / Principal Consultant",

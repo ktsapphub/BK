@@ -1,7 +1,6 @@
 import HeroRoom from "./HeroRoom";
 import IntroductionRoom from "./IntroductionRoom";
 import ValuesRoom from "./ValuesRoom";
-import FounderStoryRoom from "./FounderStoryRoom";
 import ResumeRoom from "./ResumeRoom";
 import ServicesRoom from "./ServicesRoom";
 import ProjectsRoom from "./ProjectsRoom";
@@ -25,7 +24,7 @@ export default function RoomRenderer({ section, data, onSkipIntro }) {
     case "values":
       return <ValuesRoom section={section} />;
     case "founder_story":
-      return <FounderStoryRoom section={section} />;
+      return null;
     case "resume":
       return <ResumeRoom section={section} careerEntries={data.careerEntries} settings={data.settings} />;
     case "services":

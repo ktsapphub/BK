@@ -4,7 +4,7 @@
 
 export const SECTION_TYPES = [
   "hero", "introduction", "values", "thoughts", "resume", "services",
-  "projects", "founder_story", "testimonials", "media", "impact",
+  "projects", "testimonials", "media", "impact",
   "personal", "gallery", "contact", "custom",
 ];
 
@@ -49,11 +49,7 @@ export const CONTENT_SCHEMAS = {
   values: [
     { name: "heading", type: "text", label: "Heading" },
     { name: "intro", type: "textarea", label: "Intro" },
-    { name: "items", type: "array_object", label: "Values", fields: [{ name: "title", type: "text" }, { name: "description", type: "textarea" }] },
-  ],
-  founder_story: [
-    { name: "heading", type: "text", label: "Heading" },
-    { name: "chapters", type: "array_object", label: "Chapters", fields: [{ name: "text", type: "textarea" }, { name: "image", type: "image" }] },
+    { name: "items", type: "array_object", label: "Values", fields: [{ name: "title", type: "text" }, { name: "image", type: "image" }, { name: "description", type: "textarea" }] },
   ],
   resume: [
     { name: "heading", type: "text", label: "Heading" },

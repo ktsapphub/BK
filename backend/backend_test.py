@@ -183,8 +183,11 @@ class BrettonKeyCMSTester:
             data={
                 "name": f"Test User {timestamp}",
                 "email": f"test{timestamp}@example.com",
+                "reason": "general_inquiry",
                 "message": "This is a test inquiry from automated testing",
-                "subscribe_newsletter": False
+                "contact_consent": True,
+                "contact_consent_text": "I consent to be contacted",
+                "contact_consent_version": "v1"
             }
         )
         if success:

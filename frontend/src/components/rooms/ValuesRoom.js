@@ -9,16 +9,19 @@ function offsetFor(i, seedA, seedB) {
   return (seed - Math.floor(seed)) * 2 - 1; // -1..1
 }
 
+const NODE_SIZE = 116; // px — every node is now the same size
+
 export default function ValuesRoom({ section }) {
   const c = section.content || {};
   const items = Array.isArray(c.items) ? c.items : [];
   const [active, setActive] = useState(null);
+  const activeItem = active !== null ? items[active] : null;
 
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="values-room" sectionType={section.section_type} className="py-24 md:py-36">
       <RoomContainer>
         <RoomEyebrow>Values</RoomEyebrow>
-        <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-4">{c.heading || "What Actually Drives the Work"}</h2>
+        <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-4">{c.heading || "What Drives Me"}</h2>
         {c.intro && <p className="font-body text-base md:text-lg max-w-[62ch] mb-16 opacity-90">{c.intro}</p>}
 
         {items.length === 0 ? (
@@ -43,21 +46,26 @@ export default function ValuesRoom({ section }) {
             </svg>
             <div className="relative flex flex-wrap justify-center gap-x-4 gap-y-10 md:gap-x-8 py-8 min-h-[280px] items-center">
               {items.map((item, i) => {
-                const size = 0.85 + (i % 3) * 0.18;
                 const yShift = offsetFor(i, 5, 9) * 14;
+                const isActive = active === i;
                 return (
                   <motion.button
                     key={i}
                     type="button"
                     data-testid="value-node"
+                    aria-pressed={isActive}
                     onClick={() => setActive(active === i ? null : i)}
                     style={{ transform: `translateY(${yShift}px)` }}
                     whileHover={{ scale: 1.08 }}
                     className="focus-ring group relative"
                   >
                     <span
-                      className="block rounded-full bg-[var(--background-blue-soft)] border border-[var(--border-blue)] flex items-center justify-center text-center font-display font-semibold text-[var(--surface-blue)] transition-colors group-hover:bg-[var(--surface-blue)] group-hover:text-white"
-                      style={{ width: `${size * 108}px`, height: `${size * 108}px`, fontSize: `${size * 13.5}px` }}
+                      className={`block rounded-full border flex items-center justify-center text-center font-display font-semibold text-sm transition-colors ${
+                        isActive
+                          ? "bg-[var(--surface-blue)] text-white border-transparent"
+                          : "bg-[var(--background-blue-soft)] text-[var(--surface-blue)] border-[var(--border-blue)] group-hover:bg-[var(--surface-blue)] group-hover:text-white"
+                      }`}
+                      style={{ width: `${NODE_SIZE}px`, height: `${NODE_SIZE}px` }}
                     >
                       {item.title}
                     </span>
@@ -66,16 +74,25 @@ export default function ValuesRoom({ section }) {
               })}
             </div>
             <AnimatePresence mode="wait">
-              {active !== null && items[active]?.description && (
+              {activeItem && (activeItem.description || activeItem.image) && (
                 <motion.div
                   key={active}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
-                  className="mt-10 max-w-xl mx-auto text-center"
+                  data-testid="value-highlight-card"
+                  className="mt-10 max-w-md mx-auto rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-blue)] bg-[var(--background-primary)]/60 shadow-[var(--shadow-room)]"
                 >
-                  <p className="font-editorial italic text-lg md:text-xl">{items[active].description}</p>
+                  {activeItem.image && (
+                    <div className="aspect-video overflow-hidden">
+                      <img src={activeItem.image} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  )}
+                  <div className="p-5 text-center">
+                    <p className="font-display text-xs uppercase tracking-[0.14em] text-[var(--surface-blue)] mb-2">{activeItem.title}</p>
+                    {activeItem.description && <p className="font-editorial italic text-base md:text-lg">{activeItem.description}</p>}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
