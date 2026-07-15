@@ -50,6 +50,18 @@ export default function Home() {
 
   const sections = useMemo(() => pageData?.sections || [], [pageData]);
 
+  // Deep-link support: if the URL already has a #room-id hash on load,
+  // jump straight to it once the rooms are in the DOM.
+  useEffect(() => {
+    if (!pageData || typeof window === "undefined" || !window.location.hash) return;
+    const id = window.location.hash.slice(1);
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [pageData]);
+
   const handleSkipIntro = () => {
     sessionStorage.setItem("bk_skip_intro", "1");
     const second = sections[1];
@@ -78,7 +90,7 @@ export default function Home() {
 
   return (
     <div className="bg-[var(--background-primary)]">
-      <SiteNav navItems={navItems} />
+      <SiteNav navItems={navItems} sections={sections} settings={settings} />
       <main>
         {sections.length === 0 ? (
           <div className="min-h-screen flex items-center justify-center text-center px-6">

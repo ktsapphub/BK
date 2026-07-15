@@ -124,6 +124,7 @@ class ThoughtCreate(BaseModel):
     body: Optional[str] = None
     category: Optional[str] = None
     featured_image: Optional[str] = None
+    video_url: Optional[str] = None
     publish_date: Optional[str] = None
     reading_time: Optional[str] = None
     external_url: Optional[str] = None

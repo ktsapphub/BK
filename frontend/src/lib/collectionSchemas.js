@@ -64,6 +64,7 @@ export const COLLECTION_SCHEMAS = {
     { name: "body", type: "textarea", label: "Body (use blank lines between paragraphs)" },
     { name: "category", type: "text", label: "Category" },
     { name: "featured_image", type: "image", label: "Featured Image" },
+    { name: "video_url", type: "text", label: "Video URL (YouTube / Vimeo / .mp4) — shown instead of the image when expanded" },
     { name: "reading_time", type: "text", label: "Reading Time (e.g. 5 min read)" },
     { name: "external_url", type: "text", label: "External URL (optional)" },
     { name: "featured", type: "boolean", label: "Featured" },

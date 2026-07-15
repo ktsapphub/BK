@@ -13,6 +13,8 @@ export function RoomWrapper({ id, theme, transitionStyle, children, testId, clas
       id={id}
       data-testid={testId}
       data-section-type={sectionType}
+      data-theme={theme}
+      data-theme-dark={t.isDark ? "true" : "false"}
       className={`relative w-full overflow-hidden ${t.bg} ${t.text} ${className}`}
       initial="hidden"
       animate="show"
