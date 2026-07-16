@@ -30,6 +30,7 @@ export const publicApi = {
   getGlobalSettings: () => api.get(`/public/global-settings`).then((r) => r.data),
   submitInquiry: (payload) => api.post(`/public/inquiries`, payload).then((r) => r.data),
   subscribeNewsletter: (email) => api.post(`/public/newsletter`, { email }).then((r) => r.data),
+  trackPageview: (payload) => api.post(`/public/analytics/pageview`, payload).then((r) => r.data),
 };
 
 // ---------------------------------------------------------------------------
@@ -109,4 +110,10 @@ export const adminApi = {
   deleteInquiry: (id) => api.delete(`/admin/inquiries/${id}`).then((r) => r.data),
 
   listNewsletterSubscribers: () => api.get(`/admin/newsletter-subscribers`).then((r) => r.data),
+
+  listUsers: () => api.get(`/admin/users`).then((r) => r.data),
+  createUser: (payload) => api.post(`/admin/users`, payload).then((r) => r.data),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`).then((r) => r.data),
+
+  getAnalyticsSummary: (days = 30) => api.get(`/admin/analytics/summary`, { params: { days } }).then((r) => r.data),
 };

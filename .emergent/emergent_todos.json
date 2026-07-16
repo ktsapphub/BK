@@ -1,18 +1,62 @@
 [
   {
-    "content": "Fix z-index stacking bug causing Select conditional-field clicks and discard-dialog buttons to be unclickable",
+    "content": "Backend: extend models.py (UserCreate, PageviewCreate, GlobalSettingsUpdate theme/GA/logo fields)",
     "status": "completed"
   },
   {
-    "content": "Verify fixes with real (non-forced) Playwright clicks",
+    "content": "Backend: add Users CRUD endpoints to server.py",
     "status": "completed"
   },
   {
-    "content": "Clean up test data created during manual verification",
+    "content": "Backend: add analytics pageview + summary endpoints to server.py",
     "status": "completed"
   },
   {
-    "content": "Run final testing_agent pass to confirm fixes + mobile dialog variants + full regression",
+    "content": "Seed requested admin user bkey/adm!np1",
     "status": "completed"
+  },
+  {
+    "content": "Frontend: update lib/api.js with new endpoints",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: create lib/analytics.js + AnalyticsProvider + ThemeInjector",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: extend index.css Google Fonts import for font picker options",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: build AdminUsers.js page",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: build AdminAnalytics.js page",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: build AdminNavigation.js page",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: build AdminAppearance.js page (presets + color pickers + fonts + logo)",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: update AdminSettings.js with GA field, AdminLayout.js sidebar, App.js routes+providers",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: update SiteNav.js to show logo/brand header mark",
+    "status": "completed"
+  },
+  {
+    "content": "Compile check + restart services + smoke test",
+    "status": "completed"
+  },
+  {
+    "content": "Call testing_agent_v3 for full verification",
+    "status": "in_progress"
   }
 ]

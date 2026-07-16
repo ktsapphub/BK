@@ -59,8 +59,10 @@ class BrettonKeyCMSTester:
         print("\n" + "="*60)
         print("TESTING ADMIN AUTH")
         print("="*60)
+        
+        # Test ORIGINAL admin credentials
         success, response = self.run_test(
-            "Admin Login",
+            "Admin Login (ORIGINAL: brettonjkey@icloud.com)",
             "POST",
             "admin/login",
             200,
@@ -69,8 +71,21 @@ class BrettonKeyCMSTester:
         if success and 'token' in response:
             self.token = response['token']
             print(f"   Token obtained: {self.token[:20]}...")
-            return True
-        return False
+        
+        # Test NEW admin credentials (bkey)
+        success_new, response_new = self.run_test(
+            "Admin Login (NEW: bkey)",
+            "POST",
+            "admin/login",
+            200,
+            data={"email": "bkey", "password": "adm!np1"}
+        )
+        if success_new and 'token' in response_new:
+            print(f"   NEW admin token obtained: {response_new['token'][:20]}...")
+            # Use the new token for subsequent tests
+            self.token = response_new['token']
+        
+        return success or success_new
 
     def test_public_endpoints(self):
         """Test public endpoints"""
@@ -204,6 +219,78 @@ class BrettonKeyCMSTester:
         if success:
             print(f"   Message: {response.get('message', 'N/A')}")
 
+    def test_admin_users(self):
+        """Test admin users CRUD endpoints"""
+        if not self.token:
+            print("\n⚠️  Skipping admin users tests - no auth token")
+            return
+        
+        print("\n" + "="*60)
+        print("TESTING ADMIN USERS (NEW FEATURE)")
+        print("="*60)
+        
+        # Test list users
+        success, response = self.run_test(
+            "GET /admin/users",
+            "GET",
+            "admin/users",
+            200
+        )
+        if success:
+            count = len(response) if isinstance(response, list) else 0
+            print(f"   Users count: {count}")
+            for user in response:
+                print(f"   - {user.get('email')} (created: {user.get('created_at', 'N/A')[:10]})")
+        
+        # Test create user
+        timestamp = datetime.now().strftime('%H%M%S')
+        test_username = f"test_user_{timestamp}"
+        success, response = self.run_test(
+            "POST /admin/users (create test user)",
+            "POST",
+            "admin/users",
+            200,
+            data={"email": test_username, "password": "testpass123"}
+        )
+        test_user_id = None
+        if success:
+            test_user_id = response.get('id')
+            print(f"   Created user ID: {test_user_id}")
+        
+        # Test delete user (cleanup)
+        if test_user_id:
+            self.run_test(
+                "DELETE /admin/users/{id} (cleanup test user)",
+                "DELETE",
+                f"admin/users/{test_user_id}",
+                200
+            )
+    
+    def test_admin_analytics(self):
+        """Test analytics endpoints"""
+        if not self.token:
+            print("\n⚠️  Skipping analytics tests - no auth token")
+            return
+        
+        print("\n" + "="*60)
+        print("TESTING ANALYTICS (NEW FEATURE)")
+        print("="*60)
+        
+        # Test analytics summary
+        success, response = self.run_test(
+            "GET /admin/analytics/summary?days=30",
+            "GET",
+            "admin/analytics/summary?days=30",
+            200
+        )
+        if success:
+            print(f"   Total views: {response.get('total_views', 0)}")
+            print(f"   Unique visitors: {response.get('unique_visitors', 0)}")
+            print(f"   Views by day entries: {len(response.get('views_by_day', []))}")
+            print(f"   Top paths: {len(response.get('top_paths', []))}")
+            print(f"   Top referrers: {len(response.get('top_referrers', []))}")
+            print(f"   Device breakdown: {len(response.get('device_breakdown', []))}")
+    
     def test_admin_endpoints(self):
         """Test admin endpoints (requires auth)"""
         if not self.token:
@@ -275,6 +362,7 @@ class BrettonKeyCMSTester:
         )
         if success:
             print(f"   Site title: {response.get('site_title', 'N/A')}")
+            print(f"   GA Measurement ID: {response.get('ga_measurement_id', 'Not set')}")
 
     def print_summary(self):
         """Print test summary"""
@@ -298,6 +386,8 @@ def main():
     tester.test_public_endpoints()
     tester.test_public_submissions()
     tester.test_admin_endpoints()
+    tester.test_admin_users()
+    tester.test_admin_analytics()
     
     # Print summary
     return tester.print_summary()

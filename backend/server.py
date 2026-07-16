@@ -6,7 +6,7 @@ import logging
 import uuid
 import time
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 
 from database import db, client, clean_doc, clean_docs
@@ -16,7 +16,7 @@ from auth_utils import (
 )
 from storage_utils import init_storage, put_object, get_object
 from models import (
-    LoginRequest, PageCreate, SectionCreate, SectionUpdate,
+    LoginRequest, UserCreate, PageviewCreate, PageCreate, SectionCreate, SectionUpdate,
     CareerEntryCreate, TestimonialCreate, ProjectCreate, ServiceCreate,
     ThoughtCreate, ImpactItemCreate, NavigationItemCreate,
     GlobalSettingsUpdate, InquiryCreate, NewsletterSignup, ReorderRequest,
@@ -119,6 +119,100 @@ async def admin_login(body: LoginRequest):
 @api_router.get("/admin/me")
 async def admin_me(admin=Depends(get_current_admin)):
     return {"email": admin["email"], "role": admin.get("role", "admin")}
+
+
+# ===========================================================================
+# ADMIN USERS (multi-user, all full access)
+# ===========================================================================
+@api_router.post("/admin/users")
+async def create_admin_user(body: UserCreate, admin=Depends(get_current_admin)):
+    username = body.email.strip()
+    if not username or len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="Username is required and password must be at least 6 characters")
+    existing = await db.users.find_one({"email": username})
+    if existing:
+        raise HTTPException(status_code=400, detail="A user with this username already exists")
+    doc = {
+        "id": str(uuid.uuid4()),
+        "email": username,
+        "password_hash": hash_password(body.password),
+        "role": "admin",
+        "created_at": now_iso(),
+    }
+    await db.users.insert_one(doc)
+    return {"id": doc["id"], "email": doc["email"], "role": doc["role"], "created_at": doc["created_at"]}
+
+
+@api_router.get("/admin/users")
+async def list_admin_users(admin=Depends(get_current_admin)):
+    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).sort("created_at", 1).to_list(200)
+    return users
+
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_admin_user(user_id: str, admin=Depends(get_current_admin)):
+    total = await db.users.count_documents({})
+    if total <= 1:
+        raise HTTPException(status_code=400, detail="Cannot delete the last remaining admin user")
+    target = await db.users.find_one({"id": user_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target["email"] == admin["email"]:
+        raise HTTPException(status_code=400, detail="You cannot delete the account you're currently logged in as")
+    await db.users.delete_one({"id": user_id})
+    return {"success": True}
+
+
+# ===========================================================================
+# ANALYTICS (self-hosted pageview tracking)
+# ===========================================================================
+@api_router.post("/public/analytics/pageview")
+async def track_pageview(body: PageviewCreate):
+    doc = body.model_dump()
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    try:
+        await db.analytics_pageviews.insert_one(doc)
+    except Exception as e:
+        logger.error(f"Failed to record pageview: {e}")
+    return {"success": True}
+
+
+@api_router.get("/admin/analytics/summary")
+async def analytics_summary(days: int = 30, admin=Depends(get_current_admin)):
+    days = max(1, min(days, 365))
+    since_iso = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    items = await db.analytics_pageviews.find({"created_at": {"$gte": since_iso}}, {"_id": 0}).to_list(50000)
+
+    total_views = len(items)
+    unique_visitors = len({i.get("visitor_id") for i in items if i.get("visitor_id")})
+
+    by_day, by_path, by_referrer, by_device = {}, {}, {}, {}
+    for i in items:
+        day = (i.get("created_at") or "")[:10]
+        if day:
+            by_day[day] = by_day.get(day, 0) + 1
+        path = i.get("path") or "/"
+        by_path[path] = by_path.get(path, 0) + 1
+        ref = (i.get("referrer") or "").strip()
+        ref_label = "Direct" if not ref else ref
+        by_referrer[ref_label] = by_referrer.get(ref_label, 0) + 1
+        dev = i.get("device") or "unknown"
+        by_device[dev] = by_device.get(dev, 0) + 1
+
+    views_by_day = [{"date": d, "count": c} for d, c in sorted(by_day.items())]
+    top_paths = sorted(({"path": p, "count": c} for p, c in by_path.items()), key=lambda x: -x["count"])[:10]
+    top_referrers = sorted(({"referrer": r, "count": c} for r, c in by_referrer.items()), key=lambda x: -x["count"])[:10]
+    device_breakdown = [{"device": d, "count": c} for d, c in by_device.items()]
+
+    return {
+        "total_views": total_views,
+        "unique_visitors": unique_visitors,
+        "views_by_day": views_by_day,
+        "top_paths": top_paths,
+        "top_referrers": top_referrers,
+        "device_breakdown": device_breakdown,
+    }
 
 
 # ===========================================================================

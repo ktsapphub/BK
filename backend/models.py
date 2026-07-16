@@ -15,6 +15,21 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+
+class PageviewCreate(BaseModel):
+    path: str
+    referrer: Optional[str] = None
+    visitor_id: Optional[str] = None
+    utm_source: Optional[str] = None
+    utm_medium: Optional[str] = None
+    utm_content: Optional[str] = None
+    device: Optional[str] = None
+
+
 class PageCreate(BaseModel):
     slug: str
     title: str
@@ -179,6 +194,27 @@ class GlobalSettingsUpdate(BaseModel):
     marketing_consent_text: Optional[str] = None
     newsletter_enabled: Optional[bool] = None
     privacy_policy_url: Optional[str] = None
+    # Analytics
+    ga_measurement_id: Optional[str] = None
+    # Header / branding
+    site_logo_url: Optional[str] = None
+    # Theme / appearance overrides (fall back to index.css defaults when unset)
+    theme_bg_primary: Optional[str] = None
+    theme_bg_secondary: Optional[str] = None
+    theme_bg_blue_soft: Optional[str] = None
+    theme_surface_blue: Optional[str] = None
+    theme_surface_blue_dark: Optional[str] = None
+    theme_accent_highlight: Optional[str] = None
+    theme_text_primary: Optional[str] = None
+    theme_text_secondary: Optional[str] = None
+    theme_text_muted: Optional[str] = None
+    theme_text_on_blue: Optional[str] = None
+    theme_text_on_blue_muted: Optional[str] = None
+    theme_border_primary: Optional[str] = None
+    theme_border_blue: Optional[str] = None
+    theme_font_display: Optional[str] = None
+    theme_font_body: Optional[str] = None
+    theme_font_editorial: Optional[str] = None
 
 
 class InquiryCreate(BaseModel):

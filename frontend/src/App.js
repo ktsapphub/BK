@@ -26,6 +26,12 @@ import AdminThoughts from "@/pages/admin/AdminThoughts";
 import AdminImpact from "@/pages/admin/AdminImpact";
 import AdminInquiries from "@/pages/admin/AdminInquiries";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminNavigation from "@/pages/admin/AdminNavigation";
+import AdminAppearance from "@/pages/admin/AdminAppearance";
+import AdminAnalytics from "@/pages/admin/AdminAnalytics";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import ThemeInjector from "@/components/site/ThemeInjector";
+import AnalyticsProvider from "@/components/site/AnalyticsProvider";
 
 function App() {
   // Preload the Calendly widget script/stylesheet once at the app root so
@@ -37,6 +43,8 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ThemeInjector />
+        <AnalyticsProvider />
         <Toaster position="top-center" richColors />
         <FloatingConnectButton />
         <Routes>
@@ -65,6 +73,10 @@ function App() {
             <Route path="thoughts" element={<AdminThoughts />} />
             <Route path="impact" element={<AdminImpact />} />
             <Route path="inquiries" element={<AdminInquiries />} />
+            <Route path="navigation" element={<AdminNavigation />} />
+            <Route path="appearance" element={<AdminAppearance />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>

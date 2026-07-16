@@ -26,6 +26,10 @@ const CONNECT_FIELDS = [
   ["privacy_policy_url", "Privacy Policy URL"],
 ];
 
+const ANALYTICS_FIELDS = [
+  ["ga_measurement_id", "Google Analytics 4 Measurement ID (e.g. G-XXXXXXXXXX)"],
+];
+
 export default function AdminSettings() {
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -98,6 +102,24 @@ export default function AdminSettings() {
       </div>
 
       <button onClick={handleSave} disabled={saving} data-testid="admin-settings-save-button" className="focus-ring rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-60">
+        {saving ? "Saving…" : "Save Settings"}
+      </button>
+
+      <h2 className="text-lg font-semibold pt-2">Analytics</h2>
+      <div className="bg-white rounded-lg border p-5 space-y-4">
+        <p className="text-xs text-muted-foreground">
+          Built-in analytics (page views, visitors, referrers) are always on — see the Analytics page in the sidebar. Optionally
+          add a Google Analytics 4 Measurement ID below to also track visits in GA.
+        </p>
+        {ANALYTICS_FIELDS.map(([key, label]) => (
+          <div key={key}>
+            <Label htmlFor={key}>{label}</Label>
+            <Input id={key} data-testid={`admin-settings-${key}`} value={settings[key] || ""} onChange={(e) => update(key, e.target.value)} placeholder="G-XXXXXXXXXX" />
+          </div>
+        ))}
+      </div>
+
+      <button onClick={handleSave} disabled={saving} data-testid="admin-settings-save-analytics-button" className="focus-ring rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-60">
         {saving ? "Saving…" : "Save Settings"}
       </button>
     </div>

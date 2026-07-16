@@ -110,6 +110,26 @@ export default function SiteNav({ navItems, sections, settings }) {
 
   return (
     <>
+      {/* Site brand mark — logo image if configured via Admin > Appearance, else site title text */}
+      <a
+        href="#hero"
+        onClick={(e) => {
+          e.preventDefault();
+          goTo(navItems[0]?.section_id || "hero");
+        }}
+        data-testid="site-header-brand"
+        aria-label={settings?.site_title ? `${settings.site_title} — back to top` : "Back to top"}
+        className="focus-ring fixed left-6 top-6 z-40 flex items-center gap-2"
+      >
+        {settings?.site_logo_url ? (
+          <img src={settings.site_logo_url} alt={settings?.site_title || "Site logo"} className="h-9 w-auto max-w-[160px] object-contain" />
+        ) : settings?.site_title ? (
+          <span className={`font-display text-sm font-bold uppercase tracking-[0.08em] transition-colors duration-300 ${activeDark ? "text-white" : "text-[var(--text-primary)]"}`}>
+            {settings.site_title}
+          </span>
+        ) : null}
+      </a>
+
       {/* Desktop: vertical chapter index + edge rail progress line */}
       <div className="hidden lg:block fixed left-6 top-1/2 -translate-y-1/2 z-40">
         <div className="relative pl-4">

@@ -35,8 +35,8 @@ export default function AdminLogin() {
         </div>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" data-testid="admin-login-email-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Label htmlFor="email">Email / Username</Label>
+            <Input id="email" data-testid="admin-login-email-input" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div>
             <Label htmlFor="password">Password</Label>

@@ -1,6 +1,8 @@
-# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–7)
+# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–8)
 
 ## Objectives
+
+### Completed (Rounds 3–7)
 - Deliver the requested UI polish pass across the original **4 items**:
   1) Room background alternation from **Values → bottom** using **deep_royal_blue ↔ true_white**.
   2) Solutions carousel slide/card backgrounds match the intended styling (**white cards with dark text**).
@@ -41,78 +43,42 @@
       - Header + sub-header + paragraph text
       - A single portrait image on the right
       - Replaces the old **Faith / Family / Community** theme pills with an **auto-moving image carousel** (using the former gallery images)
-  24) Place the merged “Beyond the Work / Through My Eyes” room **immediately after Projects / Solutions** (in Thoughts’ previous slot).
+  24) Place the merged “Beyond the Work / Through My Eyes” room **immediately after Projects / Solutions**.
   25) Ensure the **left navigation rail** reflects the new ordering.
 
-- Deliver **Round 7 (NEW)**: Layout + contrast refinements after section merge/reorder
+- Deliver **Round 7**: Layout + contrast refinements after section merge/reorder
   26) Ensure the **Beyond the Work** carousel sits **below** the header+text+image grid (full-width), not nested in the text column.
   27) Fix **blue-on-blue hover/links** readability in deep_royal_blue rooms by making link/label hover colors theme-aware (white/light on dark rooms).
 
-- Ensure contrast/legibility stays correct regardless of CMS theme choices and keep the “gallery rooms” feel.
-- Prove changes via automated UI verification (`testing_agent_v3`) and minimal visual spot checks.
+### New Major Phase (Round 8): Full Admin Panel Overhaul for go-live on **brettonkey.com**
+- Build and/or extend a self-contained admin CMS at `/admin` with:
+  28) **Multi-user admin accounts** (all full access; no roles).
+      - Seed primary credentials: **username `bkey` / password `adm!np1`** (stored hashed).
+  29) **Analytics**: BOTH
+      - **Built-in analytics** stored in MongoDB + visualized in admin.
+      - **Google Analytics (GA4)** support via a `ga_measurement_id` field in global settings.
+  30) **Branding / Theme control**: BOTH
+      - Preset theme switches.
+      - Live theme editor (color pickers + font family selectors) persisted in CMS and applied site-wide.
+  31) **Navigation management**:
+      - Dedicated admin page to reorder + rename + show/hide nav items.
+      - No submenus.
+  32) **Media management**:
+      - Already supports uploads (image/video) and URL usage in section content; ensure consistent usage across new branding and header/footer.
+  33) **Header, Footer, and Forms editability**:
+      - Footer already partly editable (footer_text + social links).
+      - Add header/brand mark controls (logo + site title) and ensure they render in the public header/nav.
+      - Confirm Connect/Contact form text is CMS-editable (already via Settings); flag that **Reason options remain fixed** because conditional logic depends on exact labels.
+
+- Ensure the admin system remains deployable and reliable on Render (not Emergent-only).
+- **MANDATORY**: After significant feature work, validate via `testing_agent_v3`.
 
 ---
 
 ## Implementation Steps
 
-### Phase 1: POC (Core Verification of the UI Changes)
-*(POC here is a “prove it visually + functionally” slice before broader polish.)*
-
-**User stories (POC)**
-1. As a visitor, I can visually distinguish each room from Values downward via alternating royal blue/white backgrounds.
-2. As a visitor, I can read section labels (eyebrows) on both blue and white rooms.
-3. As a visitor, I see Solutions carousel slides with the intended surface styling (**white cards + dark text**) and **7 total slides**.
-4. As a visitor, I see Thoughts images/videos framed with a subtle outline.
-5. As a visitor, the Contact room’s form panel feels appropriately sized and readable on desktop and mobile.
-6. As a visitor, I see the Hero rotating word rendered as **solid shiny black** (no gradient).
-7. As a visitor, I can click a Value circle and see a glossy black active state + a readable highlight card.
-8. As a visitor, I see an infinite Organizations marquee between Values and Résumé.
-9. As a visitor, I see “Voices and Impact” between Résumé and Services and can navigate its 3D carousel.
-10. As a visitor, I see all Services cards scannable by default and expandable for details.
-11. As a visitor, clicking “Skip Intro” jumps directly to Services.
-12. As a visitor, Media & Impact shows a fast **30+** counter and three category tiles.
-13. As a visitor, I can expand a service tile via **Explore More** and collapse it.
-14. As a visitor, “Let’s Talk” CTAs open a **Calendly popup** and each booking is tagged with origin.
-15. As a visitor, “Beyond the Work” contains a “Through My Eyes” carousel and there is no duplicate standalone gallery room.
-16. As a visitor, Thoughts appears directly before Contact.
-17. As a visitor, the **Beyond the Work** carousel appears **below** the header+text+image grid (full-width).
-18. As a visitor, links in dark-blue rooms remain legible on hover (no blue-on-blue).
-
-**Steps**
-- Confirm CMS section themes reflect desired alternation.
-- Ensure every room that uses `RoomEyebrow` passes `dark={themeFor(section.theme).isDark}`.
-- Implement/verify:
-  - Hero: solid shiny black rotating word; Skip Intro → Services.
-  - Values: glossy active circles; highlight card white/black.
-  - Logos: infinite marquee.
-  - Testimonials → Voices and Impact: 3D carousel.
-  - Projects/Solutions: white cards + dark text; 7 total projects.
-  - Media & Impact: counter + 3 category tiles + autoplay detail carousel.
-  - Services: expandable cards + Calendly CTAs.
-  - **Round 6 merge & reorder**:
-    - Merge gallery images into personal content as `gallery_images`, add `eyebrow`.
-    - Hide standalone gallery section from rendering/nav.
-    - Move personal to immediately after projects.
-    - Move thoughts to immediately before contact.
-    - Verify nav is derived from section order and reflects changes.
-  - **Round 7 refinements**:
-    - Restructure PersonalRoom so carousel is full-width below the 2-col grid.
-    - Make ThoughtsRoom blue accents theme-aware (`t.isDark`) to avoid blue-on-blue.
-
-**POC Exit**
-- Run `testing_agent_v3` covering:
-  - Home room order + rendering
-  - Nav order correctness + smooth scroll targets
-  - Hero (rotating word + Skip Intro)
-  - Values interactions
-  - Logos marquee
-  - Voices & Impact carousel
-  - Services expand/collapse + Calendly popup + UTM correctness
-  - Projects carousel
-  - Media & Impact category switching
-  - **Merged Beyond the Work**: carousel autoplay + lightbox + placement below grid
-  - Thoughts placement (directly before Contact) + hover contrast
-  - Contact UX
+### Phase 1: POC (Core Verification of the UI Changes) — COMPLETED
+*(Already completed through iteration_17; keeping for historical traceability.)*
 
 **POC Status (Current)**
 - ✅ Original 4 UI polish items implemented and verified (iteration_8).
@@ -125,126 +91,236 @@
 
 ---
 
-### Phase 2: V1 App Development (Finalize and Harden the UI Changes)
-
-**User stories (V1)**
-1. As a visitor, I experience consistent blue/white alternation through the final section order.
-2. As a visitor, I can read typography on royal-blue rooms (eyebrows, headings, body, buttons, links, hover states).
-3. As a visitor, Projects/Solutions carousel navigation remains accessible and visible.
-4. As a reader, Thoughts section is easy to scan and correctly placed before Contact.
-5. As a visitor, I can use the Contact form comfortably on desktop and mobile.
-6. As a visitor, the Organizations marquee scrolls smoothly, pauses on hover, and is accessible.
-7. As a visitor, the Voices & Impact carousel feels premium and stable across devices.
-8. As a visitor, Services expand/collapse behavior is smooth and keyboard accessible.
-9. As a visitor, Calendly popup opens quickly and reliably from Hero/Nav/Services.
-10. As a visitor, the merged “Beyond the Work / Through My Eyes” room’s carousel and lightbox work across devices.
-
-**Steps**
-- Audit theme-dependent styling regressions after reorder.
-- Verify merged room responsiveness:
-  - Carousel sizing on mobile
-  - Lightbox controls and keyboard behavior
-  - No overflow of captions
-  - Dialog accessibility basics (title present, aria attributes clean)
-- Verify nav scroll targets after reorder.
-- Verify Calendly popup unaffected.
-
-**End of Phase 2**
-- Re-run `testing_agent_v3` end-to-end on the final section order and all interactive elements.
+### Phase 2: V1 App Development (Finalize and Harden the UI Changes) — COMPLETED / STABLE
+- No new UI work requested beyond the Round 8 admin overhaul.
 
 ---
 
-### Phase 3: Additional Features / Follow-ups (Post-Verification)
+### Phase 3: Additional Features / Follow-ups — NOW ACTIVE (Round 8)
 
-**User stories (follow-up)**
-1. As an admin, I can manage the merged room content entirely via CMS fields.
-2. As an admin, I can upload and swap in the 21 organization logos via CMS.
-3. As an admin, I can refine service images and bullet points via CMS.
-4. (Optional) As a visitor, remaining CTAs (e.g., Contact room scheduling link and FloatingConnectButton) also open Calendly with unique UTM tags.
+## Round 8 — Admin Panel Overhaul (Go-live readiness)
 
-**Steps**
-- CMS guidance updates:
-  - Personal (merged room) fields now: `eyebrow`, `heading`, `statement`, `image`, `gallery_images[]`.
-  - Gallery room is intentionally disabled (draft + hidden).
-- Optional: route additional CTAs through `openCalendlyPopup()` with `utm_content` identifiers.
+### User stories (Round 8)
+1. As Bretton, I can go to `https://brettonkey.com/admin` and log in with a username/password.
+2. As Bretton, I can create additional admin users and remove them.
+3. As Bretton, I can add/remove sections and change their order.
+4. As Bretton, I can edit navigation labels, placement, and show/hide items.
+5. As Bretton, I can update brand colors and fonts via a theme editor or pick from presets.
+6. As Bretton, I can upload media and use uploaded URLs throughout content.
+7. As Bretton, I can view analytics dashboards (self-hosted) and optionally enable GA4.
+8. As Bretton, I can edit header/footer content and form wording without code changes.
+
+### Existing infrastructure to reuse (do NOT rebuild)
+- Admin auth already exists:
+  - `db.users` collection
+  - bcrypt hashing
+  - JWT (`/api/admin/login`, `/api/admin/me`, `get_current_admin`)
+  - `seed_admin()` based on env vars (`ADMIN_EMAIL`, `ADMIN_PASSWORD`).
+- Section editing already exists:
+  - Dynamic schemas in `/app/frontend/src/lib/contentSchemas.js`
+  - Dynamic editor UI in `/app/frontend/src/components/admin/DynamicForm.js`
+  - Admin Rooms UI in `/admin/sections`.
+- Media upload already exists (`/admin/media/upload` + Media Library UI).
+- Navigation support already exists:
+  - `navigation_items` collection + `/admin/navigation-items` endpoints.
+  - Public nav auto-derived from published sections with `navigation_label`.
+- Generic reorder endpoint already exists: `POST /api/admin/reorder/{collection}` (supports `sections`).
+- `recharts` already installed for analytics charts.
+
+### Backend implementation (additive, preserve existing logic)
+**A) Users CRUD (multi-user admin accounts)**
+- **models.py**:
+  - Add `UserCreate` model: `{ email: str, password: str }` (note: we treat `email` as a username; can be non-email like `bkey`).
+- **server.py**:
+  - `GET /api/admin/users` (list users).
+  - `POST /api/admin/users` (create user with bcrypt hash).
+  - `DELETE /api/admin/users/{id}` (delete user).
+  - Safety rules:
+    - Block deleting the last remaining user.
+    - Block deleting the currently logged-in user (or require a separate confirmation flow).
+
+**B) Built-in analytics (self-hosted)**
+- **models.py**:
+  - Add `PageviewCreate`: `{ path, referrer, user_agent, visitor_id, ts }` (ts optional).
+- **server.py**:
+  - `POST /api/public/analytics/pageview` (unauthenticated; store event).
+  - `GET /api/admin/analytics/summary?days=N`:
+    - total views
+    - unique visitors (by visitor_id)
+    - views_by_day
+    - top_paths
+    - top_referrers
+    - device breakdown (simple UA parsing: mobile/desktop/tablet)
+
+**C) Global settings expansion (branding + GA)**
+- **models.py**: extend `GlobalSettingsUpdate` with:
+  - `ga_measurement_id`
+  - Header/brand: `site_logo_url`
+  - Theme token overrides:
+    - `theme_bg_primary`, `theme_bg_secondary`, `theme_bg_blue_soft`
+    - `theme_surface_blue`, `theme_surface_blue_dark`, `theme_accent_highlight`
+    - `theme_text_primary`, `theme_text_secondary`, `theme_text_muted`
+    - `theme_text_on_blue`, `theme_text_on_blue_muted`
+    - `theme_border_primary`, `theme_border_blue`
+    - `theme_font_display`, `theme_font_body`, `theme_font_editorial`
+
+**D) Seed requested primary admin user**
+- One-off migration script or update to `seed_admin()` to ensure `bkey / adm!np1` exists.
+  - Preferred: one-off script that inserts if missing to avoid overwriting env-based seed.
+
+### Frontend implementation (admin + public)
+
+**A) API client updates (`/app/frontend/src/lib/api.js`)**
+- Add admin endpoints:
+  - `listUsers`, `createUser`, `deleteUser`
+  - `getAnalyticsSummary`
+- Add public analytics:
+  - `publicApi.trackPageview`
+
+**B) Analytics client + provider (public site)**
+- New `/app/frontend/src/lib/analytics.js`:
+  - Create/stash `visitor_id` in `localStorage`.
+  - `trackPageview({ path, referrer, user_agent })`:
+    - POST to `/api/public/analytics/pageview`
+    - If GA is enabled, call `gtag('event','page_view', ...)`.
+- New `/app/frontend/src/components/site/AnalyticsProvider.js`:
+  - Reads `ga_measurement_id` from global settings.
+  - Injects GA script only when set.
+  - Tracks route changes (React Router) and sends pageview events.
+
+**C) Theme injector (public site)**
+- New `/app/frontend/src/components/site/ThemeInjector.js`:
+  - Fetch `/api/public/global-settings`.
+  - Apply any `theme_*` settings as CSS variables on `document.documentElement`.
+  - Defaults remain in `index.css` if unset.
+- Update `/app/frontend/src/App.js`:
+  - Mount `<ThemeInjector />` and `<AnalyticsProvider />` inside `BrowserRouter`.
+
+**D) New admin pages**
+- `AdminUsers.js`:
+  - List users
+  - Create user form (username + password)
+  - Delete user action with confirmation
+- `AdminAnalytics.js`:
+  - Summary cards + recharts graphs:
+    - Line: views over time
+    - Bar/pie: device breakdown
+  - Lists: top pages, top referrers
+  - Note: GA enabled/disabled status shown
+- `AdminNavigation.js`:
+  - List sections (display_order)
+  - Up/Down reorder (uses existing reorder endpoint)
+  - Inline edit `navigation_label`
+  - Toggle `is_visible`
+  - (No submenu)
+- `AdminAppearance.js`:
+  - Theme presets (quick switch)
+  - Live color pickers for tokens
+  - Font pickers (display/body/editorial)
+  - Header settings:
+    - Upload/select logo URL (using existing `MediaPickerInput`)
+  - Save + Reset
+
+**E) Admin shell updates**
+- `/app/frontend/src/pages/admin/AdminLayout.js`:
+  - Add sidebar entries:
+    - Navigation
+    - Appearance
+    - Analytics
+    - Users
+- `/app/frontend/src/App.js` routes:
+  - Add `/admin/users`, `/admin/analytics`, `/admin/appearance`, `/admin/navigation`.
+
+**F) Header/Footer/Forms editability**
+- Footer:
+  - Already editable via Settings (`footer_text`, social links). Keep.
+- Header:
+  - Add brand mark in public nav:
+    - If `settings.site_logo_url` set: show logo
+    - Else show `settings.site_title`
+- Forms:
+  - Already editable text via Settings: connect dialog heading/copy + consent wording + privacy URL.
+  - **Explicit constraint**: “Reason for connecting” dropdown options remain fixed because ConnectForm conditional logic depends on exact labels.
+
+### Analytics + GA deployment notes (Render)
+- Built-in analytics requires no 3rd party.
+- GA requires adding `ga_measurement_id` in admin settings.
+- Ensure `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` are set in Render env.
 
 ---
 
-## Next Actions
-1. ✅ Completed: Expandable Services + Calendly popup integration with source-tracked UTM parameters.
-2. ✅ Completed: Section reorganization + merge Beyond the Work with Through My Eyes + nav reflects new order.
-3. ✅ Completed: Beyond the Work carousel placement below grid + dark-theme hover contrast fixes.
-4. Optional (if requested): apply Calendly popup to remaining CTAs (Contact scheduling link, FloatingConnectButton) with additional identifier tags.
+## Next Actions (Round 8)
+1. Implement backend user CRUD + analytics endpoints + GlobalSettingsUpdate extensions.
+2. Implement admin pages: Users / Analytics / Navigation / Appearance.
+3. Implement public site ThemeInjector + AnalyticsProvider.
+4. Seed `bkey / adm!np1` admin user.
+5. Run `testing_agent_v3` covering:
+   - /admin login with `bkey` credentials
+   - Users create/list/delete
+   - Navigation reorder/rename/hide reflected on public left nav
+   - Appearance changes persist and affect public theme variables
+   - Analytics dashboard renders and pageviews increase after visiting public pages
+   - GA script only injected when ID set
+   - Regression: existing CMS pages, Services/Calendly, Contact form unaffected
 
 ---
 
 ## Success Criteria
-- **Final Section Order** (and nav order) is:
-  1) Home (Hero)
-  2) Introduction
-  3) Values
-  4) Organizations
-  5) Résumé
-  6) Voices and Impact
-  7) Services
-  8) Projects (Solutions)
-  9) Beyond the Work (merged with Through My Eyes)
-  10) In the Field (Media & Impact)
-  11) Thoughts
-  12) Contact
-- **Beyond the Work merged room**:
-  - Shows eyebrow/sub-header, heading, paragraph text, image on right
-  - Replaces Faith/Family/Community pills with an auto-moving image carousel sourced from former gallery images
-  - Carousel sits **below** the header/text/image row as a full-width block
-  - No duplicate standalone gallery room appears
-- **Thoughts dark-theme readability**:
-  - No blue-on-blue hover states; uses white/light variants on deep_royal_blue rooms
-  - Light-themed rooms remain unchanged (blue link styling preserved)
-- **Services**:
-  - Expandable containers show image + number + title + “Explore More”
-  - Expanded view reveals description + bullets + CTA
-- **Calendly**:
-  - Popup opens from Hero/Nav/Services with correct UTM attribution:
-    - `opener`, `schedule_a_conversation`, `01_Agile`, `02_PO`, `03_Speaking`, `04_Tech`
-- **Nav**:
-  - Left navigation reflects the new ordering and scroll targets correctly via Lenis
-- **Regression-free**:
-  - Projects carousel, Services expand/collapse, Calendly popups, Media & Impact module, and Contact form still function with no console errors
+
+### Public site
+- Theme variables can be overridden from CMS settings and persist across reloads.
+- GA loads only when configured.
+- Built-in analytics records pageviews on every route view.
+- Header shows logo when provided; otherwise shows title.
+
+### Admin site
+- `/admin` is reachable only after login.
+- Multi-user accounts supported; all users have full access.
+- Users page supports create/list/delete with safety checks.
+- Navigation page supports reorder/rename/show-hide and reflects on public nav.
+- Appearance page supports presets + color pickers + font pickers, persisted in global settings and reflected on public site.
+- Analytics page shows meaningful charts and aggregates for last N days.
+- Media upload continues to work and can be used for logo and section images.
+
+### Testing
+- `testing_agent_v3` must pass for Round 8 before marking complete.
 
 ---
 
 ## Implementation Notes / File Map
-### Round 5 (Calendly + expandable Services)
-- `/app/frontend/src/lib/calendly.js`: `loadCalendlyScript()` + `openCalendlyPopup({ baseUrl, utm, prefill })`
-- `/app/frontend/src/App.js`: preloads Calendly script on mount
-- `/app/frontend/src/components/rooms/RoomRenderer.js`: passes `settings` to HeroRoom/ServicesRoom
-- `/app/frontend/src/components/rooms/HeroRoom.js`: “Let’s Talk” opens Calendly popup with UTM
-- `/app/frontend/src/components/site/SiteNav.js`: schedule action opens Calendly popup with UTM
-- `/app/frontend/src/components/rooms/ServicesRoom.js`: expandable/accordion services + Calendly CTAs
-- `/app/frontend/tailwind.config.js`: added `collapsible-down/up` animations
 
-### Round 6 (Section reorg + merge Beyond the Work + Through My Eyes)
-- **DB migration (one-off script)**:
-  - Merged `gallery.content.images` → `personal.content.gallery_images`
-  - Added `personal.content.eyebrow` = "Through My Eyes"
-  - Removed `personal.content.themes`
-  - Soft-deleted standalone gallery section: `is_visible=false`, `status=draft`, `navigation_label=null`
-  - Reordered display_order: personal=9, impact=10, thoughts=11, contact=12
-  - Adjusted themes for alternation: personal=deep_royal_blue, impact=true_white, thoughts=deep_royal_blue
-- `/app/frontend/src/components/rooms/PersonalRoom.js`: rebuilt to render header/sub-header/paragraph/image-right + autoplay carousel + lightbox
-- `/app/frontend/src/lib/contentSchemas.js`: updated `personal` schema fields to match merged structure
+### Completed (Rounds 5–7 highlight)
+- Calendly:
+  - `/app/frontend/src/lib/calendly.js`
+  - Hero/Nav/Services CTAs wired to Calendly popup with UTM tracking
+- Services expandable cards:
+  - `/app/frontend/src/components/rooms/ServicesRoom.js`
+- Section reorder + merge:
+  - DB migration for personal+gallery merge
+  - `/app/frontend/src/components/rooms/PersonalRoom.js`
+  - `/app/frontend/src/components/rooms/ThoughtsRoom.js` theme-aware hover
 
-### Round 7 (Placement + contrast fixes)
-- `/app/frontend/src/components/rooms/PersonalRoom.js`:
-  - Carousel moved to a full-width block below the 2-column grid
-  - Added visually-hidden `DialogTitle` to lightbox to address minor Radix a11y warning
-- `/app/frontend/src/components/rooms/ThoughtsRoom.js`:
-  - Made link/label colors theme-aware via `t.isDark` to avoid blue-on-blue
-  - Updated featured label, featured title hover, filter pill borders/hover, read-more link color, and divider/separator borders for dark theme
+### Round 8 (new)
+- Backend:
+  - `/app/backend/models.py` (UserCreate, PageviewCreate, GlobalSettingsUpdate fields)
+  - `/app/backend/server.py` (users endpoints, analytics endpoints)
+  - `/app/backend/auth_utils.py` (seed bkey user via migration or extend seed safely)
+- Frontend:
+  - `/app/frontend/src/lib/api.js` (new endpoints)
+  - `/app/frontend/src/lib/analytics.js` (new)
+  - `/app/frontend/src/components/site/AnalyticsProvider.js` (new)
+  - `/app/frontend/src/components/site/ThemeInjector.js` (new)
+  - `/app/frontend/src/pages/admin/AdminUsers.js` (new)
+  - `/app/frontend/src/pages/admin/AdminAnalytics.js` (new)
+  - `/app/frontend/src/pages/admin/AdminNavigation.js` (new)
+  - `/app/frontend/src/pages/admin/AdminAppearance.js` (new)
+  - `/app/frontend/src/pages/admin/AdminLayout.js` (sidebar updates)
+  - `/app/frontend/src/App.js` (routes + providers)
 
 ---
 
 ## Test Artifacts
-- `/app/test_reports/iteration_15.json`: 100% pass (Services expand/collapse + Calendly popup + UTM attribution + regressions)
-- `/app/test_reports/iteration_16.json`: 100% pass (section reorder + merged Beyond the Work room + nav order + regressions)
-- `/app/test_reports/iteration_17.json`: 100% pass (Beyond the Work carousel placement + Thoughts hover contrast + regressions)
+- `/app/test_reports/iteration_15.json`: 100% pass (Services expand/collapse + Calendly popup + UTM attribution)
+- `/app/test_reports/iteration_16.json`: 100% pass (section reorder + merged Beyond the Work room + nav order)
+- `/app/test_reports/iteration_17.json`: 100% pass (Beyond the Work carousel placement + Thoughts hover contrast)
+- (Planned) iteration_18.json: Round 8 Admin Overhaul verification
