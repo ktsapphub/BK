@@ -1,4 +1,4 @@
-# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–9)
+# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–10)
 
 ## Objectives
 
@@ -78,6 +78,20 @@
 35) Make the floating **“Let’s Connect”** button more prominent with a border + pulsing animation.
 36) Redesign the desktop left navigation into a **collapsible selector** with animations and inner hover highlights.
 
+### Round 10: Navigation reconciliation + scroll-based auto-hide/show — COMPLETED
+37) **Fix navigation redundancy**:
+   - Removed the duplicate **“View Work”** quick action from:
+     - Desktop quick-actions capsule
+     - Mobile drawer quick-actions list
+   - Rationale: it duplicated the existing **Projects** item in the main chapter navigation (same destination).
+   - Cleanup: removed unused `Briefcase` icon import and unused `sections` prop from `SiteNav.js`.
+
+38) **Desktop chapter-nav rail auto-hide/show**:
+   - Rail now **auto-hides after ~1.4s** of scroll inactivity (fade out + slight x-translate, `pointer-events: none`).
+   - Rail **reappears immediately** on any scroll activity (up or down), and remains visible while hovered or keyboard-focused.
+   - Implemented with `navVisible` state + `revealNav()` and a rAF-throttled passive scroll listener; uses a ref-tracked expanded flag to avoid stale-closure timer bugs.
+   - Scope: **desktop rail only**; quick-actions capsule and mobile nav remain persistently visible.
+
 ---
 
 ## Implementation Steps
@@ -101,7 +115,7 @@
 
 ---
 
-### Phase 3: Additional Features / Follow-ups — Round 9 COMPLETED
+### Phase 3: Additional Features / Follow-ups — Rounds 9–10 COMPLETED
 
 ## Round 8 — Admin Panel Overhaul (Go-live readiness) — COMPLETED
 
@@ -241,13 +255,34 @@
 
 ### Verification
 - ✅ Verified via `testing_agent_v3` (iteration_19): 100% pass.
-- ✅ Confirmed no regressions to:
-  - Mobile nav drawer
+
+---
+
+## Round 10 — Navigation Reconciliation + Auto-hide on Scroll Idle — COMPLETED
+
+### What changed
+**A) Redundancy cleanup**
+- ✅ Removed the duplicate "View Work" quick action from:
   - Desktop quick-actions capsule
+  - Mobile drawer quick-actions section
+- ✅ Removed unused `Briefcase` icon import.
+- ✅ Removed unused `sections` prop from `SiteNav` and updated the `persistentActions` memo dependencies.
+
+**B) Desktop rail hide/show on scroll**
+- ✅ Added nav rail wrapper (`motion.div`) with:
+  - Auto-hide after ~1.4 seconds of scroll inactivity.
+  - Immediate re-show on scroll up or down.
+  - Always stays visible while hovered or keyboard-focused.
+  - Uses `pointer-events: none` while hidden so it never blocks page interaction.
+
+### Verification
+- ✅ Verified via `testing_agent_v3` (iteration_20): 100% pass.
+- ✅ Confirmed no regressions to:
+  - Quick-actions capsule (still persistent)
+  - Mobile drawer
+  - Collapsible selector behavior and hover highlight
   - Active-scroll tracking
-  - Lenis smooth scrolling
   - Calendly popups
-  - Services expand/collapse
 
 ---
 
@@ -262,13 +297,16 @@
 - ✅ Floating brand mark removed.
 - ✅ “Let’s Connect” CTA is more noticeable (border + pulse) and remains fully usable.
 - ✅ Desktop nav rail behaves as a collapsible selector with polished animations and hover/focus highlights.
+- ✅ Navigation redundancy removed.
+- ✅ Desktop nav rail auto-hides on idle and reappears on any scroll activity.
 
 ### Admin site
 - ✅ No changes required; all previously delivered Round 8 functionality remains stable.
 
 ### Testing
-- ✅ `testing_agent_v3` passed for Round 9:
-  - `/app/test_reports/iteration_19.json`: 100% pass (frontend-only)
+- ✅ `testing_agent_v3` passed:
+  - `/app/test_reports/iteration_19.json`: 100% pass (Round 9)
+  - `/app/test_reports/iteration_20.json`: 100% pass (Round 10)
 
 ---
 
@@ -304,11 +342,13 @@
   - `/app/frontend/src/pages/admin/AdminLogin.js` (username-friendly login)
   - `/app/frontend/src/App.js` (routes + ThemeInjector/AnalyticsProvider)
 
-### Round 9 (delivered)
+### Rounds 9–10 (delivered)
 - Public nav + CTA polish:
   - `/app/frontend/src/components/site/SiteNav.js`
     - Removed `site-header-brand`
-    - Added collapsible selector behavior for desktop rail
+    - Collapsible selector behavior for desktop rail
+    - Removed redundant "View Work" quick action
+    - Added desktop rail auto-hide/show on scroll idle
   - `/app/frontend/src/components/connect/FloatingConnectButton.js`
     - Added border + pulse animation
 
@@ -320,3 +360,4 @@
 - `/app/test_reports/iteration_17.json`: 100% pass (Beyond the Work carousel placement + Thoughts hover contrast)
 - `/app/test_reports/iteration_18.json`: 100% pass (Round 8 Admin Overhaul: users + analytics + appearance + navigation + header branding + regressions)
 - `/app/test_reports/iteration_19.json`: 100% pass (Round 9: brand mark removal + connect pulse + collapsible desktop rail)
+- `/app/test_reports/iteration_20.json`: 100% pass (Round 10: nav redundancy fix + desktop rail auto-hide/show)
