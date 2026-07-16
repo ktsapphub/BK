@@ -1,4 +1,4 @@
-# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–10)
+# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–11)
 
 ## Objectives
 
@@ -92,6 +92,16 @@
    - Implemented with `navVisible` state + `revealNav()` and a rAF-throttled passive scroll listener; uses a ref-tracked expanded flag to avoid stale-closure timer bugs.
    - Scope: **desktop rail only**; quick-actions capsule and mobile nav remain persistently visible.
 
+### Round 11: Thoughts label fill color + Connect button depth/shadow — COMPLETED
+39) **Thoughts category filter chip fill color fix**:
+   - Replaced the active category chip’s flat blue fill (`bg-[var(--surface-blue)]`) with an **alternating gray/charcoal palette** (4 shades: `#4B5563`, `#374151`, `#5B6472`, `#6B7280`).
+   - Applied via inline style `backgroundColor` based on category index.
+   - Goal: reduce “too much blue” and create subtle visual variation.
+
+40) **Floating “Let’s Connect” pulse depth upgrade**:
+   - Upgraded the button elevation to a **layered shadow stack** (glossy inset top highlight + soft drop shadow).
+   - Converted the pulse from a flat filled disc to a **glowing ring/halo** (box-shadow-based) while preserving the same `animate-ping` timing.
+
 ---
 
 ## Implementation Steps
@@ -115,7 +125,7 @@
 
 ---
 
-### Phase 3: Additional Features / Follow-ups — Rounds 9–10 COMPLETED
+### Phase 3: Additional Features / Follow-ups — Rounds 9–11 COMPLETED
 
 ## Round 8 — Admin Panel Overhaul (Go-live readiness) — COMPLETED
 
@@ -277,17 +287,32 @@
 
 ### Verification
 - ✅ Verified via `testing_agent_v3` (iteration_20): 100% pass.
-- ✅ Confirmed no regressions to:
-  - Quick-actions capsule (still persistent)
-  - Mobile drawer
-  - Collapsible selector behavior and hover highlight
-  - Active-scroll tracking
-  - Calendly popups
+
+---
+
+## Round 11 — Visual Polish: Thoughts chips + Connect depth — COMPLETED
+
+### What changed
+**A) Thoughts category chip fill color**
+- ✅ Updated `/app/frontend/src/components/rooms/ThoughtsRoom.js`:
+  - Active category chip fill is no longer brand-blue.
+  - Uses a 4-tone neutral palette and alternates by category index.
+
+**B) Connect button depth + pulse realism**
+- ✅ Updated `/app/frontend/src/components/connect/FloatingConnectButton.js`:
+  - Upgraded elevation with layered shadows.
+  - Pulse is now a glowing halo ring (box-shadow based) rather than a flat filled disc.
+
+### Verification
+- ✅ Verified via `testing_agent_v3` (iteration_21): **95% pass**.
+  - Requested fixes passed cleanly.
+  - One **LOW severity** pre-existing note was flagged about theme color swapping in automated detection; the theme detection logic was not modified in Round 11, and this swap behavior previously passed 100% in iterations 15–20.
 
 ---
 
 ## Next Actions
-- No pending tasks in this round. Await new go-live requests (DNS/Render deploy checklist, backups, security hardening, admin audit log, etc.).
+- No pending tasks in this round.
+- Optional follow-up: if the Connect button dark/light color swapping ever shows inconsistencies in real browsing, investigate `FloatingConnectButton.updateTheme()` elementFromPoint lookup for edge cases (e.g., overlays, dialog layers, or sections without `[data-theme-dark]`).
 
 ---
 
@@ -299,6 +324,8 @@
 - ✅ Desktop nav rail behaves as a collapsible selector with polished animations and hover/focus highlights.
 - ✅ Navigation redundancy removed.
 - ✅ Desktop nav rail auto-hides on idle and reappears on any scroll activity.
+- ✅ Thoughts category active chip fill is no longer overly blue (now neutral alternating grays).
+- ✅ Connect CTA has improved depth + realistic halo pulse.
 
 ### Admin site
 - ✅ No changes required; all previously delivered Round 8 functionality remains stable.
@@ -307,6 +334,7 @@
 - ✅ `testing_agent_v3` passed:
   - `/app/test_reports/iteration_19.json`: 100% pass (Round 9)
   - `/app/test_reports/iteration_20.json`: 100% pass (Round 10)
+  - `/app/test_reports/iteration_21.json`: 95% pass (Round 11; requested changes passed, 1 low-severity pre-existing flag)
 
 ---
 
@@ -342,7 +370,7 @@
   - `/app/frontend/src/pages/admin/AdminLogin.js` (username-friendly login)
   - `/app/frontend/src/App.js` (routes + ThemeInjector/AnalyticsProvider)
 
-### Rounds 9–10 (delivered)
+### Rounds 9–11 (delivered)
 - Public nav + CTA polish:
   - `/app/frontend/src/components/site/SiteNav.js`
     - Removed `site-header-brand`
@@ -350,7 +378,11 @@
     - Removed redundant "View Work" quick action
     - Added desktop rail auto-hide/show on scroll idle
   - `/app/frontend/src/components/connect/FloatingConnectButton.js`
-    - Added border + pulse animation
+    - Added border + pulsing animation
+    - Upgraded depth (layered shadows)
+    - Pulse changed to halo ring glow
+  - `/app/frontend/src/components/rooms/ThoughtsRoom.js`
+    - Active category chip fill changed from blue to alternating neutral palette
 
 ---
 
@@ -361,3 +393,4 @@
 - `/app/test_reports/iteration_18.json`: 100% pass (Round 8 Admin Overhaul: users + analytics + appearance + navigation + header branding + regressions)
 - `/app/test_reports/iteration_19.json`: 100% pass (Round 9: brand mark removal + connect pulse + collapsible desktop rail)
 - `/app/test_reports/iteration_20.json`: 100% pass (Round 10: nav redundancy fix + desktop rail auto-hide/show)
+- `/app/test_reports/iteration_21.json`: 95% pass (Round 11: Thoughts active chip neutral fills + Connect depth/halo pulse; low-severity pre-existing note flagged)
