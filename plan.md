@@ -1,4 +1,4 @@
-# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–8)
+# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–9)
 
 ## Objectives
 
@@ -50,7 +50,7 @@
   26) Ensure the **Beyond the Work** carousel sits **below** the header+text+image grid (full-width), not nested in the text column.
   27) Fix **blue-on-blue hover/links** readability in deep_royal_blue rooms by making link/label hover colors theme-aware (white/light on dark rooms).
 
-### New Major Phase (Round 8): Full Admin Panel Overhaul for go-live on **brettonkey.com**
+### New Major Phase (Round 8): Full Admin Panel Overhaul for go-live on **brettonkey.com** — COMPLETED
 - Build and/or extend a self-contained admin CMS at `/admin` with:
   28) **Multi-user admin accounts** (all full access; no roles).
       - Seed primary credentials: **username `bkey` / password `adm!np1`** (stored hashed).
@@ -73,12 +73,17 @@
 - Ensure the admin system remains deployable and reliable on Render (not Emergent-only).
 - **MANDATORY**: After significant feature work, validate via `testing_agent_v3`.
 
+### Round 9: Nav polish + Connect button pulse + brand mark removal — COMPLETED
+34) Remove the floating brand mark (“Bretton J. Key” scroll/brand) from the public site.
+35) Make the floating **“Let’s Connect”** button more prominent with a border + pulsing animation.
+36) Redesign the desktop left navigation into a **collapsible selector** with animations and inner hover highlights.
+
 ---
 
 ## Implementation Steps
 
 ### Phase 1: POC (Core Verification of the UI Changes) — COMPLETED
-*(Already completed through iteration_17; keeping for historical traceability.)*
+*(Kept for historical traceability.)*
 
 **POC Status (Current)**
 - ✅ Original 4 UI polish items implemented and verified (iteration_8).
@@ -92,13 +97,13 @@
 ---
 
 ### Phase 2: V1 App Development (Finalize and Harden the UI Changes) — COMPLETED / STABLE
-- No new UI work requested beyond the Round 8 admin overhaul.
+- ✅ Round 8 admin overhaul implemented and verified (iteration_18).
 
 ---
 
-### Phase 3: Additional Features / Follow-ups — Round 8 COMPLETED
+### Phase 3: Additional Features / Follow-ups — Round 9 COMPLETED
 
-## Round 8 — Admin Panel Overhaul (Go-live readiness)
+## Round 8 — Admin Panel Overhaul (Go-live readiness) — COMPLETED
 
 ### User stories (Round 8)
 1. As Bretton, I can go to `https://brettonkey.com/admin` and log in with a username/password.
@@ -205,16 +210,9 @@
   - `/admin/navigation`, `/admin/appearance`, `/admin/analytics`, `/admin/users`
 
 **F) Header / Footer / Forms editability**
-- ✅ Header/branding:
-  - SiteNav now renders a top-left brand mark:
-    - uses `settings.site_logo_url` if set
-    - otherwise falls back to `settings.site_title`
-    - clickable back-to-top
-- ✅ Footer:
-  - remains editable via Settings (`footer_text`, social links)
-- ✅ Forms:
-  - confirmed editable via Settings for headings/copy/consent/privacy URL
-  - deliberate constraint: reason dropdown options remain fixed to preserve ConnectForm conditional logic
+- ✅ Footer remains editable via Settings (`footer_text`, social links).
+- ✅ Forms confirmed editable via Settings for headings/copy/consent/privacy URL.
+- ✅ Deliberate constraint: Reason dropdown options remain fixed to preserve ConnectForm conditional logic.
 
 ### Bug found during verification (and fixed)
 - ✅ AdminLogin used HTML5 `type="email"` which blocked non-email usernames like `bkey`.
@@ -222,35 +220,55 @@
 
 ---
 
-## Next Actions (Round 8) — COMPLETED
-1. ✅ Implement backend user CRUD + analytics endpoints + GlobalSettingsUpdate extensions.
-2. ✅ Implement admin pages: Users / Analytics / Navigation / Appearance.
-3. ✅ Implement public site ThemeInjector + AnalyticsProvider.
-4. ✅ Seed `bkey / adm!np1` admin user.
-5. ✅ Run `testing_agent_v3` (iteration_18) covering all Round 8 functionality + regressions.
+## Round 9 — Public Navigation + Connect CTA Polish — COMPLETED
+
+### What changed
+**A) Remove floating brand mark**
+- ✅ Removed the fixed top-left `site-header-brand` element entirely from `SiteNav.js`.
+
+**B) Floating “Let’s Connect” CTA: border + pulsing emphasis**
+- ✅ Updated `FloatingConnectButton.js`:
+  - Added a themed **2px border** (white/70 on dark rooms, brand-blue/60 on light rooms).
+  - Added a continuous **pulse / ping** animation behind the button (`animate-ping`, ~2.4s, infinite) with `pointer-events: none` to avoid blocking clicks.
+
+**C) Desktop nav rail: collapsible selector with animated highlights**
+- ✅ Updated `SiteNav.js` desktop rail:
+  - Collapsed by default (minimal dots; only active section’s label shown).
+  - Expands on hover/focus into a **glass panel** (backdrop blur) with fade/scale animation.
+  - All labels fade/slide into view in expanded state.
+  - Added an **animated inner highlight pill** behind hovered/focused item (Framer Motion shared `layoutId`).
+  - Kept keyboard navigation (Tab expands; Arrow Up/Down/Home/End still works).
+
+### Verification
+- ✅ Verified via `testing_agent_v3` (iteration_19): 100% pass.
+- ✅ Confirmed no regressions to:
+  - Mobile nav drawer
+  - Desktop quick-actions capsule
+  - Active-scroll tracking
+  - Lenis smooth scrolling
+  - Calendly popups
+  - Services expand/collapse
+
+---
+
+## Next Actions
+- No pending tasks in this round. Await new go-live requests (DNS/Render deploy checklist, backups, security hardening, admin audit log, etc.).
 
 ---
 
 ## Success Criteria — MET
 
 ### Public site
-- ✅ Theme variables can be overridden from CMS settings and persist across reloads.
-- ✅ GA loads only when configured.
-- ✅ Built-in analytics records pageviews on every route view.
-- ✅ Header shows logo when provided; otherwise shows title.
+- ✅ Floating brand mark removed.
+- ✅ “Let’s Connect” CTA is more noticeable (border + pulse) and remains fully usable.
+- ✅ Desktop nav rail behaves as a collapsible selector with polished animations and hover/focus highlights.
 
 ### Admin site
-- ✅ `/admin` is reachable only after login.
-- ✅ Multi-user accounts supported; all users have full access.
-- ✅ Users page supports create/list/delete with safety checks.
-- ✅ Navigation page supports reorder/rename/show-hide.
-- ✅ Appearance page supports presets + color pickers + font pickers, persisted in global settings and reflected on public site.
-- ✅ Analytics page shows charts and aggregates.
-- ✅ Media upload continues to work and can be used for branding and section images.
+- ✅ No changes required; all previously delivered Round 8 functionality remains stable.
 
 ### Testing
-- ✅ `testing_agent_v3` passed for Round 8:
-  - `/app/test_reports/iteration_18.json`: 100% pass (backend 22/22 + admin UI + public site regression)
+- ✅ `testing_agent_v3` passed for Round 9:
+  - `/app/test_reports/iteration_19.json`: 100% pass (frontend-only)
 
 ---
 
@@ -271,7 +289,7 @@
 - Backend:
   - `/app/backend/models.py` (UserCreate, PageviewCreate, GlobalSettingsUpdate fields)
   - `/app/backend/server.py` (users endpoints, analytics endpoints)
-  - `/app/backend/auth_utils.py` (JWT + bcrypt + seed logic)
+  - `/app/backend/auth_utils.py` (JWT + bcrypt)
 - Frontend:
   - `/app/frontend/src/lib/api.js` (new endpoints)
   - `/app/frontend/src/lib/analytics.js` (new)
@@ -284,8 +302,15 @@
   - `/app/frontend/src/pages/admin/AdminLayout.js` (sidebar updates)
   - `/app/frontend/src/pages/admin/AdminSettings.js` (GA field)
   - `/app/frontend/src/pages/admin/AdminLogin.js` (username-friendly login)
-  - `/app/frontend/src/components/site/SiteNav.js` (public brand mark)
-  - `/app/frontend/src/App.js` (routes + providers)
+  - `/app/frontend/src/App.js` (routes + ThemeInjector/AnalyticsProvider)
+
+### Round 9 (delivered)
+- Public nav + CTA polish:
+  - `/app/frontend/src/components/site/SiteNav.js`
+    - Removed `site-header-brand`
+    - Added collapsible selector behavior for desktop rail
+  - `/app/frontend/src/components/connect/FloatingConnectButton.js`
+    - Added border + pulse animation
 
 ---
 
@@ -294,3 +319,4 @@
 - `/app/test_reports/iteration_16.json`: 100% pass (section reorder + merged Beyond the Work room + nav order)
 - `/app/test_reports/iteration_17.json`: 100% pass (Beyond the Work carousel placement + Thoughts hover contrast)
 - `/app/test_reports/iteration_18.json`: 100% pass (Round 8 Admin Overhaul: users + analytics + appearance + navigation + header branding + regressions)
+- `/app/test_reports/iteration_19.json`: 100% pass (Round 9: brand mark removal + connect pulse + collapsible desktop rail)
