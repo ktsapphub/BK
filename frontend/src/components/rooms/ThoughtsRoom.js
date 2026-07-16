@@ -9,6 +9,14 @@ import { resolveVideoEmbed } from "@/lib/mediaEmbed";
 
 const PAGE_SIZE = 5;
 
+// Alternating neutral fill tones for the active category chip — replaces a
+// flat brand-blue fill (which read as too blue/monotonous on this room) with
+// a rotating set of muted grays so each category feels distinct.
+const CATEGORY_FILL_PALETTE = ["#4B5563", "#374151", "#5B6472", "#6B7280"];
+function categoryFillColor(index) {
+  return CATEGORY_FILL_PALETTE[index % CATEGORY_FILL_PALETTE.length];
+}
+
 function ArticleMedia({ article }) {
   const embed = resolveVideoEmbed(article.video_url);
   if (embed) {
@@ -107,15 +115,16 @@ export default function ThoughtsRoom({ section, thoughts }) {
 
         {categories.length > 2 && (
           <div className="flex flex-wrap gap-2 mb-8" data-testid="thoughts-category-filter">
-            {categories.map((cat) => (
+            {categories.map((cat, idx) => (
               <button
                 key={cat}
                 onClick={() => changeCategory(cat)}
                 data-testid={`thoughts-category-${cat.toLowerCase().replace(/\s+/g, "-")}`}
                 aria-pressed={category === cat}
+                style={category === cat ? { backgroundColor: categoryFillColor(idx) } : undefined}
                 className={`focus-ring font-display text-xs uppercase tracking-wide rounded-full px-3 py-1.5 border transition-colors ${
                   category === cat
-                    ? "bg-[var(--surface-blue)] text-white border-transparent"
+                    ? "text-white border-transparent"
                     : t.isDark
                     ? "border-white/25 text-[var(--text-on-blue-muted)] hover:bg-white/15 hover:text-white"
                     : "border-[var(--border-blue)] hover:bg-[var(--background-blue-soft)]"
