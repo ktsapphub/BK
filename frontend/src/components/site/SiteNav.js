@@ -19,6 +19,8 @@ export default function SiteNav({ navItems, sections, settings }) {
   const [activeId, setActiveId] = useState(null);
   const [activeDark, setActiveDark] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [railExpanded, setRailExpanded] = useState(false);
+  const [hoveredId, setHoveredId] = useState(null);
   const itemRefs = useRef({});
   const progress = useScrollProgress();
 
@@ -110,29 +112,26 @@ export default function SiteNav({ navItems, sections, settings }) {
 
   return (
     <>
-      {/* Site brand mark — logo image if configured via Admin > Appearance, else site title text */}
-      <a
-        href="#hero"
-        onClick={(e) => {
-          e.preventDefault();
-          goTo(navItems[0]?.section_id || "hero");
-        }}
-        data-testid="site-header-brand"
-        aria-label={settings?.site_title ? `${settings.site_title} — back to top` : "Back to top"}
-        className="focus-ring fixed left-6 top-6 z-40 flex items-center gap-2"
-      >
-        {settings?.site_logo_url ? (
-          <img src={settings.site_logo_url} alt={settings?.site_title || "Site logo"} className="h-9 w-auto max-w-[160px] object-contain" />
-        ) : settings?.site_title ? (
-          <span className={`font-display text-sm font-bold uppercase tracking-[0.08em] transition-colors duration-300 ${activeDark ? "text-white" : "text-[var(--text-primary)]"}`}>
-            {settings.site_title}
-          </span>
-        ) : null}
-      </a>
-
-      {/* Desktop: vertical chapter index + edge rail progress line */}
+      {/* Desktop: collapsible chapter-index selector + edge rail progress line.
+          Collapsed by default (dots only); hovering/focusing the rail expands
+          it into a glass panel that reveals all labels, and each item shows
+          an animated inner highlight pill while hovered/focused. */}
       <div className="hidden lg:block fixed left-6 top-1/2 -translate-y-1/2 z-40">
-        <div className="relative pl-4">
+        <div
+          className="relative pl-4"
+          onMouseEnter={() => setRailExpanded(true)}
+          onMouseLeave={() => {
+            setRailExpanded(false);
+            setHoveredId(null);
+          }}
+          onFocus={() => setRailExpanded(true)}
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+              setRailExpanded(false);
+              setHoveredId(null);
+            }
+          }}
+        >
           <div
             aria-hidden="true"
             className={`absolute inset-y-0 left-0 w-[2px] rounded-full transition-colors duration-300 ${
@@ -147,9 +146,30 @@ export default function SiteNav({ navItems, sections, settings }) {
             style={{ height: `${Math.round(progress * 100)}%` }}
             data-testid="site-nav-progress-line"
           />
-          <nav data-testid="site-desktop-nav" aria-label="Room navigation" className="flex flex-col gap-3.5">
+
+          {/* Glass panel — fades/scales in behind the labels when the selector expands */}
+          <motion.div
+            aria-hidden="true"
+            data-testid="site-nav-rail-panel"
+            className={`absolute -left-2.5 -right-4 -top-3 -bottom-3 rounded-[24px] pointer-events-none border ${
+              activeDark ? "bg-white/10 border-white/12" : "bg-[var(--background-primary)]/95 border-[var(--border-primary)]"
+            }`}
+            style={{ backdropFilter: "blur(14px)" }}
+            initial={false}
+            animate={{ opacity: railExpanded ? 1 : 0, scale: railExpanded ? 1 : 0.96 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          />
+
+          <nav
+            data-testid="site-desktop-nav"
+            data-expanded={railExpanded}
+            aria-label="Room navigation"
+            className="relative flex flex-col gap-3.5 py-1"
+          >
             {navItems.map((item, idx) => {
               const isActive = activeId === item.section_id;
+              const isHovered = hoveredId === item.section_id;
+              const showLabel = railExpanded || isActive;
               return (
                 <a
                   key={item.id}
@@ -160,12 +180,25 @@ export default function SiteNav({ navItems, sections, settings }) {
                     goTo(item.section_id);
                   }}
                   onKeyDown={(e) => handleRailKeyDown(e, idx)}
+                  onMouseEnter={() => setHoveredId(item.section_id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  onFocus={() => setHoveredId(item.section_id)}
+                  onBlur={() => setHoveredId((cur) => (cur === item.section_id ? null : cur))}
                   data-testid="site-nav-item"
                   aria-current={isActive ? "true" : undefined}
-                  className="focus-ring group relative flex items-center gap-3.5 py-0.5"
+                  className="focus-ring group relative flex items-center gap-3.5 rounded-full py-1 pr-3"
                 >
+                  {isHovered && (
+                    <motion.span
+                      layoutId="site-nav-hover-highlight"
+                      data-testid="site-nav-hover-highlight"
+                      aria-hidden="true"
+                      className={`absolute inset-0 rounded-full ${activeDark ? "bg-white/15" : "bg-[var(--background-blue-soft)]"}`}
+                      transition={{ type: "spring", stiffness: 500, damping: 32 }}
+                    />
+                  )}
                   <span
-                    className={`relative h-1.5 w-1.5 rounded-full shrink-0 transition-all duration-300 ${
+                    className={`relative z-10 h-1.5 w-1.5 rounded-full shrink-0 transition-all duration-300 ${
                       isActive
                         ? activeDark
                           ? "bg-white scale-[1.4]"
@@ -185,12 +218,14 @@ export default function SiteNav({ navItems, sections, settings }) {
                       />
                     )}
                   </span>
-                  <span
-                    className={`relative font-display text-[11px] uppercase tracking-[0.08em] whitespace-nowrap transition-all duration-300 ${
+                  <motion.span
+                    className={`relative z-10 font-display text-[11px] uppercase tracking-[0.08em] whitespace-nowrap ${
                       isActive
-                        ? `${activeDark ? "text-white" : "text-[var(--surface-blue)]"} font-semibold translate-x-0.5 opacity-100`
-                        : `${activeDark ? "text-white/55" : "text-[var(--text-muted)]"} font-normal opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100`
+                        ? `${activeDark ? "text-white" : "text-[var(--surface-blue)]"} font-semibold`
+                        : `${activeDark ? "text-white/70" : "text-[var(--text-muted)]"} font-normal`
                     }`}
+                    animate={{ opacity: showLabel ? 1 : 0, x: showLabel ? 0 : -6 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
                   >
                     {item.label}
                     <span
@@ -199,7 +234,7 @@ export default function SiteNav({ navItems, sections, settings }) {
                         activeDark ? "bg-white" : "bg-[var(--surface-blue)]"
                       }`}
                     />
-                  </span>
+                  </motion.span>
                 </a>
               );
             })}

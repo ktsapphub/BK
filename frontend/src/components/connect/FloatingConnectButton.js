@@ -71,18 +71,24 @@ export default function FloatingConnectButton() {
           aria-expanded={open}
           aria-label="Let's Connect — open contact form"
           data-testid="floating-connect-button"
-          className={`fixed z-[60] inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-3.5 font-display text-sm font-semibold shadow-[var(--shadow-float)] transition-colors duration-200 focus-ring ${
+          className={`fixed z-[60] inline-flex min-h-11 items-center gap-2 rounded-full border-2 px-5 py-3.5 font-display text-sm font-semibold shadow-[var(--shadow-float)] transition-colors duration-200 focus-ring ${
             isDark
-              ? "bg-white text-[var(--surface-blue-dark)] hover:bg-[var(--background-blue-soft)]"
-              : "bg-[var(--surface-blue)] text-white hover:bg-[var(--surface-blue-dark)]"
+              ? "bg-white text-[var(--surface-blue-dark)] border-white/70 hover:bg-[var(--background-blue-soft)]"
+              : "bg-[var(--surface-blue)] text-white border-[var(--surface-blue)]/60 hover:bg-[var(--surface-blue-dark)]"
           }`}
           style={{
             right: "max(24px, env(safe-area-inset-right))",
             bottom: "max(24px, env(safe-area-inset-bottom))",
           }}
         >
-          <MessageCircle className="h-4 w-4" aria-hidden="true" />
-          Let's Connect
+          <span
+            aria-hidden="true"
+            data-testid="floating-connect-button-pulse"
+            className={`absolute inset-0 rounded-full pointer-events-none animate-ping ${isDark ? "bg-white/50" : "bg-[var(--surface-blue)]/60"}`}
+            style={{ animationDuration: "2.4s" }}
+          />
+          <MessageCircle className="relative h-4 w-4" aria-hidden="true" />
+          <span className="relative">Let's Connect</span>
         </button>
       )}
 
