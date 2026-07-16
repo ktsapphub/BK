@@ -1,14 +1,6 @@
 [
   {
-    "content": "Backend: extend models.py (UserCreate, PageviewCreate, GlobalSettingsUpdate theme/GA/logo fields)",
-    "status": "completed"
-  },
-  {
-    "content": "Backend: add Users CRUD endpoints to server.py",
-    "status": "completed"
-  },
-  {
-    "content": "Backend: add analytics pageview + summary endpoints to server.py",
+    "content": "Backend: Users CRUD, Analytics endpoints, GlobalSettings extensions",
     "status": "completed"
   },
   {
@@ -16,47 +8,15 @@
     "status": "completed"
   },
   {
-    "content": "Frontend: update lib/api.js with new endpoints",
+    "content": "Frontend: AdminUsers, AdminAnalytics, AdminNavigation, AdminAppearance pages",
     "status": "completed"
   },
   {
-    "content": "Frontend: create lib/analytics.js + AnalyticsProvider + ThemeInjector",
+    "content": "Frontend: ThemeInjector, AnalyticsProvider, SiteNav brand mark",
     "status": "completed"
   },
   {
-    "content": "Frontend: extend index.css Google Fonts import for font picker options",
+    "content": "Testing agent verification (iteration_18) + fix AdminLogin username bug",
     "status": "completed"
-  },
-  {
-    "content": "Frontend: build AdminUsers.js page",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend: build AdminAnalytics.js page",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend: build AdminNavigation.js page",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend: build AdminAppearance.js page (presets + color pickers + fonts + logo)",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend: update AdminSettings.js with GA field, AdminLayout.js sidebar, App.js routes+providers",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend: update SiteNav.js to show logo/brand header mark",
-    "status": "completed"
-  },
-  {
-    "content": "Compile check + restart services + smoke test",
-    "status": "completed"
-  },
-  {
-    "content": "Call testing_agent_v3 for full verification",
-    "status": "in_progress"
   }
 ]
