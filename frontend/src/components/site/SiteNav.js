@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Menu, X, Briefcase, Download, Linkedin, CalendarClock } from "lucide-react";
+import { Menu, X, Download, Linkedin, CalendarClock } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { scrollToElement } from "@/lib/lenisSingleton";
@@ -15,14 +15,50 @@ import { openCalendlyPopup } from "@/lib/calendly";
 //   large tap targets, a visible close control, and the same quick actions.
 // - Colors automatically adapt to the theme (light/dark) of whichever room
 //   is currently in view, read from each room's `data-theme-dark` attribute.
-export default function SiteNav({ navItems, sections, settings }) {
+export default function SiteNav({ navItems, settings }) {
   const [activeId, setActiveId] = useState(null);
   const [activeDark, setActiveDark] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [railExpanded, setRailExpanded] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
+  const [navVisible, setNavVisible] = useState(true);
   const itemRefs = useRef({});
+  const idleTimerRef = useRef(null);
+  const railExpandedRef = useRef(false);
   const progress = useScrollProgress();
+
+  useEffect(() => {
+    railExpandedRef.current = railExpanded;
+  }, [railExpanded]);
+
+  // Reveals the desktop nav rail and (re)starts the idle timer that hides it
+  // again after a short pause — unless the rail is currently expanded/focused,
+  // in which case we leave it visible for the user browsing it.
+  const revealNav = useCallback(() => {
+    setNavVisible(true);
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      if (!railExpandedRef.current) setNavVisible(false);
+    }, 1400);
+  }, []);
+
+  useEffect(() => {
+    revealNav();
+    let raf = null;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        revealNav();
+        raf = null;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [revealNav]);
 
   useEffect(() => {
     if (!navItems?.length) return;
@@ -71,19 +107,6 @@ export default function SiteNav({ navItems, sections, settings }) {
 
   const persistentActions = useMemo(() => {
     const list = [];
-    const projectsSection = sections?.find((s) => s.section_type === "projects");
-    if (projectsSection) {
-      list.push({
-        key: "view-work",
-        label: "View Work",
-        icon: Briefcase,
-        href: `#${projectsSection.id}`,
-        onClick: (e) => {
-          e.preventDefault();
-          goTo(projectsSection.id);
-        },
-      });
-    }
     if (settings?.resume_pdf_url) {
       list.push({ key: "download-resume", label: "Download Résumé", icon: Download, href: settings.resume_pdf_url, external: true });
     }
@@ -106,7 +129,7 @@ export default function SiteNav({ navItems, sections, settings }) {
       });
     }
     return list;
-  }, [sections, settings, goTo]);
+  }, [settings]);
 
   if (!navItems?.length) return null;
 
@@ -115,8 +138,19 @@ export default function SiteNav({ navItems, sections, settings }) {
       {/* Desktop: collapsible chapter-index selector + edge rail progress line.
           Collapsed by default (dots only); hovering/focusing the rail expands
           it into a glass panel that reveals all labels, and each item shows
-          an animated inner highlight pill while hovered/focused. */}
-      <div className="hidden lg:block fixed left-6 top-1/2 -translate-y-1/2 z-40">
+          an animated inner highlight pill while hovered/focused. The whole
+          rail fades out after a short idle period and reappears the moment
+          the user scrolls (up or down) or hovers/focuses it again. */}
+      <motion.div
+        className="hidden lg:block fixed left-6 top-1/2 -translate-y-1/2 z-40"
+        animate={{ opacity: navVisible ? 1 : 0, x: navVisible ? 0 : -14 }}
+        transition={{ duration: 0.35, ease: "easeInOut" }}
+        style={{ pointerEvents: navVisible ? "auto" : "none" }}
+        data-testid="site-desktop-nav-wrapper"
+        data-nav-visible={navVisible}
+        onMouseEnter={revealNav}
+        onFocus={revealNav}
+      >
         <div
           className="relative pl-4"
           onMouseEnter={() => setRailExpanded(true)}
@@ -240,7 +274,7 @@ export default function SiteNav({ navItems, sections, settings }) {
             })}
           </nav>
         </div>
-      </div>
+      </motion.div>
 
       {/* Desktop: persistent quick-actions capsule */}
       {persistentActions.length > 0 && (
