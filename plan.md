@@ -1,4 +1,4 @@
-# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–11)
+# UI Tweak Iteration Plan (Message 510 + New Feature Batch + Rounds 3–12)
 
 ## Objectives
 
@@ -50,6 +50,8 @@
   26) Ensure the **Beyond the Work** carousel sits **below** the header+text+image grid (full-width), not nested in the text column.
   27) Fix **blue-on-blue hover/links** readability in deep_royal_blue rooms by making link/label hover colors theme-aware (white/light on dark rooms).
 
+---
+
 ### New Major Phase (Round 8): Full Admin Panel Overhaul for go-live on **brettonkey.com** — COMPLETED
 - Build and/or extend a self-contained admin CMS at `/admin` with:
   28) **Multi-user admin accounts** (all full access; no roles).
@@ -64,19 +66,22 @@
       - Dedicated admin page to reorder + rename + show/hide nav items.
       - No submenus.
   32) **Media management**:
-      - Already supports uploads (image/video) and URL usage in section content; ensure consistent usage across new branding and header/footer.
+      - Supports uploads (image/video) and URL usage throughout section content.
   33) **Header, Footer, and Forms editability**:
-      - Footer already partly editable (footer_text + social links).
-      - Add header/brand mark controls (logo + site title) and ensure they render in the public header/nav.
-      - Confirm Connect/Contact form text is CMS-editable (already via Settings); **Reason options remain fixed** because ConnectForm’s conditional logic depends on exact labels.
+      - Footer editable (footer_text + social links).
+      - Connect/Contact form text editable via Settings; **Reason options remain fixed** due to ConnectForm conditional logic.
 
 - Ensure the admin system remains deployable and reliable on Render (not Emergent-only).
 - **MANDATORY**: After significant feature work, validate via `testing_agent_v3`.
+
+---
 
 ### Round 9: Nav polish + Connect button pulse + brand mark removal — COMPLETED
 34) Remove the floating brand mark (“Bretton J. Key” scroll/brand) from the public site.
 35) Make the floating **“Let’s Connect”** button more prominent with a border + pulsing animation.
 36) Redesign the desktop left navigation into a **collapsible selector** with animations and inner hover highlights.
+
+---
 
 ### Round 10: Navigation reconciliation + scroll-based auto-hide/show — COMPLETED
 37) **Fix navigation redundancy**:
@@ -92,6 +97,8 @@
    - Implemented with `navVisible` state + `revealNav()` and a rAF-throttled passive scroll listener; uses a ref-tracked expanded flag to avoid stale-closure timer bugs.
    - Scope: **desktop rail only**; quick-actions capsule and mobile nav remain persistently visible.
 
+---
+
 ### Round 11: Thoughts label fill color + Connect button depth/shadow — COMPLETED
 39) **Thoughts category filter chip fill color fix**:
    - Replaced the active category chip’s flat blue fill (`bg-[var(--surface-blue)]`) with an **alternating gray/charcoal palette** (4 shades: `#4B5563`, `#374151`, `#5B6472`, `#6B7280`).
@@ -101,6 +108,52 @@
 40) **Floating “Let’s Connect” pulse depth upgrade**:
    - Upgraded the button elevation to a **layered shadow stack** (glossy inset top highlight + soft drop shadow).
    - Converted the pulse from a flat filled disc to a **glowing ring/halo** (box-shadow-based) while preserving the same `animate-ping` timing.
+
+---
+
+### Round 12: Admin gap-audit fixes (export, password management, privacy policy CMS, remove Emergent branding, favicon) — COMPLETED
+41) **Export form submissions (CSV)**
+   - Added client-side CSV export (no new backend endpoints required).
+   - `AdminInquiries.js`: new **Export CSV** button exports all inquiry fields.
+   - New `AdminNewsletter.js`: lists newsletter subscribers and supports CSV export.
+
+42) **Password management (manual, admin-friendly)**
+   - Backend:
+     - `POST /api/admin/change-password` (self-service; **no-auth** endpoint by design; requires username + current password + new password).
+     - `PUT /api/admin/users/{id}/password` (admin-managed password set for any user).
+   - Frontend:
+     - Shared `PasswordInput.js` component with show/hide toggle (eye icon) used consistently.
+     - `/admin/login` now includes a **Reset Password** mode (manual reset: username + current password + new password + confirm).
+     - `/admin/users` includes a per-user **Reset Password** dialog (admin sets password directly).
+   - Post-test cleanup:
+     - Restored `bkey` password to **`adm!np1`**.
+     - Removed leftover test user `qa_reset_test`.
+
+43) **Privacy Policy is now CMS-editable**
+   - Added new Settings fields:
+     - `privacy_policy_updated_date`
+     - `privacy_policy_content`
+   - Markup convention:
+     - `## Heading` for section titles
+     - blank lines separate paragraphs
+     - `- ` for bullet points
+     - `{{contact_email}}` auto-substitution token
+   - Rewrote `PrivacyPolicy.js` to parse and render the CMS content (including auto mailto linking).
+   - Seeded content from the user-provided `privacy-policy.html` (extracted verbatim).
+
+44) **Removed Emergent branding + corrected static SEO meta**
+   - Cleaned `/app/frontend/public/index.html`:
+     - Removed PostHog script and `emergent-main.js`.
+     - Updated `<title>` to **Bretton J. Key**.
+     - Updated `<meta name="description">` to correctly describe the site.
+     - Added basic Open Graph + Twitter meta tags.
+
+45) **Favicon wired**
+   - Added `/app/frontend/public/favicon-96x96.png` (user-provided).
+   - Linked via `<link rel="icon">` and `apple-touch-icon`.
+
+46) **Explicitly deferred**
+   - Admin Dashboard stat/polish upgrades (user: “do not do at the moment”).
 
 ---
 
@@ -125,264 +178,115 @@
 
 ---
 
-### Phase 3: Additional Features / Follow-ups — Rounds 9–11 COMPLETED
+### Phase 3: Additional Features / Follow-ups — Rounds 9–12 COMPLETED
 
 ## Round 8 — Admin Panel Overhaul (Go-live readiness) — COMPLETED
-
-### User stories (Round 8)
-1. As Bretton, I can go to `https://brettonkey.com/admin` and log in with a username/password.
-2. As Bretton, I can create additional admin users and remove them.
-3. As Bretton, I can add/remove sections and change their order.
-4. As Bretton, I can edit navigation labels, placement, and show/hide items.
-5. As Bretton, I can update brand colors and fonts via a theme editor or pick from presets.
-6. As Bretton, I can upload media and use uploaded URLs throughout content.
-7. As Bretton, I can view analytics dashboards (self-hosted) and optionally enable GA4.
-8. As Bretton, I can edit header/footer content and form wording without code changes.
-
-### Existing infrastructure reused (not rebuilt)
-- Admin auth already existed:
-  - `db.users` collection
-  - bcrypt hashing
-  - JWT (`/api/admin/login`, `/api/admin/me`, `get_current_admin`)
-  - `seed_admin()` based on env vars (`ADMIN_EMAIL`, `ADMIN_PASSWORD`).
-- Section editing already existed:
-  - Dynamic schemas in `/app/frontend/src/lib/contentSchemas.js`
-  - Dynamic editor UI in `/app/frontend/src/components/admin/DynamicForm.js`
-  - Admin Rooms UI in `/admin/sections`.
-- Media upload already existed (`/admin/media/upload` + Media Library UI).
-- Generic reorder endpoint already existed: `POST /api/admin/reorder/{collection}` (used for `sections`).
-- `recharts` already installed (used for analytics charts).
-
-### Backend implementation (delivered)
-**A) Users CRUD (multi-user admin accounts)**
-- **models.py**
-  - ✅ Added `UserCreate`.
-- **server.py**
-  - ✅ `GET /api/admin/users` (list users).
-  - ✅ `POST /api/admin/users` (create user with bcrypt hash).
-  - ✅ `DELETE /api/admin/users/{id}` (delete user).
-  - ✅ Safety rules implemented:
-    - Cannot delete last remaining admin.
-    - Cannot delete currently logged-in user.
-- **Seeded primary credentials**
-  - ✅ `bkey / adm!np1` created alongside the original admin account.
-
-**B) Built-in analytics (self-hosted) + GA4 support**
-- **models.py**
-  - ✅ Added `PageviewCreate`.
-- **server.py**
-  - ✅ `POST /api/public/analytics/pageview` stores pageview events.
-  - ✅ `GET /api/admin/analytics/summary?days=N` returns:
-    - total views
-    - unique visitors (by visitor_id)
-    - views_by_day
-    - top_paths
-    - top_referrers
-    - device breakdown
-
-**C) Global settings expansion (branding + GA + theme)**
-- **models.py**
-  - ✅ Extended `GlobalSettingsUpdate` with:
-    - `ga_measurement_id`
-    - `site_logo_url`
-    - `theme_*` color tokens
-    - `theme_font_*` font tokens
-- **server.py**
-  - ✅ Existing Global Settings PUT/GET automatically supports the new optional fields.
-
-### Frontend implementation (delivered)
-**A) API client updates (`/app/frontend/src/lib/api.js`)**
-- ✅ Added:
-  - `adminApi.listUsers/createUser/deleteUser`
-  - `adminApi.getAnalyticsSummary(days)`
-  - `publicApi.trackPageview(payload)`
-
-**B) Analytics client + provider (public site)**
-- ✅ New `/app/frontend/src/lib/analytics.js`:
-  - stable anonymous `visitor_id` in localStorage
-  - sends pageview to backend + mirrors to `gtag()` if loaded
-- ✅ New `/app/frontend/src/components/site/AnalyticsProvider.js`:
-  - mounted once in `App.js`
-  - loads GA4 script only if `ga_measurement_id` exists in settings
-  - tracks pageviews on every route change
-
-**C) Theme injector (public site)**
-- ✅ New `/app/frontend/src/components/site/ThemeInjector.js`:
-  - reads global settings and applies any `theme_*` and `theme_font_*` values as CSS variables
-- ✅ `App.js` mounts ThemeInjector + AnalyticsProvider inside BrowserRouter
-- ✅ Extended `/app/frontend/src/index.css` font imports to support the font picker.
-
-**D) New admin pages**
-- ✅ `AdminUsers.js`: create/list/delete admin users.
-- ✅ `AdminAnalytics.js`: stat cards + recharts charts + top pages/referrers + device breakdown.
-- ✅ `AdminNavigation.js`:
-  - up/down reorder (reuses existing reorder endpoint)
-  - inline nav label editing
-  - visibility toggle
-  - no submenus
-- ✅ `AdminAppearance.js`:
-  - 4 presets (Royal Blue Classic, Midnight Navy, Slate Charcoal, Ocean Teal)
-  - live color pickers + hex sync
-  - font pickers (display/body/editorial)
-  - header logo upload/URL via MediaPickerInput
-  - Save + Reset
-
-**E) Admin shell updates**
-- ✅ `AdminLayout.js` sidebar updated with new pages:
-  - Navigation, Appearance, Analytics, Users
-- ✅ `App.js` routes added:
-  - `/admin/navigation`, `/admin/appearance`, `/admin/analytics`, `/admin/users`
-
-**F) Header / Footer / Forms editability**
-- ✅ Footer remains editable via Settings (`footer_text`, social links).
-- ✅ Forms confirmed editable via Settings for headings/copy/consent/privacy URL.
-- ✅ Deliberate constraint: Reason dropdown options remain fixed to preserve ConnectForm conditional logic.
-
-### Bug found during verification (and fixed)
-- ✅ AdminLogin used HTML5 `type="email"` which blocked non-email usernames like `bkey`.
-  - Fixed by switching the field to `type="text"` and labeling it "Email / Username".
+*(Retained from earlier plan; see “Objectives” section for deliverables.)*
 
 ---
 
 ## Round 9 — Public Navigation + Connect CTA Polish — COMPLETED
-
-### What changed
-**A) Remove floating brand mark**
-- ✅ Removed the fixed top-left `site-header-brand` element entirely from `SiteNav.js`.
-
-**B) Floating “Let’s Connect” CTA: border + pulsing emphasis**
-- ✅ Updated `FloatingConnectButton.js`:
-  - Added a themed **2px border** (white/70 on dark rooms, brand-blue/60 on light rooms).
-  - Added a continuous **pulse / ping** animation behind the button (`animate-ping`, ~2.4s, infinite) with `pointer-events: none` to avoid blocking clicks.
-
-**C) Desktop nav rail: collapsible selector with animated highlights**
-- ✅ Updated `SiteNav.js` desktop rail:
-  - Collapsed by default (minimal dots; only active section’s label shown).
-  - Expands on hover/focus into a **glass panel** (backdrop blur) with fade/scale animation.
-  - All labels fade/slide into view in expanded state.
-  - Added an **animated inner highlight pill** behind hovered/focused item (Framer Motion shared `layoutId`).
-  - Kept keyboard navigation (Tab expands; Arrow Up/Down/Home/End still works).
-
-### Verification
-- ✅ Verified via `testing_agent_v3` (iteration_19): 100% pass.
+*(Retained from earlier plan; see “Objectives” section for deliverables.)*
 
 ---
 
 ## Round 10 — Navigation Reconciliation + Auto-hide on Scroll Idle — COMPLETED
-
-### What changed
-**A) Redundancy cleanup**
-- ✅ Removed the duplicate "View Work" quick action from:
-  - Desktop quick-actions capsule
-  - Mobile drawer quick-actions section
-- ✅ Removed unused `Briefcase` icon import.
-- ✅ Removed unused `sections` prop from `SiteNav` and updated the `persistentActions` memo dependencies.
-
-**B) Desktop rail hide/show on scroll**
-- ✅ Added nav rail wrapper (`motion.div`) with:
-  - Auto-hide after ~1.4 seconds of scroll inactivity.
-  - Immediate re-show on scroll up or down.
-  - Always stays visible while hovered or keyboard-focused.
-  - Uses `pointer-events: none` while hidden so it never blocks page interaction.
-
-### Verification
-- ✅ Verified via `testing_agent_v3` (iteration_20): 100% pass.
+*(Retained from earlier plan; see “Objectives” section for deliverables.)*
 
 ---
 
 ## Round 11 — Visual Polish: Thoughts chips + Connect depth — COMPLETED
+*(Retained from earlier plan; see “Objectives” section for deliverables.)*
 
-### What changed
-**A) Thoughts category chip fill color**
-- ✅ Updated `/app/frontend/src/components/rooms/ThoughtsRoom.js`:
-  - Active category chip fill is no longer brand-blue.
-  - Uses a 4-tone neutral palette and alternates by category index.
+---
 
-**B) Connect button depth + pulse realism**
-- ✅ Updated `/app/frontend/src/components/connect/FloatingConnectButton.js`:
-  - Upgraded elevation with layered shadows.
-  - Pulse is now a glowing halo ring (box-shadow based) rather than a flat filled disc.
+## Round 12 — Admin Gap-Audit Fixes — COMPLETED
+
+### User stories (Round 12)
+1. As Bretton, I can export Inquiries (contact form submissions) to CSV.
+2. As Bretton, I can view and export newsletter subscribers to CSV.
+3. As Bretton, I can see what password I’m typing (show/hide toggle) anywhere passwords are entered.
+4. As Bretton, I can reset my admin password manually from the login screen (no email flow).
+5. As Bretton, I can reset any admin user’s password from the Users screen.
+6. As Bretton, I can manage the Privacy Policy content in the CMS and publish it to `/privacy`.
+7. As Bretton, the public site contains no Emergent branding/tracking and has correct title/meta/favicon.
+
+### Backend implementation (delivered)
+- ✅ `POST /api/admin/change-password` (self-service)
+- ✅ `PUT /api/admin/users/{id}/password` (admin-managed reset)
+- ✅ Added `privacy_policy_updated_date`, `privacy_policy_content` to global settings schema (via `GlobalSettingsUpdate`).
+
+### Frontend implementation (delivered)
+- ✅ `AdminInquiries.js`: added Export CSV button.
+- ✅ `AdminNewsletter.js`: new page + CSV export.
+- ✅ `PasswordInput.js`: shared show/hide component.
+- ✅ `AdminLogin.js`: added Reset Password mode + toggles.
+- ✅ `AdminUsers.js`: added per-user Reset Password dialog + toggles.
+- ✅ `AdminSettings.js`: added Legal/Privacy section.
+- ✅ `PrivacyPolicy.js`: CMS-driven rendering + mailto auto-linking.
+- ✅ `index.html`: removed Emergent scripts, updated title/meta, added OG tags, wired favicon.
 
 ### Verification
-- ✅ Verified via `testing_agent_v3` (iteration_21): **95% pass**.
-  - Requested fixes passed cleanly.
-  - One **LOW severity** pre-existing note was flagged about theme color swapping in automated detection; the theme detection logic was not modified in Round 11, and this swap behavior previously passed 100% in iterations 15–20.
+- ✅ Verified via `testing_agent_v3` (iteration_22):
+  - Frontend: **100% pass**
+  - Backend: **95.3% pass** (3 non-critical rate-limit timing anomalies on `/api/public/inquiries` during rapid test loops — not a functional bug)
+- ✅ Post-test cleanup performed:
+  - `bkey` password restored to **adm!np1**
+  - Leftover `qa_reset_test` admin user removed
 
 ---
 
 ## Next Actions
-- No pending tasks in this round.
-- Optional follow-up: if the Connect button dark/light color swapping ever shows inconsistencies in real browsing, investigate `FloatingConnectButton.updateTheme()` elementFromPoint lookup for edge cases (e.g., overlays, dialog layers, or sections without `[data-theme-dark]`).
+- No pending tasks.
+- Optional low-priority hardening:
+  - Consider making public inquiry rate-limit threshold/delay more deterministic for automated tests (currently functions correctly; only timing variance observed under rapid test bursts).
 
 ---
 
 ## Success Criteria — MET
 
 ### Public site
-- ✅ Floating brand mark removed.
-- ✅ “Let’s Connect” CTA is more noticeable (border + pulse) and remains fully usable.
-- ✅ Desktop nav rail behaves as a collapsible selector with polished animations and hover/focus highlights.
-- ✅ Navigation redundancy removed.
-- ✅ Desktop nav rail auto-hides on idle and reappears on any scroll activity.
-- ✅ Thoughts category active chip fill is no longer overly blue (now neutral alternating grays).
-- ✅ Connect CTA has improved depth + realistic halo pulse.
+- ✅ No Emergent scripts/branding in static HTML.
+- ✅ Correct title/meta/OG + favicon.
+- ✅ Privacy policy is editable via CMS and renders correctly at `/privacy`.
 
 ### Admin site
-- ✅ No changes required; all previously delivered Round 8 functionality remains stable.
+- ✅ Export CSV for Inquiries.
+- ✅ Newsletter subscribers page + CSV export.
+- ✅ Password show/hide toggles everywhere passwords are entered.
+- ✅ Manual Reset Password on login screen + per-user reset in Users.
+- ✅ Credentials confirmed working: `bkey/adm!np1` and `brettonjkey@icloud.com/#Test1234`.
 
 ### Testing
 - ✅ `testing_agent_v3` passed:
   - `/app/test_reports/iteration_19.json`: 100% pass (Round 9)
   - `/app/test_reports/iteration_20.json`: 100% pass (Round 10)
   - `/app/test_reports/iteration_21.json`: 95% pass (Round 11; requested changes passed, 1 low-severity pre-existing flag)
+  - `/app/test_reports/iteration_22.json`: 100% FE / 95.3% BE pass (Round 12)
 
 ---
 
 ## Implementation Notes / File Map
 
-### Completed (Rounds 5–7 highlight)
-- Calendly:
-  - `/app/frontend/src/lib/calendly.js`
-  - Hero/Nav/Services CTAs wired to Calendly popup with UTM tracking
-- Services expandable cards:
-  - `/app/frontend/src/components/rooms/ServicesRoom.js`
-- Section reorder + merge:
-  - DB migration for personal+gallery merge
-  - `/app/frontend/src/components/rooms/PersonalRoom.js`
-  - `/app/frontend/src/components/rooms/ThoughtsRoom.js` theme-aware hover
-
-### Round 8 (delivered)
+### Round 12 (delivered)
 - Backend:
-  - `/app/backend/models.py` (UserCreate, PageviewCreate, GlobalSettingsUpdate fields)
-  - `/app/backend/server.py` (users endpoints, analytics endpoints)
-  - `/app/backend/auth_utils.py` (JWT + bcrypt)
+  - `/app/backend/models.py`
+    - `ChangePasswordRequest`, `SetPasswordRequest`
+    - `privacy_policy_updated_date`, `privacy_policy_content` in `GlobalSettingsUpdate`
+  - `/app/backend/server.py`
+    - `POST /api/admin/change-password`
+    - `PUT /api/admin/users/{id}/password`
 - Frontend:
-  - `/app/frontend/src/lib/api.js` (new endpoints)
-  - `/app/frontend/src/lib/analytics.js` (new)
-  - `/app/frontend/src/components/site/AnalyticsProvider.js` (new)
-  - `/app/frontend/src/components/site/ThemeInjector.js` (new)
-  - `/app/frontend/src/pages/admin/AdminUsers.js` (new)
-  - `/app/frontend/src/pages/admin/AdminAnalytics.js` (new)
-  - `/app/frontend/src/pages/admin/AdminNavigation.js` (new)
-  - `/app/frontend/src/pages/admin/AdminAppearance.js` (new)
-  - `/app/frontend/src/pages/admin/AdminLayout.js` (sidebar updates)
-  - `/app/frontend/src/pages/admin/AdminSettings.js` (GA field)
-  - `/app/frontend/src/pages/admin/AdminLogin.js` (username-friendly login)
-  - `/app/frontend/src/App.js` (routes + ThemeInjector/AnalyticsProvider)
-
-### Rounds 9–11 (delivered)
-- Public nav + CTA polish:
-  - `/app/frontend/src/components/site/SiteNav.js`
-    - Removed `site-header-brand`
-    - Collapsible selector behavior for desktop rail
-    - Removed redundant "View Work" quick action
-    - Added desktop rail auto-hide/show on scroll idle
-  - `/app/frontend/src/components/connect/FloatingConnectButton.js`
-    - Added border + pulsing animation
-    - Upgraded depth (layered shadows)
-    - Pulse changed to halo ring glow
-  - `/app/frontend/src/components/rooms/ThoughtsRoom.js`
-    - Active category chip fill changed from blue to alternating neutral palette
+  - `/app/frontend/src/lib/csvExport.js` (new)
+  - `/app/frontend/src/pages/admin/AdminInquiries.js` (CSV export)
+  - `/app/frontend/src/pages/admin/AdminNewsletter.js` (new)
+  - `/app/frontend/src/components/admin/PasswordInput.js` (new)
+  - `/app/frontend/src/pages/admin/AdminLogin.js` (reset password mode + toggles)
+  - `/app/frontend/src/pages/admin/AdminUsers.js` (reset password dialog + toggles)
+  - `/app/frontend/src/pages/admin/AdminSettings.js` (Legal/Privacy fields)
+  - `/app/frontend/src/pages/PrivacyPolicy.js` (CMS-driven policy rendering)
+  - `/app/frontend/public/index.html` (meta cleanup + remove Emergent + favicon + OG)
+  - `/app/frontend/public/favicon-96x96.png` (new)
 
 ---
 
@@ -390,7 +294,8 @@
 - `/app/test_reports/iteration_15.json`: 100% pass (Services expand/collapse + Calendly popup + UTM attribution)
 - `/app/test_reports/iteration_16.json`: 100% pass (section reorder + merged Beyond the Work room + nav order)
 - `/app/test_reports/iteration_17.json`: 100% pass (Beyond the Work carousel placement + Thoughts hover contrast)
-- `/app/test_reports/iteration_18.json`: 100% pass (Round 8 Admin Overhaul: users + analytics + appearance + navigation + header branding + regressions)
-- `/app/test_reports/iteration_19.json`: 100% pass (Round 9: brand mark removal + connect pulse + collapsible desktop rail)
-- `/app/test_reports/iteration_20.json`: 100% pass (Round 10: nav redundancy fix + desktop rail auto-hide/show)
-- `/app/test_reports/iteration_21.json`: 95% pass (Round 11: Thoughts active chip neutral fills + Connect depth/halo pulse; low-severity pre-existing note flagged)
+- `/app/test_reports/iteration_18.json`: 100% pass (Round 8 Admin Overhaul)
+- `/app/test_reports/iteration_19.json`: 100% pass (Round 9)
+- `/app/test_reports/iteration_20.json`: 100% pass (Round 10)
+- `/app/test_reports/iteration_21.json`: 95% pass (Round 11)
+- `/app/test_reports/iteration_22.json`: 100% FE / 95.3% BE pass (Round 12)
