@@ -4,11 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Trash2 } from "lucide-react";
+import { UserPlus, Trash2, KeyRound } from "lucide-react";
+import PasswordInput from "@/components/admin/PasswordInput";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export default function AdminUsers() {
   const { admin } = useAuth();
@@ -18,6 +20,11 @@ export default function AdminUsers() {
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [resetTarget, setResetTarget] = useState(null); // { id, email }
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirm, setResetConfirm] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   const load = () => adminApi.listUsers().then(setUsers).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -52,6 +59,34 @@ export default function AdminUsers() {
     }
   };
 
+  const closeResetDialog = () => {
+    setResetTarget(null);
+    setResetPassword("");
+    setResetConfirm("");
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (resetPassword !== resetConfirm) {
+      toast.error("New password and confirmation do not match");
+      return;
+    }
+    if (resetPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    setResetting(true);
+    try {
+      await adminApi.setUserPassword(resetTarget.id, resetPassword);
+      toast.success(`Password updated for ${resetTarget.email}`);
+      closeResetDialog();
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Failed to update password");
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <div className="space-y-5 max-w-2xl">
       <div>
@@ -75,15 +110,14 @@ export default function AdminUsers() {
           </div>
           <div>
             <Label htmlFor="new-password">Password</Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
-              data-testid="admin-users-password-input"
+              testId="admin-users-password-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 6 characters"
               minLength={6}
-              required
+              autoComplete="new-password"
             />
           </div>
         </div>
@@ -108,15 +142,26 @@ export default function AdminUsers() {
               </p>
               <p className="text-xs text-muted-foreground">Full access &middot; added {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setDeletingId(u.id)}
-              data-testid={`admin-users-delete-button-${u.id}`}
-              className="focus-ring rounded-md p-2 text-destructive hover:bg-destructive/10"
-              aria-label={`Remove ${u.email}`}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setResetTarget({ id: u.id, email: u.email })}
+                data-testid={`admin-users-reset-password-button-${u.id}`}
+                className="focus-ring rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-[var(--surface-blue)]"
+                aria-label={`Reset password for ${u.email}`}
+              >
+                <KeyRound className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeletingId(u.id)}
+                data-testid={`admin-users-delete-button-${u.id}`}
+                className="focus-ring rounded-md p-2 text-destructive hover:bg-destructive/10"
+                aria-label={`Remove ${u.email}`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -135,6 +180,54 @@ export default function AdminUsers() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!resetTarget} onOpenChange={(v) => !v && closeResetDialog()}>
+        <DialogContent data-testid="admin-users-reset-password-dialog">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>Set a new password for {resetTarget?.email}. They'll need to use it the next time they sign in.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div>
+              <Label htmlFor="reset-target-password">New Password</Label>
+              <PasswordInput
+                id="reset-target-password"
+                testId="admin-users-reset-password-input"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="Minimum 6 characters"
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
+            <div>
+              <Label htmlFor="reset-target-confirm">Confirm New Password</Label>
+              <PasswordInput
+                id="reset-target-confirm"
+                testId="admin-users-reset-confirm-input"
+                value={resetConfirm}
+                onChange={(e) => setResetConfirm(e.target.value)}
+                placeholder="Re-enter password"
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
+            <DialogFooter>
+              <button type="button" onClick={closeResetDialog} className="focus-ring rounded-md border px-4 py-2 text-sm hover:bg-accent">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={resetting}
+                data-testid="admin-users-reset-password-submit-button"
+                className="focus-ring rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-60"
+              >
+                {resetting ? "Updating…" : "Update Password"}
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

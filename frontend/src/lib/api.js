@@ -31,6 +31,7 @@ export const publicApi = {
   submitInquiry: (payload) => api.post(`/public/inquiries`, payload).then((r) => r.data),
   subscribeNewsletter: (email) => api.post(`/public/newsletter`, { email }).then((r) => r.data),
   trackPageview: (payload) => api.post(`/public/analytics/pageview`, payload).then((r) => r.data),
+  changePassword: (payload) => api.post(`/admin/change-password`, payload).then((r) => r.data),
 };
 
 // ---------------------------------------------------------------------------
@@ -114,6 +115,7 @@ export const adminApi = {
   listUsers: () => api.get(`/admin/users`).then((r) => r.data),
   createUser: (payload) => api.post(`/admin/users`, payload).then((r) => r.data),
   deleteUser: (id) => api.delete(`/admin/users/${id}`).then((r) => r.data),
+  setUserPassword: (id, newPassword) => api.put(`/admin/users/${id}/password`, { new_password: newPassword }).then((r) => r.data),
 
   getAnalyticsSummary: (days = 30) => api.get(`/admin/analytics/summary`, { params: { days } }).then((r) => r.data),
 };

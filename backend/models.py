@@ -20,6 +20,16 @@ class UserCreate(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    email: str
+    current_password: str
+    new_password: str
+
+
+class SetPasswordRequest(BaseModel):
+    new_password: str
+
+
 class PageviewCreate(BaseModel):
     path: str
     referrer: Optional[str] = None
@@ -215,6 +225,9 @@ class GlobalSettingsUpdate(BaseModel):
     theme_font_display: Optional[str] = None
     theme_font_body: Optional[str] = None
     theme_font_editorial: Optional[str] = None
+    # Legal
+    privacy_policy_updated_date: Optional[str] = None
+    privacy_policy_content: Optional[str] = None
 
 
 class InquiryCreate(BaseModel):

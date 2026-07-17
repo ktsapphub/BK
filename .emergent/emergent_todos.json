@@ -1,22 +1,50 @@
 [
   {
-    "content": "Backend: Users CRUD, Analytics endpoints, GlobalSettings extensions",
+    "content": "Backend: password reset endpoints (self-service + admin-managed)",
     "status": "completed"
   },
   {
-    "content": "Seed requested admin user bkey/adm!np1",
+    "content": "Backend: privacy policy content fields in GlobalSettingsUpdate",
     "status": "completed"
   },
   {
-    "content": "Frontend: AdminUsers, AdminAnalytics, AdminNavigation, AdminAppearance pages",
+    "content": "Frontend: CSV export utility + Inquiries export button",
     "status": "completed"
   },
   {
-    "content": "Frontend: ThemeInjector, AnalyticsProvider, SiteNav brand mark",
+    "content": "Frontend: AdminNewsletter page + routing/sidebar",
     "status": "completed"
   },
   {
-    "content": "Testing agent verification (iteration_18) + fix AdminLogin username bug",
+    "content": "Frontend: AdminLogin password toggle + reset password flow",
     "status": "completed"
+  },
+  {
+    "content": "Frontend: AdminUsers password toggle + per-user reset dialog",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: AdminSettings Legal/Privacy Policy fields",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: PrivacyPolicy.js dynamic content rendering",
+    "status": "completed"
+  },
+  {
+    "content": "Seed privacy policy content from uploaded file",
+    "status": "completed"
+  },
+  {
+    "content": "index.html cleanup (remove Emergent branding/tracking, fix meta, add favicon)",
+    "status": "completed"
+  },
+  {
+    "content": "Compile check + restart + smoke test",
+    "status": "completed"
+  },
+  {
+    "content": "Call testing_agent_v3 for full verification",
+    "status": "in_progress"
   }
 ]

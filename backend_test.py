@@ -682,9 +682,147 @@ class BackendTester:
                 "DELETE", f"/admin/inquiries/{test_inquiry_id}", 200
             )
         
-        # 13. PUBLIC PAGE ENDPOINT TEST
+        # 13. PASSWORD RESET TESTS (NEW FEATURES)
         print("\n" + "=" * 70)
-        print("13. PUBLIC PAGE ENDPOINT TEST")
+        print("13. PASSWORD RESET TESTS (NEW FEATURES)")
+        print("=" * 70)
+        
+        # Test self-service password change (no auth required, needs current password)
+        # First, create a test user for password reset testing
+        test_reset_user_email = f"reset-test-{datetime.now().strftime('%H%M%S')}@example.com"
+        test_reset_password = "initial123"
+        
+        success, reset_user_resp = self.test(
+            "Create test user for password reset",
+            "POST", "/admin/users", 200,
+            data={"email": test_reset_user_email, "password": test_reset_password},
+            check_response=lambda r: "id" in r
+        )
+        
+        test_reset_user_id = reset_user_resp.get("id") if success else None
+        
+        if test_reset_user_id:
+            # Test self-service password change with wrong current password (should fail)
+            self.test(
+                "Self-service password change with wrong current password (should fail)",
+                "POST", "/admin/change-password", 401,
+                data={
+                    "email": test_reset_user_email,
+                    "current_password": "wrongpassword",
+                    "new_password": "newpassword123"
+                }
+            )
+            
+            # Test self-service password change with correct current password
+            new_password = "updated123"
+            success_change, _ = self.test(
+                "Self-service password change with correct credentials",
+                "POST", "/admin/change-password", 200,
+                data={
+                    "email": test_reset_user_email,
+                    "current_password": test_reset_password,
+                    "new_password": new_password
+                },
+                check_response=lambda r: r.get("success") == True
+            )
+            
+            # Verify new password works by logging in
+            if success_change:
+                success_login, _ = self.test(
+                    "Login with new password after self-service reset",
+                    "POST", "/admin/login", 200,
+                    data={"email": test_reset_user_email, "password": new_password},
+                    check_response=lambda r: "token" in r
+                )
+                if success_login:
+                    self.log(f"✅ Self-service password reset working correctly")
+            
+            # Test admin-initiated password reset (requires auth)
+            admin_set_password = "admin-set-123"
+            success_admin_reset, _ = self.test(
+                "Admin-initiated password reset for user",
+                "PUT", f"/admin/users/{test_reset_user_id}/password", 200,
+                data={"new_password": admin_set_password},
+                check_response=lambda r: r.get("success") == True
+            )
+            
+            # Verify admin-set password works
+            if success_admin_reset:
+                success_login_admin, _ = self.test(
+                    "Login with admin-set password",
+                    "POST", "/admin/login", 200,
+                    data={"email": test_reset_user_email, "password": admin_set_password},
+                    check_response=lambda r: "token" in r
+                )
+                if success_login_admin:
+                    self.log(f"✅ Admin password reset working correctly")
+        
+        # 14. NEWSLETTER SUBSCRIBERS TEST (NEW FEATURE)
+        print("\n" + "=" * 70)
+        print("14. NEWSLETTER SUBSCRIBERS TEST (NEW FEATURE)")
+        print("=" * 70)
+        
+        # Submit an inquiry with marketing consent to create a newsletter subscriber
+        newsletter_test_email = f"newsletter-{datetime.now().strftime('%H%M%S')}@example.com"
+        success, newsletter_inquiry = self.test(
+            "Submit inquiry with marketing consent (creates newsletter subscriber)",
+            "POST", "/public/inquiries", 200,
+            data={
+                "name": "Newsletter Test User",
+                "email": newsletter_test_email,
+                "reason": "Something else",
+                "message": "Testing newsletter signup",
+                "contact_consent": True,
+                "contact_consent_text": "I agree",
+                "contact_consent_version": "contact-consent-v1",
+                "marketing_consent": True,
+                "marketing_consent_text": "Yes, I would like updates"
+            },
+            check_response=lambda r: r.get("success") == True
+        )
+        
+        # List newsletter subscribers
+        success, subscribers = self.test(
+            "List newsletter subscribers (admin)",
+            "GET", "/admin/newsletter-subscribers", 200,
+            check_response=lambda r: isinstance(r, list)
+        )
+        
+        if success and subscribers:
+            # Verify our test subscriber is in the list
+            found = any(s.get("email") == newsletter_test_email for s in subscribers)
+            if found:
+                self.log(f"✅ Newsletter subscriber correctly added to list")
+            else:
+                self.log(f"⚠️  Newsletter subscriber not found in list")
+        
+        # 15. PRIVACY POLICY FIELDS IN GLOBAL SETTINGS (NEW FEATURE)
+        print("\n" + "=" * 70)
+        print("15. PRIVACY POLICY FIELDS IN GLOBAL SETTINGS (NEW FEATURE)")
+        print("=" * 70)
+        
+        success, settings = self.test(
+            "Get global settings and check for privacy policy fields",
+            "GET", "/admin/global-settings", 200,
+            check_response=lambda r: isinstance(r, dict)
+        )
+        
+        if success and settings:
+            privacy_fields = ["privacy_policy_updated_date", "privacy_policy_content"]
+            missing = [f for f in privacy_fields if f not in settings]
+            if missing:
+                self.log(f"⚠️  Missing privacy policy fields: {missing}")
+            else:
+                self.log(f"✅ Privacy policy fields present in global settings")
+                # Check if they have content
+                if settings.get("privacy_policy_content"):
+                    self.log(f"✅ Privacy policy content is populated")
+                if settings.get("privacy_policy_updated_date"):
+                    self.log(f"✅ Privacy policy updated date is set: {settings['privacy_policy_updated_date']}")
+        
+        # 16. PUBLIC PAGE ENDPOINT TEST
+        print("\n" + "=" * 70)
+        print("16. PUBLIC PAGE ENDPOINT TEST")
         print("=" * 70)
         
         success, page_data = self.test(
@@ -706,10 +844,14 @@ class BackendTester:
                 if s.get("is_visible") != True:
                     self.log(f"❌ WARNING: Section {s.get('id')} has is_visible=False but appears in public API")
         
-        # 14. CLEANUP TEST DATA
+        # 17. CLEANUP TEST DATA
         print("\n" + "=" * 70)
-        print("14. CLEANUP TEST DATA")
+        print("17. CLEANUP TEST DATA")
         print("=" * 70)
+        
+        # Clean up password reset test user
+        if test_reset_user_id:
+            self.test("Delete password reset test user", "DELETE", f"/admin/users/{test_reset_user_id}", 200)
         
         if test_section_id:
             self.test("Delete test section", "DELETE", f"/admin/sections/{test_section_id}", 200)

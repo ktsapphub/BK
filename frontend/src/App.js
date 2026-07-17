@@ -25,6 +25,7 @@ import AdminServices from "@/pages/admin/AdminServices";
 import AdminThoughts from "@/pages/admin/AdminThoughts";
 import AdminImpact from "@/pages/admin/AdminImpact";
 import AdminInquiries from "@/pages/admin/AdminInquiries";
+import AdminNewsletter from "@/pages/admin/AdminNewsletter";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminNavigation from "@/pages/admin/AdminNavigation";
 import AdminAppearance from "@/pages/admin/AdminAppearance";
@@ -73,6 +74,7 @@ function App() {
             <Route path="thoughts" element={<AdminThoughts />} />
             <Route path="impact" element={<AdminImpact />} />
             <Route path="inquiries" element={<AdminInquiries />} />
+            <Route path="newsletter" element={<AdminNewsletter />} />
             <Route path="navigation" element={<AdminNavigation />} />
             <Route path="appearance" element={<AdminAppearance />} />
             <Route path="analytics" element={<AdminAnalytics />} />

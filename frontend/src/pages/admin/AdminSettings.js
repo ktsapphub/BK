@@ -30,6 +30,11 @@ const ANALYTICS_FIELDS = [
   ["ga_measurement_id", "Google Analytics 4 Measurement ID (e.g. G-XXXXXXXXXX)"],
 ];
 
+const LEGAL_FIELDS = [
+  ["privacy_policy_updated_date", "Last Updated Date (e.g. July 17, 2026)"],
+  ["privacy_policy_content", "Privacy Policy Content", "textarea"],
+];
+
 export default function AdminSettings() {
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -120,6 +125,30 @@ export default function AdminSettings() {
       </div>
 
       <button onClick={handleSave} disabled={saving} data-testid="admin-settings-save-analytics-button" className="focus-ring rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-60">
+        {saving ? "Saving…" : "Save Settings"}
+      </button>
+
+      <h2 className="text-lg font-semibold pt-2">Legal / Privacy Policy</h2>
+      <div className="bg-white rounded-lg border p-5 space-y-4">
+        <p className="text-xs text-muted-foreground">
+          This powers the built-in <code>/privacy</code> page. Start a new section with a line beginning "## " (e.g.{" "}
+          <code>## Information I Collect</code>), separate paragraphs with a blank line, and use lines starting with "- " for
+          bullet points. Use <code>{"{{contact_email}}"}</code> anywhere you want your current Contact Email inserted
+          automatically.
+        </p>
+        {LEGAL_FIELDS.map(([key, label, type]) => (
+          <div key={key}>
+            <Label htmlFor={key}>{label}</Label>
+            {type === "textarea" ? (
+              <Textarea id={key} data-testid={`admin-settings-${key}`} rows={16} className="font-mono text-xs" value={settings[key] || ""} onChange={(e) => update(key, e.target.value)} />
+            ) : (
+              <Input id={key} data-testid={`admin-settings-${key}`} value={settings[key] || ""} onChange={(e) => update(key, e.target.value)} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button onClick={handleSave} disabled={saving} data-testid="admin-settings-save-legal-button" className="focus-ring rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-60">
         {saving ? "Saving…" : "Save Settings"}
       </button>
     </div>

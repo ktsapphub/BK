@@ -16,7 +16,7 @@ from auth_utils import (
 )
 from storage_utils import init_storage, put_object, get_object
 from models import (
-    LoginRequest, UserCreate, PageviewCreate, PageCreate, SectionCreate, SectionUpdate,
+    LoginRequest, UserCreate, ChangePasswordRequest, SetPasswordRequest, PageviewCreate, PageCreate, SectionCreate, SectionUpdate,
     CareerEntryCreate, TestimonialCreate, ProjectCreate, ServiceCreate,
     ThoughtCreate, ImpactItemCreate, NavigationItemCreate,
     GlobalSettingsUpdate, InquiryCreate, NewsletterSignup, ReorderRequest,
@@ -160,6 +160,29 @@ async def delete_admin_user(user_id: str, admin=Depends(get_current_admin)):
     if target["email"] == admin["email"]:
         raise HTTPException(status_code=400, detail="You cannot delete the account you're currently logged in as")
     await db.users.delete_one({"id": user_id})
+    return {"success": True}
+
+
+@api_router.put("/admin/users/{user_id}/password")
+async def set_user_password(user_id: str, body: SetPasswordRequest, admin=Depends(get_current_admin)):
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    target = await db.users.find_one({"id": user_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    await db.users.update_one({"id": user_id}, {"$set": {"password_hash": hash_password(body.new_password)}})
+    return {"success": True}
+
+
+@api_router.post("/admin/change-password")
+async def change_own_password(body: ChangePasswordRequest):
+    username = body.email.strip()
+    user = await db.users.find_one({"email": username})
+    if not user or not verify_password(body.current_password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Username or current password is incorrect")
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
     return {"success": True}
 
 
