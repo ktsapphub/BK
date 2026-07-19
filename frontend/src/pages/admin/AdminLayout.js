@@ -7,22 +7,22 @@ import {
 } from "lucide-react";
 
 const NAV = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/admin/sections", label: "Rooms / Sections", icon: Rows3 },
-  { to: "/admin/navigation", label: "Navigation", icon: Compass },
-  { to: "/admin/appearance", label: "Appearance", icon: Palette },
-  { to: "/admin/media", label: "Media Library", icon: Image },
-  { to: "/admin/career", label: "Résumé", icon: Briefcase },
-  { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote },
-  { to: "/admin/projects", label: "Projects", icon: FolderKanban },
-  { to: "/admin/services", label: "Services", icon: Wrench },
-  { to: "/admin/thoughts", label: "Thoughts", icon: Newspaper },
-  { to: "/admin/impact", label: "Media & Impact", icon: Sparkles },
-  { to: "/admin/inquiries", label: "Inquiries", icon: Mail },
-  { to: "/admin/newsletter", label: "Newsletter", icon: MailPlus },
-  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/admin/users", label: "Users", icon: Users },
-  { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true, testId: "dashboard" },
+  { to: "/admin/sections", label: "Rooms / Sections", icon: Rows3, testId: "sections" },
+  { to: "/admin/navigation", label: "Navigation", icon: Compass, testId: "navigation" },
+  { to: "/admin/appearance", label: "Appearance", icon: Palette, testId: "appearance" },
+  { to: "/admin/media", label: "Media Library", icon: Image, testId: "media" },
+  { to: "/admin/career", label: "Résumé", icon: Briefcase, testId: "resume" },
+  { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote, testId: "testimonials" },
+  { to: "/admin/projects", label: "Projects", icon: FolderKanban, testId: "projects" },
+  { to: "/admin/services", label: "Services", icon: Wrench, testId: "services" },
+  { to: "/admin/thoughts", label: "Thoughts", icon: Newspaper, testId: "thoughts" },
+  { to: "/admin/impact", label: "Media & Impact", icon: Sparkles, testId: "impact" },
+  { to: "/admin/inquiries", label: "Inquiries", icon: Mail, testId: "inquiries" },
+  { to: "/admin/newsletter", label: "Newsletter", icon: MailPlus, testId: "newsletter" },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart3, testId: "analytics" },
+  { to: "/admin/users", label: "Users", icon: Users, testId: "users" },
+  { to: "/admin/settings", label: "Settings", icon: Settings, testId: "settings" },
 ];
 
 export default function AdminLayout() {
@@ -42,7 +42,7 @@ export default function AdminLayout() {
               key={item.to}
               to={item.to}
               end={item.end}
-              data-testid={`admin-nav-${item.label.toLowerCase().replace(/[^a-z]+/g, "-")}`}
+              data-testid={`admin-nav-${item.testId}`}
               className={({ isActive }) =>
                 `focus-ring flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
                   isActive ? "bg-[var(--background-blue-soft)] text-[var(--surface-blue)] font-medium" : "text-gray-600 hover:bg-gray-100"

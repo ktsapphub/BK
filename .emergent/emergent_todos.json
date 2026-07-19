@@ -16,23 +16,27 @@
     "status": "completed"
   },
   {
-    "content": "Fix missing hook dependencies - verified via real eslint react-hooks/exhaustive-deps run, fixed 3 real issues found (ConnectForm, ThoughtsRoom, AdminSectionEditor)",
+    "content": "Fix missing hook dependencies - verified via real eslint react-hooks/exhaustive-deps run, fixed 3 real issues found",
     "status": "completed"
   },
   {
-    "content": "Verify is/is-not-None comparisons flagged in report (confirmed false positives - all correct None checks)",
+    "content": "Verify is/is-not-None comparisons flagged in report (confirmed false positives)",
     "status": "completed"
   },
   {
-    "content": "Refactor high-complexity functions: submit_inquiry (server.py), GalleryRoom lightbox, ConnectForm reason-fields",
+    "content": "Refactor high-complexity functions: submit_inquiry, GalleryRoom lightbox, ConnectForm reason-fields",
     "status": "completed"
   },
   {
-    "content": "Fix critical bug from testing agent: logout race condition leaving stale authenticated UI - added 401 interceptor + awaited logout before navigate",
+    "content": "Fix critical logout race-condition bug found by testing agent",
     "status": "completed"
   },
   {
-    "content": "Re-run testing_agent_v3 to verify logout fix and complete remaining untested items (admin CRUD, public rooms, gallery lightbox, connect form reasons, privacy policy, project detail)",
-    "status": "in_progress"
+    "content": "Re-test via testing_agent_v3 - confirmed logout fix works, no critical bugs remain",
+    "status": "completed"
+  },
+  {
+    "content": "Fix minor testid issue (accented char in Resume nav slug) found in test report",
+    "status": "completed"
   }
 ]
