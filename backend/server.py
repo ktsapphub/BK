@@ -12,7 +12,7 @@ from typing import Optional, List
 from database import db, client, clean_doc, clean_docs
 from auth_utils import (
     hash_password, verify_password, create_jwt, seed_admin,
-    get_current_admin, now_iso,
+    get_current_admin, now_iso, AUTH_COOKIE_NAME, JWT_EXPIRE_HOURS,
 )
 from storage_utils import init_storage, put_object, get_object
 from models import (
@@ -108,12 +108,29 @@ async def shutdown_db_client():
 # AUTH
 # ===========================================================================
 @api_router.post("/admin/login")
-async def admin_login(body: LoginRequest):
+async def admin_login(body: LoginRequest, response: Response):
     user = await db.users.find_one({"email": body.email})
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = create_jwt(user["email"])
+    # Deliver the token via httpOnly cookie so it is never exposed to JS/localStorage
+    # (mitigates XSS token theft). Still returned in the body for CLI/test scripts.
+    response.set_cookie(
+        key=AUTH_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=JWT_EXPIRE_HOURS * 3600,
+        path="/",
+    )
     return {"token": token, "email": user["email"], "role": user.get("role", "admin")}
+
+
+@api_router.post("/admin/logout")
+async def admin_logout(response: Response):
+    response.delete_cookie(key=AUTH_COOKIE_NAME, path="/")
+    return {"ok": True}
 
 
 @api_router.get("/admin/me")
@@ -734,18 +751,9 @@ def _sanitize_text(value: Optional[str], max_len: int = 2000) -> Optional[str]:
     return cleaned[:max_len] if cleaned else None
 
 
-@api_router.post("/public/inquiries")
-async def submit_inquiry(body: InquiryCreate, request: Request):
-    # Honeypot: bots that fill this hidden field get a generic success
-    # response but nothing is persisted.
-    if body.hp:
-        return {"success": True, "message": "Thank you \u2014 your message has been received.", "id": str(uuid.uuid4())}
-
-    client_ip = request.client.host if request.client else "unknown"
-    if not _check_rate_limit(client_ip):
-        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
-
-    # Server-side consent re-validation (never trust the client alone).
+def _validate_and_extract_inquiry_fields(body: InquiryCreate) -> dict:
+    """Server-side consent + required-field validation (never trust the client alone).
+    Raises HTTPException on failure. Returns the sanitized required fields."""
     if not body.contact_consent or not (body.contact_consent_text or "").strip():
         raise HTTPException(status_code=400, detail="Please provide consent so Bretton can respond to your inquiry.")
 
@@ -755,25 +763,29 @@ async def submit_inquiry(body: InquiryCreate, request: Request):
     reason = _sanitize_text(body.reason, 100)
     if not name or not email or not message or not reason:
         raise HTTPException(status_code=400, detail="Name, email, reason, and message are required.")
+    return {"name": name, "email": email, "message": message, "reason": reason}
 
-    # Dedupe-guard: identical email+message resubmitted within 2 minutes
-    # (double-click / retry) returns the original success without duplicating.
+
+async def _find_recent_duplicate_inquiry(email: str, message: str) -> Optional[dict]:
+    """Dedupe-guard: identical email+message resubmitted within 2 minutes
+    (double-click / retry) should return the original record instead of duplicating."""
     recent = await db.inquiries.find_one({"email": email, "message": message}, sort=[("created_at", -1)])
-    if recent and recent.get("created_at"):
-        try:
-            recent_dt = datetime.fromisoformat(recent["created_at"])
-            if (datetime.now(timezone.utc) - recent_dt).total_seconds() < 120:
-                return {"success": True, "message": "Thank you \u2014 your message has been received.", "id": recent["id"]}
-        except Exception:
-            pass
+    if not recent or not recent.get("created_at"):
+        return None
+    try:
+        recent_dt = datetime.fromisoformat(recent["created_at"])
+        if (datetime.now(timezone.utc) - recent_dt).total_seconds() < 120:
+            return recent
+    except Exception:
+        pass
+    return None
 
+
+def _build_inquiry_doc(body: InquiryCreate, fields: dict) -> dict:
     doc = body.model_dump()
     doc.pop("hp", None)
     doc.update({
-        "name": name,
-        "email": email,
-        "message": message,
-        "reason": reason,
+        **fields,
         "phone": _sanitize_text(body.phone, 40),
         "pick_brain_topic": _sanitize_text(body.pick_brain_topic, 1500),
         "speaking_topic": _sanitize_text(body.speaking_topic, 1500),
@@ -784,8 +796,33 @@ async def submit_inquiry(body: InquiryCreate, request: Request):
         "marketing_consent_at": now_iso() if body.marketing_consent else None,
         "created_at": now_iso(),
     })
+    return doc
+
+
+def _inquiry_success_response(inquiry_id: str) -> dict:
+    return {"success": True, "message": "Thank you \u2014 your message has been received.", "id": inquiry_id}
+
+
+@api_router.post("/public/inquiries")
+async def submit_inquiry(body: InquiryCreate, request: Request):
+    # Honeypot: bots that fill this hidden field get a generic success
+    # response but nothing is persisted.
+    if body.hp:
+        return _inquiry_success_response(str(uuid.uuid4()))
+
+    client_ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+
+    fields = _validate_and_extract_inquiry_fields(body)
+
+    duplicate = await _find_recent_duplicate_inquiry(fields["email"], fields["message"])
+    if duplicate:
+        return _inquiry_success_response(duplicate["id"])
+
+    doc = _build_inquiry_doc(body, fields)
     await db.inquiries.insert_one(doc)
-    return {"success": True, "message": "Thank you \u2014 your message has been received.", "id": doc["id"]}
+    return _inquiry_success_response(doc["id"])
 
 
 @api_router.get("/admin/inquiries")

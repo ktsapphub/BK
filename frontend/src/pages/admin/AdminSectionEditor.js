@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { adminApi } from "@/lib/api";
 import { toast } from "sonner";
@@ -18,14 +18,14 @@ export default function AdminSectionEditor() {
   const [versions, setVersions] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const data = await adminApi.getSection(id);
     setSection(data);
     const v = await adminApi.getSectionVersions(id);
     setVersions(v);
-  };
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load(); }, [load]);
 
   if (!section) return <p className="text-sm text-muted-foreground">Loading…</p>;
 

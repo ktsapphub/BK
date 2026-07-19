@@ -2,7 +2,7 @@ import os
 import uuid
 import bcrypt
 import jwt
-from fastapi import HTTPException, Header
+from fastapi import HTTPException, Header, Request
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 from database import db
@@ -12,6 +12,11 @@ JWT_ALGO = 'HS256'
 JWT_EXPIRE_HOURS = 24 * 7
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme')
+
+# Auth token is delivered to the browser as an httpOnly cookie (not readable by
+# JS / localStorage) to reduce XSS token-theft risk. The Authorization header
+# path is kept as a fallback for CLI/test scripts that call the API directly.
+AUTH_COOKIE_NAME = "bk_admin_token"
 
 
 def now_iso():
@@ -50,10 +55,14 @@ async def seed_admin():
         })
 
 
-async def get_current_admin(authorization: Optional[str] = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
+async def get_current_admin(authorization: Optional[str] = Header(None), request: Request = None):
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1]
+    elif request is not None:
+        token = request.cookies.get(AUTH_COOKIE_NAME)
+    if not token:
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    token = authorization.split(" ", 1)[1]
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
     except jwt.ExpiredSignatureError:

@@ -85,7 +85,7 @@ export default function ResumeRoom({ section, careerEntries, settings }) {
                     {Array.isArray(active.achievements) && active.achievements.length > 0 && (
                       <ul className="mt-5 space-y-2">
                         {active.achievements.map((a, i) => (
-                          <li key={i} className="font-body text-sm md:text-base flex gap-2">
+                          <li key={`${active.id}-ach-${i}`} className="font-body text-sm md:text-base flex gap-2">
                             <span className="text-[var(--surface-blue)] mt-1">—</span>
                             <span className="opacity-90">{a}</span>
                           </li>
@@ -95,7 +95,7 @@ export default function ResumeRoom({ section, careerEntries, settings }) {
                     {Array.isArray(active.skills) && active.skills.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-5">
                         {active.skills.map((s, i) => (
-                          <span key={i} className="font-display text-xs rounded-full border border-[var(--border-blue)] px-3 py-1">{s}</span>
+                          <span key={`${active.id}-skill-${i}`} className="font-display text-xs rounded-full border border-[var(--border-blue)] px-3 py-1">{s}</span>
                         ))}
                       </div>
                     )}
@@ -119,7 +119,7 @@ export default function ResumeRoom({ section, careerEntries, settings }) {
                     {Array.isArray(entry.achievements) && (
                       <ul className="space-y-2">
                         {entry.achievements.map((a, i) => (
-                          <li key={i} className="text-sm opacity-90">— {a}</li>
+                          <li key={`${entry.id}-ach-${i}`} className="text-sm opacity-90">— {a}</li>
                         ))}
                       </ul>
                     )}

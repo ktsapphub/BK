@@ -8,6 +8,52 @@ import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
 
 const AUTOPLAY_INTERVAL_MS = 3000;
 
+// Fullscreen image viewer with prev/next navigation — split out of GalleryRoom
+// so the carousel and the lightbox each stay focused and easy to reason about.
+function GalleryLightbox({ images, activeIndex, onClose, onNext, onPrev }) {
+  const isOpen = activeIndex !== null;
+  const current = isOpen ? images[activeIndex] : null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent
+        data-testid="gallery-lightbox"
+        className="bg-black/95 border-none max-w-4xl p-0"
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") onNext();
+          if (e.key === "ArrowLeft") onPrev();
+        }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          data-testid="gallery-lightbox-close-button"
+          className="focus-ring absolute right-3 top-3 z-50 rounded-full p-2 bg-white/15 text-white hover:bg-white/25 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        {current && (
+          <div className="relative">
+            <img src={current.url} alt={current.alt || ""} className="w-full max-h-[80vh] object-contain" />
+            {current.caption && <p className="text-white/80 text-sm font-body p-4">{current.caption}</p>}
+            {images.length > 1 && (
+              <>
+                <button onClick={onPrev} aria-label="Previous image" className="focus-ring absolute left-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2">
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button onClick={onNext} aria-label="Next image" className="focus-ring absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2">
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function GalleryRoom({ section }) {
   const c = section.content || {};
   const images = Array.isArray(c.images) ? c.images : [];
@@ -58,7 +104,7 @@ export default function GalleryRoom({ section }) {
           <Carousel setApi={setApi} opts={{ loop: images.length > 1, align: "start" }} className="w-full">
             <CarouselContent className="-ml-4">
               {images.map((img, i) => (
-                <CarouselItem key={i} className="pl-4 basis-[78%] sm:basis-[52%] md:basis-[36%] lg:basis-[30%]">
+                <CarouselItem key={img.url || i} className="pl-4 basis-[78%] sm:basis-[52%] md:basis-[36%] lg:basis-[30%]">
                   <button
                     onClick={() => setLightboxIdx(i)}
                     data-testid="gallery-image-button"
@@ -101,35 +147,13 @@ export default function GalleryRoom({ section }) {
         </div>
       </RoomContainer>
 
-      <Dialog open={lightboxIdx !== null} onOpenChange={(v) => !v && setLightboxIdx(null)}>
-        <DialogContent data-testid="gallery-lightbox" className="bg-black/95 border-none max-w-4xl p-0" onKeyDown={(e) => { if (e.key === "ArrowRight") showNext(); if (e.key === "ArrowLeft") showPrev(); }}>
-          <button
-            type="button"
-            onClick={() => setLightboxIdx(null)}
-            aria-label="Close"
-            data-testid="gallery-lightbox-close-button"
-            className="focus-ring absolute right-3 top-3 z-50 rounded-full p-2 bg-white/15 text-white hover:bg-white/25 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          {lightboxIdx !== null && (
-            <div className="relative">
-              <img src={images[lightboxIdx].url} alt={images[lightboxIdx].alt || ""} className="w-full max-h-[80vh] object-contain" />
-              {images[lightboxIdx].caption && <p className="text-white/80 text-sm font-body p-4">{images[lightboxIdx].caption}</p>}
-              {images.length > 1 && (
-                <>
-                  <button onClick={showPrev} aria-label="Previous image" className="focus-ring absolute left-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2">
-                    <ChevronLeft className="h-6 w-6" />
-                  </button>
-                  <button onClick={showNext} aria-label="Next image" className="focus-ring absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2">
-                    <ChevronRight className="h-6 w-6" />
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <GalleryLightbox
+        images={images}
+        activeIndex={lightboxIdx}
+        onClose={() => setLightboxIdx(null)}
+        onNext={showNext}
+        onPrev={showPrev}
+      />
     </RoomWrapper>
   );
 }

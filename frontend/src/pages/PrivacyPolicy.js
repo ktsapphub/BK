@@ -11,7 +11,7 @@ function renderWithMailto(text) {
   const parts = text.split(EMAIL_RE);
   return parts.map((part, i) =>
     i % 2 === 1 ? (
-      <a key={i} href={`mailto:${part}`} className="focus-ring underline hover:text-[var(--surface-blue)]">
+      <a key={`${i}-${part}`} href={`mailto:${part}`} className="focus-ring underline hover:text-[var(--surface-blue)]">
         {part}
       </a>
     ) : (
@@ -96,18 +96,18 @@ export default function PrivacyPolicy() {
         ) : (
           <div className="space-y-10 font-body text-sm md:text-base leading-relaxed opacity-90" data-testid="privacy-policy-content">
             {blocks.map((block, i) => (
-              <section key={i}>
+              <section key={`${i}-${block.heading || "section"}`}>
                 {block.heading && <h2 className="font-display font-semibold text-lg mb-2 text-[var(--text-primary)]">{block.heading}</h2>}
                 {block.groups.map((g, gi) =>
                   g.type === "ul" ? (
-                    <ul key={gi} className="list-disc pl-5 space-y-1.5 mb-3">
+                    <ul key={`${gi}-${g.type}`} className="list-disc pl-5 space-y-1.5 mb-3">
                       {g.lines.map((l, li) => (
-                        <li key={li}>{renderWithMailto(l)}</li>
+                        <li key={`${li}-${l.slice(0, 30)}`}>{renderWithMailto(l)}</li>
                       ))}
                     </ul>
                   ) : (
                     g.lines.map((l, li) => (
-                      <p key={li} className="mb-3">
+                      <p key={`${li}-${l.slice(0, 30)}`} className="mb-3">
                         {renderWithMailto(l)}
                       </p>
                     ))

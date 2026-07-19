@@ -4,46 +4,58 @@ import { adminApi } from "@/lib/api";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem("bk_admin_token"));
-  const [admin, setAdmin] = useState(null);
+  // `session` holds the authenticated admin's public profile (email/role) only.
+  // The actual JWT never touches JS-accessible storage — it lives in an
+  // httpOnly cookie set by the backend, sent automatically via withCredentials.
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const check = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+    let mounted = true;
+    const checkSession = async () => {
       try {
         const me = await adminApi.me();
-        setAdmin(me);
+        if (mounted) setSession(me);
       } catch (e) {
-        localStorage.removeItem("bk_admin_token");
-        setToken(null);
+        if (mounted) setSession(null);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
-    check();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+    checkSession();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Global safety net: any 401 from an /admin endpoint (expired token, cleared
+  // cookie, or a logout race) immediately clears the local session so
+  // ProtectedRoute redirects instead of showing a stale authenticated UI.
+  useEffect(() => {
+    const handleUnauthorized = () => setSession(null);
+    window.addEventListener("bk:auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("bk:auth:unauthorized", handleUnauthorized);
+  }, []);
 
   const login = useCallback(async (email, password) => {
     const data = await adminApi.login(email, password);
-    localStorage.setItem("bk_admin_token", data.token);
-    setToken(data.token);
-    setAdmin({ email: data.email, role: data.role });
+    setSession({ email: data.email, role: data.role });
     return data;
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem("bk_admin_token");
-    setToken(null);
-    setAdmin(null);
+  const logout = useCallback(async () => {
+    try {
+      await adminApi.logout();
+    } catch (e) {
+      // Even if the network call fails, clear local session state so the
+      // user is treated as logged out client-side.
+    } finally {
+      setSession(null);
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ token, admin, loading, login, logout }}>
+    <AuthContext.Provider value={{ token: session, admin: session, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

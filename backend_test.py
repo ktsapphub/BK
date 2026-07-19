@@ -3,14 +3,24 @@
 Comprehensive backend API test for Bretton J. Key CMS
 Tests all CRUD operations, auth, public endpoints, and verified gates
 """
+import os
+from pathlib import Path
+
 import requests
 import sys
 import io
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent / "backend" / ".env")
 
 BASE_URL = "https://bretton-world.preview.emergentagent.com/api"
-ADMIN_EMAIL = "brettonjkey@icloud.com"
-ADMIN_PASSWORD = "#Test1234"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+    raise SystemExit(
+        "ADMIN_EMAIL / ADMIN_PASSWORD not set. Add them to backend/.env before running this script."
+    )
 
 class BackendTester:
     def __init__(self):
@@ -63,7 +73,7 @@ class BackendTester:
                         self.log(f"✅ PASS - Status: {response.status_code}")
                         self.tests_passed += 1
                         return True, resp_json
-                except:
+                except Exception:
                     self.log(f"✅ PASS - Status: {response.status_code} (no JSON)")
                     self.tests_passed += 1
                     return True, {}
@@ -71,7 +81,7 @@ class BackendTester:
                 self.log(f"❌ FAIL - Expected {expected_status}, got {response.status_code}")
                 try:
                     self.log(f"   Response: {response.text[:200]}")
-                except:
+                except Exception:
                     pass
                 self.tests_failed += 1
                 self.failures.append(f"{name}: Expected {expected_status}, got {response.status_code}")

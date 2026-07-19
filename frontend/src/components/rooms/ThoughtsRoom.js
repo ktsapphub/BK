@@ -49,7 +49,7 @@ function ArticleMedia({ article }) {
 
 export default function ThoughtsRoom({ section, thoughts }) {
   const c = section.content || {};
-  const list = Array.isArray(thoughts) ? thoughts : [];
+  const list = useMemo(() => (Array.isArray(thoughts) ? thoughts : []), [thoughts]);
   const t = themeFor(section.theme);
   const [category, setCategory] = useState("All");
   const [page, setPage] = useState(1);

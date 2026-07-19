@@ -34,6 +34,142 @@ function makeSubmissionId() {
   return `sub-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+// Reason-specific extra fields — kept as its own component (rather than five
+// inline conditional blocks in the main form) to keep ConnectForm's render
+// function focused on the fields that always show.
+function ReasonSpecificFields({ form, setField, fid, inquiryProjects }) {
+  if (form.reason === "I have a project for you") {
+    return (
+      <div className="grid sm:grid-cols-2 gap-4" data-testid={fid("conditional-project")}>
+        <div>
+          <Label htmlFor={fid("project-type")}>Project type</Label>
+          <Select value={form.project_type} onValueChange={setField("project_type")}>
+            <SelectTrigger id={fid("project-type")} data-testid={fid("project-type-select")}>
+              <SelectValue placeholder="Select a type" />
+            </SelectTrigger>
+            <SelectContent className="!z-[80]">
+              {PROJECT_TYPE_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor={fid("project-stage")}>Stage</Label>
+          <Select value={form.project_stage} onValueChange={setField("project_stage")}>
+            <SelectTrigger id={fid("project-stage")} data-testid={fid("project-stage-select")}>
+              <SelectValue placeholder="Select a stage" />
+            </SelectTrigger>
+            <SelectContent className="!z-[80]">
+              {PROJECT_STAGE_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  }
+
+  if (form.reason === "Let me pick your brain") {
+    return (
+      <div data-testid={fid("conditional-pick-brain")}>
+        <Label htmlFor={fid("pick-brain-topic")}>What's on your mind?</Label>
+        <Textarea
+          id={fid("pick-brain-topic")}
+          data-testid={fid("pick-brain-topic-input")}
+          rows={3}
+          value={form.pick_brain_topic}
+          onChange={(e) => setField("pick_brain_topic")(e.target.value)}
+        />
+        <p className="font-body text-xs opacity-60 mt-1.5">Larger advisory asks may fit a scheduled consult better.</p>
+      </div>
+    );
+  }
+
+  if (form.reason === "Speaking engagement") {
+    return (
+      <div className="grid sm:grid-cols-2 gap-4" data-testid={fid("conditional-speaking")}>
+        <div>
+          <Label htmlFor={fid("speaking-org")}>Organization</Label>
+          <Input id={fid("speaking-org")} data-testid={fid("speaking-org-input")} value={form.speaking_org} onChange={(e) => setField("speaking_org")(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor={fid("speaking-event")}>Event name</Label>
+          <Input id={fid("speaking-event")} data-testid={fid("speaking-event-input")} value={form.speaking_event} onChange={(e) => setField("speaking_event")(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor={fid("speaking-date")}>Event date</Label>
+          <Input id={fid("speaking-date")} type="date" data-testid={fid("speaking-date-input")} value={form.speaking_date} onChange={(e) => setField("speaking_date")(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor={fid("speaking-location")}>Event location</Label>
+          <Input id={fid("speaking-location")} data-testid={fid("speaking-location-input")} value={form.speaking_location} onChange={(e) => setField("speaking_location")(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor={fid("speaking-mode")}>Virtual or in-person</Label>
+          <Select value={form.speaking_mode} onValueChange={setField("speaking_mode")}>
+            <SelectTrigger id={fid("speaking-mode")} data-testid={fid("speaking-mode-select")}>
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent className="!z-[80]">
+              {SPEAKING_MODE_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor={fid("speaking-audience")}>Audience size</Label>
+          <Input id={fid("speaking-audience")} data-testid={fid("speaking-audience-input")} value={form.speaking_audience_size} onChange={(e) => setField("speaking_audience_size")(e.target.value)} />
+        </div>
+        <div className="sm:col-span-2">
+          <Label htmlFor={fid("speaking-topic")}>Topic</Label>
+          <Input id={fid("speaking-topic")} data-testid={fid("speaking-topic-input")} value={form.speaking_topic} onChange={(e) => setField("speaking_topic")(e.target.value)} />
+        </div>
+      </div>
+    );
+  }
+
+  if (form.reason === "I want to use your app(s)") {
+    return (
+      <div data-testid={fid("conditional-use-app")}>
+        <Label htmlFor={fid("use-app")}>Which app?</Label>
+        <Select value={form.use_app_project_id} onValueChange={setField("use_app_project_id")}>
+          <SelectTrigger id={fid("use-app")} data-testid={fid("use-app-select")}>
+            <SelectValue placeholder={inquiryProjects.length ? "Select a project" : "No projects currently open for inquiries"} />
+          </SelectTrigger>
+          <SelectContent className="!z-[80]">
+            {inquiryProjects.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  if (form.reason === "Partnership or collaboration") {
+    return (
+      <div data-testid={fid("conditional-partnership")}>
+        <Label htmlFor={fid("partnership-type")}>Partnership type</Label>
+        <Select value={form.partnership_type} onValueChange={setField("partnership_type")}>
+          <SelectTrigger id={fid("partnership-type")} data-testid={fid("partnership-type-select")}>
+            <SelectValue placeholder="Select a type" />
+          </SelectTrigger>
+          <SelectContent className="!z-[80]">
+            {PARTNERSHIP_TYPE_OPTIONS.map((opt) => (
+              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 // Shared "Let's Connect" inquiry form — mounted both inline in the Contact
 // room and inside the floating ConnectDialog, so both surfaces use identical
 // fields, validation, consent wording, and the same backend endpoint.
@@ -63,7 +199,6 @@ export default function ConnectForm({
 
   useEffect(() => {
     if (initialProjectId) setForm((f) => (f.use_app_project_id ? f : { ...f, use_app_project_id: initialProjectId }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialProjectId]);
 
   useEffect(() => {
@@ -233,124 +368,7 @@ export default function ConnectForm({
       </div>
 
       {/* Conditional fields per reason */}
-      {form.reason === "I have a project for you" && (
-        <div className="grid sm:grid-cols-2 gap-4" data-testid={fid("conditional-project")}>
-          <div>
-            <Label htmlFor={fid("project-type")}>Project type</Label>
-            <Select value={form.project_type} onValueChange={setField("project_type")}>
-              <SelectTrigger id={fid("project-type")} data-testid={fid("project-type-select")}>
-                <SelectValue placeholder="Select a type" />
-              </SelectTrigger>
-              <SelectContent className="!z-[80]">
-                {PROJECT_TYPE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor={fid("project-stage")}>Stage</Label>
-            <Select value={form.project_stage} onValueChange={setField("project_stage")}>
-              <SelectTrigger id={fid("project-stage")} data-testid={fid("project-stage-select")}>
-                <SelectValue placeholder="Select a stage" />
-              </SelectTrigger>
-              <SelectContent className="!z-[80]">
-                {PROJECT_STAGE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
-
-      {form.reason === "Let me pick your brain" && (
-        <div data-testid={fid("conditional-pick-brain")}>
-          <Label htmlFor={fid("pick-brain-topic")}>What's on your mind?</Label>
-          <Textarea
-            id={fid("pick-brain-topic")}
-            data-testid={fid("pick-brain-topic-input")}
-            rows={3}
-            value={form.pick_brain_topic}
-            onChange={(e) => setField("pick_brain_topic")(e.target.value)}
-          />
-          <p className="font-body text-xs opacity-60 mt-1.5">Larger advisory asks may fit a scheduled consult better.</p>
-        </div>
-      )}
-
-      {form.reason === "Speaking engagement" && (
-        <div className="grid sm:grid-cols-2 gap-4" data-testid={fid("conditional-speaking")}>
-          <div>
-            <Label htmlFor={fid("speaking-org")}>Organization</Label>
-            <Input id={fid("speaking-org")} data-testid={fid("speaking-org-input")} value={form.speaking_org} onChange={(e) => setField("speaking_org")(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor={fid("speaking-event")}>Event name</Label>
-            <Input id={fid("speaking-event")} data-testid={fid("speaking-event-input")} value={form.speaking_event} onChange={(e) => setField("speaking_event")(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor={fid("speaking-date")}>Event date</Label>
-            <Input id={fid("speaking-date")} type="date" data-testid={fid("speaking-date-input")} value={form.speaking_date} onChange={(e) => setField("speaking_date")(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor={fid("speaking-location")}>Event location</Label>
-            <Input id={fid("speaking-location")} data-testid={fid("speaking-location-input")} value={form.speaking_location} onChange={(e) => setField("speaking_location")(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor={fid("speaking-mode")}>Virtual or in-person</Label>
-            <Select value={form.speaking_mode} onValueChange={setField("speaking_mode")}>
-              <SelectTrigger id={fid("speaking-mode")} data-testid={fid("speaking-mode-select")}>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent className="!z-[80]">
-                {SPEAKING_MODE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor={fid("speaking-audience")}>Audience size</Label>
-            <Input id={fid("speaking-audience")} data-testid={fid("speaking-audience-input")} value={form.speaking_audience_size} onChange={(e) => setField("speaking_audience_size")(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor={fid("speaking-topic")}>Topic</Label>
-            <Input id={fid("speaking-topic")} data-testid={fid("speaking-topic-input")} value={form.speaking_topic} onChange={(e) => setField("speaking_topic")(e.target.value)} />
-          </div>
-        </div>
-      )}
-
-      {form.reason === "I want to use your app(s)" && (
-        <div data-testid={fid("conditional-use-app")}>
-          <Label htmlFor={fid("use-app")}>Which app?</Label>
-          <Select value={form.use_app_project_id} onValueChange={setField("use_app_project_id")}>
-            <SelectTrigger id={fid("use-app")} data-testid={fid("use-app-select")}>
-              <SelectValue placeholder={inquiryProjects.length ? "Select a project" : "No projects currently open for inquiries"} />
-            </SelectTrigger>
-            <SelectContent className="!z-[80]">
-              {inquiryProjects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {form.reason === "Partnership or collaboration" && (
-        <div data-testid={fid("conditional-partnership")}>
-          <Label htmlFor={fid("partnership-type")}>Partnership type</Label>
-          <Select value={form.partnership_type} onValueChange={setField("partnership_type")}>
-            <SelectTrigger id={fid("partnership-type")} data-testid={fid("partnership-type-select")}>
-              <SelectValue placeholder="Select a type" />
-            </SelectTrigger>
-            <SelectContent className="!z-[80]">
-              {PARTNERSHIP_TYPE_OPTIONS.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <ReasonSpecificFields form={form} setField={setField} fid={fid} inquiryProjects={inquiryProjects} />
 
       <div>
         <Label htmlFor={fid("message")}>Tell me a little more</Label>

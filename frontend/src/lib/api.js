@@ -3,15 +3,27 @@ import axios from "axios";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
 
-export const api = axios.create({ baseURL: API });
+// withCredentials ensures the httpOnly auth cookie set by the backend on
+// login is sent with every request. The JWT is never stored in
+// localStorage/JS-readable state, reducing exposure to XSS token theft.
+export const api = axios.create({ baseURL: API, withCredentials: true });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("bk_admin_token");
-  if (token && config.url && config.url.includes("/admin")) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Defense-in-depth for the cookie-based session: if any admin request comes
+// back 401 (expired/cleared/stale session — including a race right after
+// logout), broadcast an event so AuthContext can immediately clear local
+// state and ProtectedRoute can redirect, instead of leaving a stale
+// "logged in" UI showing behind failed API calls.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url || "";
+    if (status === 401 && url.includes("/admin") && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("bk:auth:unauthorized"));
+    }
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 // ---------------------------------------------------------------------------
 // Public
@@ -39,6 +51,7 @@ export const publicApi = {
 // ---------------------------------------------------------------------------
 export const adminApi = {
   login: (email, password) => api.post(`/admin/login`, { email, password }).then((r) => r.data),
+  logout: () => api.post(`/admin/logout`).then((r) => r.data),
   me: () => api.get(`/admin/me`).then((r) => r.data),
 
   uploadMedia: (file, onProgress) => {

@@ -1,6 +1,21 @@
+import os
+from pathlib import Path
+
 import requests
 import sys
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+ALT_ADMIN_EMAIL = os.environ.get("ALT_ADMIN_EMAIL", "")
+ALT_ADMIN_PASSWORD = os.environ.get("ALT_ADMIN_PASSWORD", "")
+if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+    raise SystemExit(
+        "ADMIN_EMAIL / ADMIN_PASSWORD not set. Add them to backend/.env before running this script."
+    )
 
 class BrettonKeyCMSTester:
     def __init__(self, base_url="https://bretton-world.preview.emergentagent.com/api"):
@@ -62,29 +77,33 @@ class BrettonKeyCMSTester:
         
         # Test ORIGINAL admin credentials
         success, response = self.run_test(
-            "Admin Login (ORIGINAL: brettonjkey@icloud.com)",
+            f"Admin Login (ORIGINAL: {ADMIN_EMAIL})",
             "POST",
             "admin/login",
             200,
-            data={"email": "brettonjkey@icloud.com", "password": "#Test1234"}
+            data={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}
         )
         if success and 'token' in response:
             self.token = response['token']
             print(f"   Token obtained: {self.token[:20]}...")
-        
-        # Test NEW admin credentials (bkey)
-        success_new, response_new = self.run_test(
-            "Admin Login (NEW: bkey)",
-            "POST",
-            "admin/login",
-            200,
-            data={"email": "bkey", "password": "adm!np1"}
-        )
-        if success_new and 'token' in response_new:
-            print(f"   NEW admin token obtained: {response_new['token'][:20]}...")
-            # Use the new token for subsequent tests
-            self.token = response_new['token']
-        
+
+        success_new = False
+        if ALT_ADMIN_EMAIL and ALT_ADMIN_PASSWORD:
+            # Test alternate/secondary admin credentials (if configured)
+            success_new, response_new = self.run_test(
+                f"Admin Login (ALT: {ALT_ADMIN_EMAIL})",
+                "POST",
+                "admin/login",
+                200,
+                data={"email": ALT_ADMIN_EMAIL, "password": ALT_ADMIN_PASSWORD}
+            )
+            if success_new and 'token' in response_new:
+                print(f"   ALT admin token obtained: {response_new['token'][:20]}...")
+                # Use the new token for subsequent tests
+                self.token = response_new['token']
+        else:
+            print("   Skipping ALT admin credential test (ALT_ADMIN_EMAIL/ALT_ADMIN_PASSWORD not set)")
+
         return success or success_new
 
     def test_public_endpoints(self):

@@ -98,7 +98,7 @@ export default function ProjectDetail() {
             <h2 className="font-display text-xs uppercase tracking-[0.14em] text-[var(--text-muted)] mb-3">Features</h2>
             <div className="flex flex-wrap gap-2">
               {project.features.map((f, i) => (
-                <span key={i} className="font-display text-xs rounded-full border border-[var(--border-blue)] px-3 py-1">{f}</span>
+                <span key={`${i}-${String(f).slice(0, 30)}`} className="font-display text-xs rounded-full border border-[var(--border-blue)] px-3 py-1">{f}</span>
               ))}
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function ProjectDetail() {
         {Array.isArray(project.technologies) && project.technologies.length > 0 && (
           <div className="mt-6 flex flex-wrap gap-2">
             {project.technologies.map((t, i) => (
-              <span key={i} className="font-body text-xs rounded-full bg-[var(--background-secondary)] px-3 py-1">{t}</span>
+              <span key={`${i}-${String(t).slice(0, 30)}`} className="font-body text-xs rounded-full bg-[var(--background-secondary)] px-3 py-1">{t}</span>
             ))}
           </div>
         )}

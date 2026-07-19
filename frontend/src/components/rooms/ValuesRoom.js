@@ -35,7 +35,7 @@ export default function ValuesRoom({ section }) {
               {items.map((_, i) =>
                 i > 0 ? (
                   <line
-                    key={i}
+                    key={`line-${i}`}
                     x1={`${8 + ((i - 1) % 5) * 20 + offsetFor(i - 1, 3, 7) * 4}%`}
                     y1={`${20 + Math.floor((i - 1) / 5) * 42 + offsetFor(i - 1, 5, 9) * 8}%`}
                     x2={`${8 + (i % 5) * 20 + offsetFor(i, 3, 7) * 4}%`}
@@ -52,7 +52,7 @@ export default function ValuesRoom({ section }) {
                 const isActive = active === i;
                 return (
                   <motion.button
-                    key={i}
+                    key={`${item.title || "value"}-${i}`}
                     type="button"
                     data-testid="value-node"
                     aria-pressed={isActive}

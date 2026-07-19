@@ -2,12 +2,18 @@
 """
 Test backend inquiry API validation: consent, honeypot, dedupe, rate limiting
 """
+import os
+from pathlib import Path
+
 import requests
 import time
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent / "backend" / ".env")
 
 BASE_URL = "https://bretton-world.preview.emergentagent.com/api"
-ADMIN_EMAIL = "brettonjkey@icloud.com"
-ADMIN_PASSWORD = "#Test1234"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
 def test_consent_validation():
     """Test that consent is required"""

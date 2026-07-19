@@ -7,11 +7,21 @@ and stock imagery placeholders (to be replaced later via the media library).
 Run with: python scripts/seed_content.py
 Idempotent-ish: clears existing content collections before reseeding.
 """
+import os
+from pathlib import Path
+
 import requests
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 BASE_URL = "http://localhost:8001/api"
-ADMIN_EMAIL = "brettonjkey@icloud.com"
-ADMIN_PASSWORD = "#Test1234"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+    raise SystemExit(
+        "ADMIN_EMAIL / ADMIN_PASSWORD not set. Add them to backend/.env before running this script."
+    )
 
 # ---------------------------------------------------------------------------
 # Stock imagery placeholders (Unsplash) - replace later via CMS media library

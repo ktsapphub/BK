@@ -1,50 +1,38 @@
 [
   {
-    "content": "Backend: password reset endpoints (self-service + admin-managed)",
+    "content": "Fix hardcoded secrets in seed_content.py, poc_core_flow_test.py, backend_test.py (root + backend) - use env vars",
     "status": "completed"
   },
   {
-    "content": "Backend: privacy policy content fields in GlobalSettingsUpdate",
+    "content": "Migrate admin auth token from localStorage to httpOnly cookie (backend auth_utils.py, server.py, frontend api.js, AuthContext.js)",
     "status": "completed"
   },
   {
-    "content": "Frontend: CSV export utility + Inquiries export button",
+    "content": "Fix empty catch block in analytics.js:45",
     "status": "completed"
   },
   {
-    "content": "Frontend: AdminNewsletter page + routing/sidebar",
+    "content": "Replace array index keys with stable IDs (ProjectDetail, PrivacyPolicy, ResumeRoom, GalleryRoom, ValuesRoom)",
     "status": "completed"
   },
   {
-    "content": "Frontend: AdminLogin password toggle + reset password flow",
+    "content": "Fix missing hook dependencies - verified via real eslint react-hooks/exhaustive-deps run, fixed 3 real issues found (ConnectForm, ThoughtsRoom, AdminSectionEditor)",
     "status": "completed"
   },
   {
-    "content": "Frontend: AdminUsers password toggle + per-user reset dialog",
+    "content": "Verify is/is-not-None comparisons flagged in report (confirmed false positives - all correct None checks)",
     "status": "completed"
   },
   {
-    "content": "Frontend: AdminSettings Legal/Privacy Policy fields",
+    "content": "Refactor high-complexity functions: submit_inquiry (server.py), GalleryRoom lightbox, ConnectForm reason-fields",
     "status": "completed"
   },
   {
-    "content": "Frontend: PrivacyPolicy.js dynamic content rendering",
+    "content": "Fix critical bug from testing agent: logout race condition leaving stale authenticated UI - added 401 interceptor + awaited logout before navigate",
     "status": "completed"
   },
   {
-    "content": "Seed privacy policy content from uploaded file",
-    "status": "completed"
-  },
-  {
-    "content": "index.html cleanup (remove Emergent branding/tracking, fix meta, add favicon)",
-    "status": "completed"
-  },
-  {
-    "content": "Compile check + restart + smoke test",
-    "status": "completed"
-  },
-  {
-    "content": "Call testing_agent_v3 for full verification",
+    "content": "Re-run testing_agent_v3 to verify logout fix and complete remaining untested items (admin CRUD, public rooms, gallery lightbox, connect form reasons, privacy policy, project detail)",
     "status": "in_progress"
   }
 ]

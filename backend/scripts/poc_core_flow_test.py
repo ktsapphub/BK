@@ -4,13 +4,23 @@ Proves: JWT auth, object storage upload/retrieve, page/section CRUD,
 draft->publish workflow, public RLS-equivalent gating, testimonial
 verified-gate, content versioning + rollback.
 """
+import os
+from pathlib import Path
+
 import requests
 import sys
 import time
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 BASE_URL = "http://localhost:8001/api"
-ADMIN_EMAIL = "brettonjkey@icloud.com"
-ADMIN_PASSWORD = "#Test1234"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+    raise SystemExit(
+        "ADMIN_EMAIL / ADMIN_PASSWORD not set. Add them to backend/.env before running this script."
+    )
 
 results = []
 

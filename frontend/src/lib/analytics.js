@@ -42,7 +42,10 @@ export function trackPageview(path) {
     if (typeof window !== "undefined" && typeof window.gtag === "function") {
       window.gtag("event", "page_view", { page_path: path });
     }
-  } catch {
-    // Analytics must never break the site.
+  } catch (err) {
+    // Analytics must never break the site — log for visibility but swallow.
+    if (typeof console !== "undefined") {
+      console.error("trackPageview failed:", err);
+    }
   }
 }

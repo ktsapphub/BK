@@ -59,7 +59,7 @@ export default function AdminLayout() {
             <ExternalLink className="h-4 w-4" /> View Site
           </a>
           <button
-            onClick={() => { logout(); navigate("/admin/login"); }}
+            onClick={async () => { await logout(); navigate("/admin/login"); }}
             data-testid="admin-logout-button"
             className="focus-ring w-full flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
           >
