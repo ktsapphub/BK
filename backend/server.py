@@ -263,7 +263,7 @@ async def upload_media(file: UploadFile = File(...), admin=Depends(get_current_a
     ext = file.filename.split(".")[-1] if "." in file.filename else "bin"
     path = f"{APP_NAME}/media/{uuid.uuid4()}.{ext}"
     data = await file.read()
-    result = put_object(path, data, file.content_type or "application/octet-stream")
+    result = await put_object(path, data, file.content_type or "application/octet-stream")
     media_id = str(uuid.uuid4())
     doc = {
         "id": media_id,
@@ -300,7 +300,7 @@ async def get_media(media_id: str):
     record = await db.media_items.find_one({"id": media_id, "is_deleted": False})
     if not record:
         raise HTTPException(status_code=404, detail="File not found")
-    data, content_type = get_object(record["storage_path"])
+    data, content_type = await get_object(record["storage_path"])
     return Response(content=data, media_type=record.get("content_type") or content_type)
 
 
