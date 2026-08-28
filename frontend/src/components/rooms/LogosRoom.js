@@ -9,7 +9,7 @@ function LogoTile({ item }) {
         data-testid="logo-tile"
         className="shrink-0 h-16 w-40 md:h-20 md:w-48 rounded-[var(--radius-sm)] border border-[var(--border-blue)] bg-[var(--background-primary)]/60 flex items-center justify-center px-5"
       >
-        <img src={item.logo_url} alt={item.name || "Partner organization"} className="max-h-8 md:max-h-10 max-w-full object-contain" loading="lazy" />
+        <img src={item.logo_url} alt={item.name || "Partner organization"} className="max-h-11 md:max-h-14 max-w-full object-contain" loading="lazy" />
       </div>
     );
   }

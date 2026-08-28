@@ -236,11 +236,28 @@ export default function ConnectForm({
     e.preventDefault();
     setAttemptedSubmit(true);
     setErrorState(false);
+
+    // Detailed validation logging for debugging
+    console.log("Form submission attempted:", {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      emailValid,
+      reason: form.reason,
+      message: form.message.trim(),
+      contact_consent: form.contact_consent,
+      isValid
+    });
+
     if (!form.contact_consent) {
       setConsentError(true);
+      console.warn("Form submission blocked: Missing contact consent");
       return;
     }
-    if (!isValid) return;
+    if (!isValid) {
+      console.warn("Form submission blocked: Validation failed");
+      setErrorState(false); // Don't show general error, rely on field validation
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -254,13 +271,18 @@ export default function ConnectForm({
         source_channel: sourceChannel,
         submission_id: submissionIdRef.current,
       };
+      console.log("Submitting inquiry payload:", payload);
       await publicApi.submitInquiry(payload);
+      console.log("Inquiry submitted successfully");
       if (form.marketing_consent && form.email) {
-        publicApi.subscribeNewsletter(form.email).catch(() => {});
+        publicApi.subscribeNewsletter(form.email).catch((err) => {
+          console.warn("Newsletter subscription failed:", err);
+        });
       }
       setSubmitted(true);
       onSuccess?.();
     } catch (err) {
+      console.error("Form submission error:", err);
       setErrorState(true);
     } finally {
       setSubmitting(false);
