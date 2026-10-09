@@ -35,3 +35,9 @@ The schema is created by the app on startup (MongoDB, no migration files). Seed 
 2. Open a PR `staging` -> `main`.
 3. Bretton reviews and approves, then merges.
 4. Railway deploys production from `main`. Confirm https://brettonkey.com and https://api.brettonkey.com return 200.
+
+## Rollback
+- Fastest: in Railway, open the production service's Deployments tab and redeploy the previous successful deployment.
+- Code: `git revert -m 1 <merge-sha>` on `main`, push; Railway redeploys the reverted code.
+- Staging: reset the `staging` branch to `main` (`git push --force-with-lease origin main:staging`) to discard a bad staging change. Staging data can be re-seeded with `backend/scripts/seed_content.py`.
+- Database: the schema is created by the app and has no migrations, so a code rollback needs no DB step.
