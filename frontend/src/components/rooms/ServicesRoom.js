@@ -4,6 +4,7 @@ import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { themeFor } from "@/lib/theme";
 import { openCalendlyPopup } from "@/lib/calendly";
+import ProductsCarousel from "./ProductsCarousel";
 
 // Derives a short, human-readable UTM tag for a service so booked Calendly
 // events can be traced back to exactly which service tile they came from
@@ -129,6 +130,7 @@ export default function ServicesRoom({ section, services, settings }) {
             })}
           </div>
         )}
+      <ProductsCarousel />
       </RoomContainer>
     </RoomWrapper>
   );
