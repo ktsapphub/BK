@@ -45,15 +45,23 @@ export default function ResumeRoom({ section, careerEntries, settings }) {
         ) : (
           <>
             {/* Desktop: milestone rail + detail panel */}
-            <div className="hidden md:grid grid-cols-[260px_1fr] gap-10" data-testid="resume-timeline">
-              <div className="relative pl-7">
-                <div className="absolute left-[7px] top-1 bottom-1 w-px bg-[var(--border-blue)]" aria-hidden="true" />
+            {/* The rail scrolls on its own and is about as tall as one role's story, so long
+                careers don't leave a tall empty gap beside the text. */}
+            <div className="hidden md:grid grid-cols-[260px_1fr] gap-10 items-start" data-testid="resume-timeline">
+              <div
+                data-lenis-prevent
+                data-testid="resume-rail"
+                aria-label="Roles, newest first. Scroll for earlier roles."
+                className="max-h-[400px] overflow-y-auto overscroll-contain pr-2 [scrollbar-width:thin] [mask-image:linear-gradient(to_bottom,black_88%,transparent)]"
+              >
+              <div className="relative pl-7 pt-1 pb-8">
+                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-[var(--border-blue)]" aria-hidden="true" />
                 {entries.map((entry) => (
                   <button
                     key={entry.id}
                     onClick={() => setActiveId(entry.id)}
                     data-testid="resume-entry"
-                    className="focus-ring relative block w-full text-left pb-7 group"
+                    className="focus-ring relative block w-full text-left pb-4 group"
                   >
                     <span
                       className={`absolute -left-7 top-1 h-3.5 w-3.5 rounded-full border-2 transition-all ${
@@ -66,6 +74,7 @@ export default function ResumeRoom({ section, careerEntries, settings }) {
                     <span className={`font-display text-xs block mt-0.5 ${activeId === entry.id ? "opacity-90" : "opacity-50"}`}>{entry.title}</span>
                   </button>
                 ))}
+              </div>
               </div>
               <AnimatePresence mode="wait">
                 {active && (
