@@ -1,6 +1,7 @@
 import { Building2 } from "lucide-react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { themeFor } from "@/lib/theme";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 
 function LogoTile({ item }) {
   if (item.logo_url) {
@@ -30,6 +31,7 @@ export default function LogosRoom({ section }) {
   const c = section.content || {};
   const items = Array.isArray(c.items) ? c.items : [];
   const t = themeFor(section.theme);
+  const scrollRef = useAutoScroll(40);
 
   if (items.length === 0) return null;
 
@@ -44,8 +46,12 @@ export default function LogosRoom({ section }) {
         )}
       </RoomContainer>
 
-      <div className="relative w-full overflow-hidden group [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]" data-testid="logos-marquee">
-        <div className="flex items-center gap-4 md:gap-6 w-max animate-marquee group-hover:[animation-play-state:paused]">
+      <div
+        ref={scrollRef}
+        className="w-full overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
+        data-testid="logos-marquee"
+      >
+        <div className="flex items-center gap-4 md:gap-6 w-max">
           {[...items, ...items].map((item, i) => (
             <LogoTile key={i} item={item} />
           ))}
