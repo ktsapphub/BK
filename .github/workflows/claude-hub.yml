@@ -1,0 +1,232 @@
+# Mission Control agent — installed by build.ktsapps.com.
+# The hub dispatches this workflow; Claude Code does the work on a branch,
+# opens a PR, and reports cost + memory (HANDOFF.md) back to the hub.
+#
+# Repo secrets:
+#   ANTHROPIC_API_KEY    required
+#   HUB_URL              https://build.ktsapps.com  (optional; without it the hub polls)
+#   HUB_WEBHOOK_SECRET   must match the hub's secret (optional, with HUB_URL)
+#   HUB_PR_TOKEN         optional PAT so the PR triggers other workflows (preview deploys via Actions)
+name: Mission Control Agent
+run-name: "hub:${{ inputs.run_id }} · ${{ inputs.mode }} · ${{ inputs.title }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:    { description: "Hub run id", required: true, type: string }
+      mode:      { description: "build | update | assess | productize", required: true, type: string, default: update }
+      prompt:    { description: "Compiled prompt from the hub", required: true, type: string }
+      model:     { description: "Model id", required: false, type: string, default: "" }
+      max_turns: { description: "Turn cap", required: false, type: string, default: "30" }
+      title:     { description: "PR title", required: false, type: string, default: "Mission Control run" }
+      gateway:   { description: "1 = route Claude Code through the OmniRoute gateway", required: false, type: string, default: "0" }
+      subagent_model: { description: "Model for subagents (delegated subtasks)", required: false, type: string, default: "" }
+      resume_from: { description: "Branch of a previous attempt to continue from (hub Continue)", required: false, type: string, default: "" }
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: hub-${{ inputs.run_id }}
+
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      RUN_ID: ${{ inputs.run_id }}
+      MODE: ${{ inputs.mode }}
+      HUB_URL: ${{ secrets.HUB_URL }}
+      HUB_SECRET: ${{ secrets.HUB_WEBHOOK_SECRET }}
+    steps:
+      - name: "Vera · checkout & load memory"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.HUB_PR_TOKEN || github.token }}
+
+      - name: "Vera · prepare branch, sync skills + memory"
+        shell: bash
+        env:
+          RESUME_FROM: ${{ inputs.resume_from }}
+        run: |
+          git config user.name "mission-control[bot]"
+          git config user.email "mission-control@users.noreply.github.com"
+          git checkout -b "hub/$RUN_ID"
+          # Continue: start from the previous attempt's work instead of from scratch.
+          case "$RESUME_FROM" in
+            "") ;;
+            *[!A-Za-z0-9._/-]*) echo "::warning::Ignoring resume branch with unexpected characters" ;;
+            *) if git fetch -q origin "$RESUME_FROM" 2>/dev/null; then
+                 git merge --no-edit -q FETCH_HEAD && echo "resume: continuing from $RESUME_FROM ($(git rev-list --count HEAD ^origin/HEAD 2>/dev/null || echo '?') commits ahead)"
+               else echo "resume: $RESUME_FROM was never pushed; starting from the default branch with the previous handoff"; fi ;;
+          esac
+          mkdir -p .claude .hub
+          if [ -f .claude/HANDOFF.md ]; then echo "memory: HANDOFF.md ($(wc -l < .claude/HANDOFF.md) lines)"; else echo "memory: none yet"; fi
+          # Pull the live skill pack from the hub so every run uses the current skills
+          # (memory, usage, security, design...) without a PR to this repo.
+          SYNCED=0; PACKV=""
+          if [ -n "$HUB_URL" ] && curl -sf "$HUB_URL/api/hooks/skillpack" -H "authorization: Bearer $HUB_SECRET" -o /tmp/pack.json; then
+            while IFS= read -r f; do
+              case "$f" in /*|*..*) continue ;; esac
+              mkdir -p ".claude/skills/$(dirname "$f")"
+              jq -j --arg f "$f" '.files[$f]' /tmp/pack.json > ".claude/skills/$f"
+              SYNCED=$((SYNCED+1))
+            done < <(jq -r '.files | keys[]' /tmp/pack.json)
+            PACKV=$(jq -r '.version' /tmp/pack.json)
+            echo "skills: synced $SYNCED files from hub (pack $PACKV)"
+          else
+            echo "skills: using the copy committed in .claude/skills (hub not reachable)"
+          fi
+          if [ -n "$HUB_URL" ]; then
+            curl -s -X POST "$HUB_URL/api/hooks/run" -H "authorization: Bearer $HUB_SECRET" -H "content-type: application/json" \
+              -d "{\"run_id\":\"$RUN_ID\",\"phase\":\"started\",\"skills_synced\":$SYNCED,\"skills_version\":\"$PACKV\",\"actions_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}" || true
+          fi
+
+      # Second brain: a local code knowledge graph (tree-sitter, no LLM, no API cost).
+      # Agents read graphify-out/GRAPH_REPORT.md and query the graph instead of re-reading files.
+      - name: "Vera · restore code graph"
+        uses: actions/cache@v4
+        continue-on-error: true
+        with:
+          path: graphify-out
+          key: graphify-${{ github.repository }}-${{ github.sha }}
+          restore-keys: graphify-${{ github.repository }}-
+
+      - name: "Vera · build code graph (graphify)"
+        continue-on-error: true
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          pipx install graphifyy >/dev/null 2>&1 || python3 -m pip install --user -q graphifyy
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          graphify update . 2>&1 | tail -3 || echo "graph build skipped"
+          graphify install --platform claude >/dev/null 2>&1 || true
+          [ -f graphify-out/GRAPH_REPORT.md ] && head -12 graphify-out/GRAPH_REPORT.md || true
+
+      # Optional model gateway (OmniRoute): used when the hub routes this run through it,
+      # e.g. as a fallback when Claude is rate-limited or out of credits.
+      - name: "Hub · model routing"
+        id: route
+        shell: bash
+        env:
+          GW: ${{ inputs.gateway }}
+          OMNI_URL: ${{ secrets.OMNIROUTE_URL }}
+          OMNI_KEY: ${{ secrets.OMNIROUTE_API_KEY }}
+          SUB: ${{ inputs.subagent_model }}
+        run: |
+          if [ "$GW" = "1" ] && [ -n "$OMNI_URL" ] && [ -n "$OMNI_KEY" ]; then
+            echo "::add-mask::$OMNI_KEY"
+            echo "ANTHROPIC_BASE_URL=${OMNI_URL%/}" >> "$GITHUB_ENV"
+            echo "ANTHROPIC_AUTH_TOKEN=$OMNI_KEY" >> "$GITHUB_ENV"
+            echo "gw=1" >> "$GITHUB_OUTPUT"
+            echo "Routing through the OmniRoute gateway"
+          else
+            echo "gw=0" >> "$GITHUB_OUTPUT"
+            [ "$GW" = "1" ] && echo "::warning::Gateway requested but OMNIROUTE_URL / OMNIROUTE_API_KEY are not set; using Claude directly."
+            true
+          fi
+          case "$SUB" in ""|*[!A-Za-z0-9._/-]*) ;; *) echo "CLAUDE_CODE_SUBAGENT_MODEL=$SUB" >> "$GITHUB_ENV" ;; esac
+
+      # MCP servers for every run: Context7 (current library docs), Playwright (real browser
+      # checks), Firecrawl (web search/scrape, only when FIRECRAWL_API_KEY is set).
+      - name: "Hub · MCP servers"
+        continue-on-error: true
+        shell: bash
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          CONTEXT7_API_KEY: ${{ secrets.CONTEXT7_API_KEY }}
+        run: |
+          echo '{"mcpServers":{}}' > "$RUNNER_TEMP/mcp.json"   # safe default if anything below fails
+          npx -y playwright@latest install --with-deps chromium >/dev/null 2>&1 || echo "::warning::Playwright browser install failed; the browser MCP may not work this run."
+          jq -n --arg fc "$FIRECRAWL_API_KEY" --arg c7 "$CONTEXT7_API_KEY" '
+            {mcpServers: ({
+              context7: ({command: "npx", args: ["-y", "@upstash/context7-mcp"]} + (if $c7 != "" then {env: {CONTEXT7_API_KEY: $c7}} else {} end)),
+              playwright: {command: "npx", args: ["-y", "@playwright/mcp@latest", "--headless", "--isolated", "--browser", "chromium"]}
+            } + (if $fc != "" then {firecrawl: {command: "npx", args: ["-y", "firecrawl-mcp"], env: {FIRECRAWL_API_KEY: $fc}}} else {} end))}' > "$RUNNER_TEMP/mcp.json"
+          jq -r '.mcpServers | keys | join(", ")' "$RUNNER_TEMP/mcp.json" | sed 's/^/MCP servers: /'
+
+      - name: "Agent team · Claude Code"
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ steps.route.outputs.gw == '1' && secrets.OMNIROUTE_API_KEY || secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          prompt: ${{ inputs.prompt }}
+          # Efficiency skill packs: ponytail (laziest code that works) + agent-skills (spec → ship lifecycle).
+          plugin_marketplaces: |
+            https://github.com/DietrichGebert/ponytail.git
+            https://github.com/addyosmani/agent-skills.git
+            https://github.com/HKUDS/CLI-Anything.git
+          plugins: |
+            ponytail@ponytail
+            agent-skills@addy-agent-skills
+            cli-anything@cli-anything
+          claude_args: >-
+            --max-turns ${{ inputs.max_turns }}
+            --mcp-config ${{ runner.temp }}/mcp.json
+            ${{ inputs.model != '' && format('--model {0}', inputs.model) || '' }}
+            --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Task,TodoWrite,WebFetch,Bash(npm *),Bash(npx *),Bash(pnpm *),Bash(yarn *),Bash(node *),Bash(python *),Bash(python3 *),Bash(pip *),Bash(pytest *),Bash(git status),Bash(git diff *),Bash(git log *),Bash(ls *),Bash(cat *),Bash(mkdir *),Bash(rm *),Bash(mv *),Bash(cp *),Bash(cd *),Bash(find *),Bash(grep *),Bash(rg *),Bash(sed *),Bash(awk *),Bash(head *),Bash(tail *),Bash(wc *),Bash(sort *),Bash(uniq *),Bash(touch *),Bash(chmod *),Bash(echo *),Bash(printf *),Bash(diff *),Bash(test *),Bash(jq *),Bash(curl *),Bash(sleep *),Bash(timeout *),Bash(kill *),Bash(bun *),Bash(bunx *),Bash(uv *),Bash(git show *),Bash(git rm *),Bash(git mv *),Bash(graphify *),Bash(pipx *),mcp__context7,mcp__playwright,mcp__firecrawl"
+
+      - name: "Bram · checks"
+        if: inputs.mode != 'assess'
+        continue-on-error: true
+        run: |
+          if [ -f package.json ] && grep -q '"test"' package.json; then
+            (npm ci || npm install) && npm test --if-present
+          else
+            echo "No test script found; skipping."
+          fi
+
+      - name: "Ines · commit, push & open PR"
+        id: pr
+        if: inputs.mode != 'assess'
+        env:
+          GH_TOKEN: ${{ secrets.HUB_PR_TOKEN || github.token }}
+          TITLE: ${{ inputs.title }}
+        run: |
+          git add -A
+          git reset -q -- .hub 2>/dev/null || true
+          git reset -q -- .claude/skills 2>/dev/null || true   # synced skills are not part of the change
+          git reset -q -- graphify-out 2>/dev/null || true     # the code graph is cached, not committed
+          if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
+          git commit -q -m "$TITLE" -m "Mission Control run $RUN_ID ($MODE)"
+          git push -q -u origin "hub/$RUN_ID"
+          {
+            printf 'Mission Control run `%s` (%s)\n\n' "$RUN_ID" "$MODE"
+            cat .hub/summary.md 2>/dev/null || true
+          } > /tmp/body.md
+          # Some repos don't let Actions open PRs; the branch is pushed, so the hub opens it instead.
+          if URL=$(gh pr create --title "$TITLE" --body-file /tmp/body.md --head "hub/$RUN_ID" 2>/tmp/pr.err); then
+            echo "url=$URL" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Could not open the PR from Actions ($(head -c 200 /tmp/pr.err)). The hub will open it from hub/$RUN_ID."
+          fi
+
+      - name: "Report to hub"
+        if: always()
+        env:
+          EXEC_FILE: ${{ steps.claude.outputs.execution_file }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          OUTCOME: ${{ steps.claude.outcome }}
+        run: |
+          if [ -z "$HUB_URL" ]; then echo "HUB_URL not set; the hub will poll GitHub instead."; exit 0; fi
+          RESULT='{}'
+          if [ -n "$EXEC_FILE" ] && [ -f "$EXEC_FILE" ]; then
+            RESULT=$(jq -c '[.[] | select(.type=="result")] | last // {}' "$EXEC_FILE" 2>/dev/null || echo '{}')
+          fi
+          touch .hub/summary.md .claude/HANDOFF.md
+          head -c 6000 graphify-out/GRAPH_REPORT.md > /tmp/graph.md 2>/dev/null || : > /tmp/graph.md
+          jq -n --arg run_id "$RUN_ID" --arg outcome "$OUTCOME" --arg pr "$PR_URL" \
+                --rawfile summary .hub/summary.md --rawfile handoff .claude/HANDOFF.md --rawfile graph /tmp/graph.md \
+                --argjson result "$RESULT" \
+                '{run_id:$run_id, phase:"finished", outcome:$outcome, pr_url:$pr, summary:$summary, handoff:$handoff, graph:$graph,
+                  cost_usd:($result.total_cost_usd // null), usage:($result.usage // null), turns:($result.num_turns // null),
+                  subtype:($result.subtype // null), denials_count:($result.permission_denials_count // (($result.permission_denials // []) | length)),
+                  denials:(($result.permission_denials // []) | map(.tool_input.command // .tool_name // "") | .[0:12])}' \
+          | curl -s -X POST "$HUB_URL/api/hooks/run" -H "authorization: Bearer $HUB_SECRET" -H "content-type: application/json" --data-binary @- || true
