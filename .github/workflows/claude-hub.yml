@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       run_id:    { description: "Hub run id", required: true, type: string }
-      mode:      { description: "build | update | assess | productize", required: true, type: string, default: update }
+      mode:      { description: "build | update | assess | productize | mobile", required: true, type: string, default: update }
       prompt:    { description: "Compiled prompt from the hub", required: true, type: string }
       model:     { description: "Model id", required: false, type: string, default: "" }
       max_turns: { description: "Turn cap", required: false, type: string, default: "30" }
@@ -22,6 +22,9 @@ on:
       gateway:   { description: "1 = route Claude Code through the OmniRoute gateway", required: false, type: string, default: "0" }
       subagent_model: { description: "Model for subagents (delegated subtasks)", required: false, type: string, default: "" }
       resume_from: { description: "Branch of a previous attempt to continue from (hub Continue)", required: false, type: string, default: "" }
+      base_branch: { description: "Branch to start from and open the PR into (staging-first projects)", required: false, type: string, default: "" }
+      mobile_dir: { description: "Expo app folder (mobile projects); empty = no phone preview", required: false, type: string, default: "" }
+      mobile_build: { description: "android = also start an EAS preview build", required: false, type: string, default: "" }
 
 permissions:
   contents: write
@@ -47,6 +50,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.base_branch }}
           token: ${{ secrets.HUB_PR_TOKEN || github.token }}
 
       - name: "Vera · prepare branch, sync skills + memory"
@@ -89,6 +93,19 @@ jobs:
 
       # Second brain: a local code knowledge graph (tree-sitter, no LLM, no API cost).
       # Agents read graphify-out/GRAPH_REPORT.md and query the graph instead of re-reading files.
+      - name: "Priya · official Expo skills"
+        if: inputs.mode == 'mobile' || inputs.mobile_dir != ''
+        continue-on-error: true
+        env:
+          EXPO_SKILLS_SHA: d4f484024fec15196bfd3c272e953e3f983972cf   # github.com/expo/skills, pinned; bump on purpose
+        run: |
+          D="$RUNNER_TEMP/expo-skills"
+          git init -q "$D" && git -C "$D" remote add origin https://github.com/expo/skills.git
+          git -C "$D" fetch -q --depth 1 origin "$EXPO_SKILLS_SHA" && git -C "$D" checkout -q FETCH_HEAD
+          mkdir -p .claude/skills
+          n=0; for s in "$D"/plugins/expo/skills/*/; do b=$(basename "$s"); [ -e ".claude/skills/$b" ] || { cp -r "$s" ".claude/skills/$b"; n=$((n+1)); }; done
+          echo "Expo skills added: $n"
+
       - name: "Vera · restore code graph"
         uses: actions/cache@v4
         continue-on-error: true
@@ -151,9 +168,43 @@ jobs:
             } + (if $fc != "" then {firecrawl: {command: "npx", args: ["-y", "firecrawl-mcp"], env: {FIRECRAWL_API_KEY: $fc}}} else {} end))}' > "$RUNNER_TEMP/mcp.json"
           jq -r '.mcpServers | keys | join(", ")' "$RUNNER_TEMP/mcp.json" | sed 's/^/MCP servers: /'
 
+      - name: "Ines · Railway CLI (guarded)"
+        id: railway
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_API_TOKEN$RAILWAY_TOKEN" ]; then echo "No Railway key for this repo (only Railway projects you approve get one)."; exit 0; fi
+          npm i -g @railway/cli@4 >/dev/null 2>&1 || { echo "::warning::Railway CLI install failed"; exit 0; }
+          REAL=$(command -v railway); TGT=$(readlink -f "$REAL"); rm -f "$REAL"
+          cat > "$REAL" <<'SHIM'
+          #!/usr/bin/env bash
+          # Mission Control guard around the Railway CLI: agents may work in staging/preview
+          # environments; production and anything destructive stay with Bretton.
+          REAL="$RAILWAY_REAL"
+          deny() { echo "Blocked by Mission Control: $1. Production on Railway changes only through Promote to production (Bretton). Use -e staging." >&2; exit 3; }
+          sub="$1"; all=" $* "
+          case "$sub" in delete|down|init|unlink) deny "'railway $sub' isn't allowed for agents";; esac
+          [ "$sub" = environment ] && [[ "$all" =~ " delete " || "$all" =~ " rm " ]] && deny "deleting environments"
+          mut=0
+          case "$sub" in up|deploy|redeploy|domain|volume|add|service|connect|run|shell|ssh|scale) mut=1;; esac
+          [ "$sub" = variables ] && [[ "$all" =~ " --set" || "$all" =~ " -s " || "$all" =~ " set " || "$all" =~ " delete" ]] && mut=1
+          if [ "$mut" = 1 ]; then
+            ENV=$(printf '%s\n' "$@" | awk 'f{print;exit} /^(-e|--environment)$/{f=1} /^--environment=/{sub(/^--environment=/,"");print;exit}')
+            [ -n "$ENV" ] || deny "'railway $sub' needs an explicit environment (-e staging)"
+            echo "$ENV" | grep -qiE '^(production|prod|live|main)$' && deny "agents don't change the production environment"
+          fi
+          exec "$REAL" "$@"
+          SHIM
+          sed -i "s#^REAL=.*#REAL=$TGT#" "$REAL"; chmod +x "$REAL"
+          echo "on=1" >> "$GITHUB_OUTPUT"; railway whoami 2>/dev/null | head -1 || true
+
       - name: "Agent team · Claude Code"
         id: claude
         uses: anthropics/claude-code-action@v1
+        env:
+          RAILWAY_API_TOKEN: ${{ steps.railway.outputs.on == '1' && secrets.RAILWAY_API_TOKEN || '' }}
+          RAILWAY_TOKEN: ${{ steps.railway.outputs.on == '1' && secrets.RAILWAY_TOKEN || '' }}
         with:
           anthropic_api_key: ${{ steps.route.outputs.gw == '1' && secrets.OMNIROUTE_API_KEY || secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
@@ -171,7 +222,7 @@ jobs:
             --max-turns ${{ inputs.max_turns }}
             --mcp-config ${{ runner.temp }}/mcp.json
             ${{ inputs.model != '' && format('--model {0}', inputs.model) || '' }}
-            --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Task,TodoWrite,WebFetch,Bash(npm *),Bash(npx *),Bash(pnpm *),Bash(yarn *),Bash(node *),Bash(python *),Bash(python3 *),Bash(pip *),Bash(pytest *),Bash(git status),Bash(git diff *),Bash(git log *),Bash(ls *),Bash(cat *),Bash(mkdir *),Bash(rm *),Bash(mv *),Bash(cp *),Bash(cd *),Bash(find *),Bash(grep *),Bash(rg *),Bash(sed *),Bash(awk *),Bash(head *),Bash(tail *),Bash(wc *),Bash(sort *),Bash(uniq *),Bash(touch *),Bash(chmod *),Bash(echo *),Bash(printf *),Bash(diff *),Bash(test *),Bash(jq *),Bash(curl *),Bash(sleep *),Bash(timeout *),Bash(kill *),Bash(bun *),Bash(bunx *),Bash(uv *),Bash(git show *),Bash(git rm *),Bash(git mv *),Bash(graphify *),Bash(pipx *),mcp__context7,mcp__playwright,mcp__firecrawl"
+            --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Task,TodoWrite,WebFetch,Bash(npm *),Bash(npx *),Bash(pnpm *),Bash(yarn *),Bash(node *),Bash(python *),Bash(python3 *),Bash(pip *),Bash(pytest *),Bash(git status),Bash(git diff *),Bash(git log *),Bash(ls *),Bash(cat *),Bash(mkdir *),Bash(rm *),Bash(mv *),Bash(cp *),Bash(cd *),Bash(find *),Bash(grep *),Bash(rg *),Bash(sed *),Bash(awk *),Bash(head *),Bash(tail *),Bash(wc *),Bash(sort *),Bash(uniq *),Bash(touch *),Bash(chmod *),Bash(echo *),Bash(printf *),Bash(diff *),Bash(test *),Bash(jq *),Bash(curl *),Bash(sleep *),Bash(timeout *),Bash(kill *),Bash(bun *),Bash(bunx *),Bash(uv *),Bash(git show *),Bash(git rm *),Bash(git mv *),Bash(graphify *),Bash(pipx *),Bash(railway *),mcp__context7,mcp__playwright,mcp__firecrawl"
 
       - name: "Bram · checks"
         if: inputs.mode != 'assess'
@@ -183,12 +234,58 @@ jobs:
             echo "No test script found; skipping."
           fi
 
+      - name: "Priya · phone preview"
+        id: mobile
+        if: inputs.mobile_dir != '' && inputs.mode != 'assess'
+        continue-on-error: true
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          MDIR: ${{ inputs.mobile_dir }}
+          MBUILD: ${{ inputs.mobile_build }}
+        run: |
+          say() { echo "error=$1" >> "$GITHUB_OUTPUT"; echo "::warning::$1"; }
+          if [ -z "$EXPO_TOKEN" ]; then say "EXPO_TOKEN isn't set (Setup → Mobile previews)"; exit 0; fi
+          APP=""
+          for d in "$MDIR" apps/mobile mobile .; do
+            if [ -n "$d" ] && { [ -f "$d/app.json" ] || ls "$d"/app.config.* >/dev/null 2>&1; } && grep -q '"expo"' "$d/package.json" 2>/dev/null; then APP="$d"; break; fi
+          done
+          if [ -z "$APP" ]; then say "no Expo app found yet (looked in $MDIR, apps/mobile, mobile)"; exit 0; fi
+          ROOT=$PWD
+          if [ -f pnpm-lock.yaml ]; then npx -y pnpm@9 install --frozen-lockfile=false >/dev/null 2>&1 || true
+          elif [ -f yarn.lock ]; then yarn install >/dev/null 2>&1 || true
+          elif [ -f package-lock.json ]; then npm install --no-audit --no-fund >/dev/null 2>&1 || true; fi
+          cd "$APP"
+          [ -d node_modules ] || npm install --no-audit --no-fund >/dev/null 2>&1 || true
+          # First preview links the app to EAS (writes the project id into app config, committed with the PR).
+          npx -y eas-cli@latest init --non-interactive --force >/tmp/eas-init.log 2>&1 || true
+          npx -y eas-cli@latest update:configure --platform all --non-interactive >/dev/null 2>&1 || true
+          CFG=$(npx expo config --json 2>/dev/null || echo '{}')
+          SLUG=$(echo "$CFG" | jq -r '.slug // empty')
+          OWNER=$(echo "$CFG" | jq -r '.owner // empty')
+          [ -n "$OWNER" ] || OWNER=$(npx -y eas-cli@latest whoami 2>/dev/null | head -1)
+          if OUT=$(npx -y eas-cli@latest update --branch "hub-$RUN_ID" --message "Mission Control run $RUN_ID" --non-interactive --json 2>/tmp/eas-update.err); then
+            GROUP=$(echo "$OUT" | jq -r '.[0].group // empty' 2>/dev/null)
+            if [ -n "$GROUP" ] && [ -n "$SLUG" ] && [ -n "$OWNER" ]; then echo "preview=https://expo.dev/accounts/$OWNER/projects/$SLUG/updates/$GROUP" >> "$GITHUB_OUTPUT"; fi
+          else
+            say "EAS update failed: $(tail -c 220 /tmp/eas-update.err | tr '\n' ' ')"
+          fi
+          if [ "$MBUILD" = "android" ]; then
+            if B=$(npx -y eas-cli@latest build --platform android --profile preview --no-wait --non-interactive --json 2>/tmp/eas-build.err); then
+              BID=$(echo "$B" | jq -r '.[0].id // empty' 2>/dev/null)
+              [ -n "$BID" ] && echo "build=https://expo.dev/accounts/$OWNER/projects/$SLUG/builds/$BID" >> "$GITHUB_OUTPUT"
+            else
+              say "Android preview build didn't start: $(tail -c 220 /tmp/eas-build.err | tr '\n' ' ') (first build may need a one-time 'eas build -p android --profile preview' on your PC to create the keystore)"
+            fi
+          fi
+          cd "$ROOT"
+
       - name: "Ines · commit, push & open PR"
         id: pr
         if: inputs.mode != 'assess'
         env:
           GH_TOKEN: ${{ secrets.HUB_PR_TOKEN || github.token }}
           TITLE: ${{ inputs.title }}
+          BASE: ${{ inputs.base_branch }}
         run: |
           git add -A
           git reset -q -- .hub 2>/dev/null || true
@@ -202,11 +299,36 @@ jobs:
             cat .hub/summary.md 2>/dev/null || true
           } > /tmp/body.md
           # Some repos don't let Actions open PRs; the branch is pushed, so the hub opens it instead.
-          if URL=$(gh pr create --title "$TITLE" --body-file /tmp/body.md --head "hub/$RUN_ID" 2>/tmp/pr.err); then
+          if URL=$(gh pr create --title "$TITLE" --body-file /tmp/body.md --head "hub/$RUN_ID" ${BASE:+--base "$BASE"} 2>/tmp/pr.err); then
             echo "url=$URL" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::Could not open the PR from Actions ($(head -c 200 /tmp/pr.err)). The hub will open it from hub/$RUN_ID."
           fi
+
+      - name: "Ines · deliver files"
+        if: always()
+        continue-on-error: true
+        run: |
+          [ -d .hub/out ] || { echo "No deliverables this run."; exit 0; }
+          find .hub/out -type f \( -name '.env*' -o -name '*.pem' -o -name '*.key' \) -delete
+          N=$(find .hub/out -type f | wc -l); echo "Deliverables: $N file(s)"
+          [ "$N" -gt 0 ] || exit 0
+          if [ -n "$HUB_URL" ]; then
+            find .hub/out -type f -size -20M | head -40 | while read -r f; do
+              rel="${f#.hub/out/}"
+              curl -s -o /dev/null -w "%{http_code} $rel\n" -X POST "$HUB_URL/api/hooks/output" -H "authorization: Bearer $HUB_SECRET" \
+                -F "run_id=$RUN_ID" -F "file=@$f;filename=$rel" || true
+            done
+          fi
+
+      - name: "Ines · keep deliverables on GitHub too"
+        if: always() && hashFiles('.hub/out/**') != ''
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: deliverables-${{ inputs.run_id }}
+          path: .hub/out/
+          retention-days: 30
 
       - name: "Report to hub"
         if: always()
@@ -214,6 +336,9 @@ jobs:
           EXEC_FILE: ${{ steps.claude.outputs.execution_file }}
           PR_URL: ${{ steps.pr.outputs.url }}
           OUTCOME: ${{ steps.claude.outcome }}
+          M_PREVIEW: ${{ steps.mobile.outputs.preview }}
+          M_BUILD: ${{ steps.mobile.outputs.build }}
+          M_ERROR: ${{ steps.mobile.outputs.error }}
         run: |
           if [ -z "$HUB_URL" ]; then echo "HUB_URL not set; the hub will poll GitHub instead."; exit 0; fi
           RESULT='{}'
@@ -223,9 +348,10 @@ jobs:
           touch .hub/summary.md .claude/HANDOFF.md
           head -c 6000 graphify-out/GRAPH_REPORT.md > /tmp/graph.md 2>/dev/null || : > /tmp/graph.md
           jq -n --arg run_id "$RUN_ID" --arg outcome "$OUTCOME" --arg pr "$PR_URL" \
+                --arg mp "$M_PREVIEW" --arg mb "$M_BUILD" --arg me "$M_ERROR" \
                 --rawfile summary .hub/summary.md --rawfile handoff .claude/HANDOFF.md --rawfile graph /tmp/graph.md \
                 --argjson result "$RESULT" \
-                '{run_id:$run_id, phase:"finished", outcome:$outcome, pr_url:$pr, summary:$summary, handoff:$handoff, graph:$graph,
+                '{run_id:$run_id, phase:"finished", outcome:$outcome, pr_url:$pr, mobile_preview:$mp, mobile_build:$mb, mobile_error:$me, summary:$summary, handoff:$handoff, graph:$graph,
                   cost_usd:($result.total_cost_usd // null), usage:($result.usage // null), turns:($result.num_turns // null),
                   subtype:($result.subtype // null), denials_count:($result.permission_denials_count // (($result.permission_denials // []) | length)),
                   denials:(($result.permission_denials // []) | map(.tool_input.command // .tool_name // "") | .[0:12])}' \
