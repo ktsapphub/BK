@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Play } from "lucide-react";
 import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
 import { themeFor } from "@/lib/theme";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
@@ -15,6 +15,12 @@ const STATUS_STYLES = {
   Private: "bg-[var(--background-secondary)] text-[var(--text-muted)] border-[var(--border-primary)]",
   "Case Study Available": "bg-[var(--surface-blue)] text-white border-transparent",
 };
+
+const LINKS = [
+  ["live_url", "Live site"],
+  ["repo_url", "Repo"],
+  ["case_study_url", "Case study"],
+];
 
 const AUTOPLAY_INTERVAL_MS = 4500;
 
@@ -67,6 +73,22 @@ function SolutionSlide({ project, distance }) {
         </div>
         <h3 className="font-display font-bold text-xl md:text-2xl mb-2 text-[var(--text-primary)]">{project.title}</h3>
         {project.summary && <p className="font-body text-sm md:text-base text-[var(--text-secondary)] leading-relaxed">{project.summary}</p>}
+        {LINKS.some(([k]) => project[k]) && (
+          <div className="flex flex-wrap gap-2 mt-4" data-testid="project-links">
+            {LINKS.filter(([k]) => project[k]).map(([k, label]) => (
+              <a
+                key={k}
+                href={project[k]}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid={`project-link-${k}`}
+                className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-[var(--border-blue)] px-3.5 py-1.5 font-display text-xs font-semibold text-[var(--surface-blue)] hover:bg-[var(--background-blue-soft)]"
+              >
+                {label} <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

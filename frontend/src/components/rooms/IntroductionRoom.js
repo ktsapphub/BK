@@ -7,7 +7,7 @@ export default function IntroductionRoom({ section }) {
   const imageOnRight = (c.image_position || "right") === "right";
 
   const textBlock = (
-    <div className="flex-1">
+    <div className="flex-1 min-w-0">
       <RoomEyebrow dark={t.isDark}>{c.badge || "Introduction"}</RoomEyebrow>
       <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em] mb-6" data-testid="intro-heading">
         {c.heading || "Introduction"}
@@ -46,9 +46,10 @@ export default function IntroductionRoom({ section }) {
   );
 
   const imageBlock = c.portrait_url ? (
-    <div className="flex-1 flex justify-center">
-      <div className="relative w-full max-w-sm aspect-[4/5] rounded-[var(--radius-md)] overflow-hidden shadow-[var(--shadow-room)] border border-[var(--border-primary)]">
-        <img src={c.portrait_url} alt="Portrait of Bretton J. Key" className="w-full h-full object-cover" loading="lazy" />
+    <div className="w-full md:flex-1 min-w-0 flex justify-center">
+      <div className="relative w-full max-w-sm aspect-[4/5] [@supports_not_(aspect-ratio:1)]:h-[420px] rounded-[var(--radius-md)] overflow-hidden shadow-[var(--shadow-room)] border border-[var(--border-primary)]">
+        {/* absolute fill: iOS Safari collapses percentage-height imgs inside aspect-ratio flex children */}
+        <img src={c.portrait_url} alt="Portrait of Bretton J. Key" className="absolute inset-0 w-full h-full object-cover" />
       </div>
     </div>
   ) : null;
