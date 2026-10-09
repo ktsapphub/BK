@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, ExternalLink, Linkedin } from "lucide-react";
+import { Download, ExternalLink, FileText, Linkedin } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RESUME_PAGES, resumeUrl } from "@/lib/resume";
 import { RoomWrapper, RoomContainer, RoomEyebrow, EmptyRoomNotice } from "./RoomWrapper";
 import { themeFor } from "@/lib/theme";
@@ -29,9 +30,7 @@ export default function ResumeRoom({ section, careerEntries, settings }) {
             <h2 className="font-display font-bold text-3xl md:text-4xl tracking-[-0.01em]">{c.heading || "Twenty Years in Motion"}</h2>
           </div>
           <div className="flex gap-3">
-            <a href={pdf} download="Bretton_Key_Resume.pdf" data-testid="resume-download-button" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-4 py-2 font-display text-xs font-semibold uppercase tracking-wide hover:bg-[var(--background-blue-soft)]">
-              <Download className="h-3.5 w-3.5" /> Download résumé
-            </a>
+            <ResumeButton pdf={pdf} />
             {settings?.social_linkedin && (
               <a href={settings.social_linkedin} target="_blank" rel="noopener noreferrer" data-testid="resume-linkedin-link" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-4 py-2 font-display text-xs font-semibold uppercase tracking-wide hover:bg-[var(--background-blue-soft)]">
                 <Linkedin className="h-3.5 w-3.5" /> LinkedIn
@@ -129,34 +128,41 @@ export default function ResumeRoom({ section, careerEntries, settings }) {
             </Accordion>
           </>
         )}
-
-        <ResumePreview pdf={pdf} />
       </RoomContainer>
     </RoomWrapper>
   );
 }
 
-// Page images render the same on every browser (iOS Safari shows only page 1 of an
-// embedded PDF), so the preview is the pages themselves, with the real PDF one tap away.
-function ResumePreview({ pdf }) {
+// "Résumé" opens the pages in a scrollable overlay with the full PDF one tap away.
+// Page images look the same on every browser (iOS Safari shows only page 1 of an embedded PDF).
+function ResumeButton({ pdf }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="mt-16" data-testid="resume-preview">
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
-        <h3 className="font-display font-bold text-xl md:text-2xl">The full résumé</h3>
-        <div className="flex flex-wrap gap-3">
-          <a href={pdf} download="Bretton_Key_Resume.pdf" data-testid="resume-preview-download" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--surface-blue)] px-4 py-2.5 font-display text-xs font-semibold uppercase tracking-wide text-white hover:opacity-90">
-            <Download className="h-3.5 w-3.5" aria-hidden="true" /> Download PDF
-          </a>
-          <a href={pdf} target="_blank" rel="noopener noreferrer" data-testid="resume-preview-open" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-4 py-2.5 font-display text-xs font-semibold uppercase tracking-wide hover:bg-[var(--background-blue-soft)]">
-            Open full size <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-          </a>
-        </div>
-      </div>
-      <div className="max-h-[78vh] overflow-y-auto overscroll-contain rounded-[var(--radius-md)] border border-[var(--border-blue)] bg-[var(--background-blue-soft)] p-3 md:p-5 space-y-4" tabIndex={0} aria-label="Résumé preview, scrollable">
-        {RESUME_PAGES.map((src, i) => (
-          <img key={src} src={src} alt={`Bretton Key résumé, page ${i + 1} of ${RESUME_PAGES.length}`} width="935" height="1210" loading="lazy" className="block w-full max-w-[760px] h-auto mx-auto bg-white shadow-[var(--shadow-room)] rounded-sm" />
-        ))}
-      </div>
-    </div>
+    <>
+      <button type="button" onClick={() => setOpen(true)} data-testid="resume-download-button" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-4 py-2 font-display text-xs font-semibold uppercase tracking-wide hover:bg-[var(--background-blue-soft)]">
+        <FileText className="h-3.5 w-3.5" aria-hidden="true" /> Résumé
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent data-testid="resume-overlay" className="max-w-3xl w-[calc(100vw-24px)] p-0 gap-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--background-primary)]">
+          <div className="flex flex-wrap items-center gap-3 px-5 py-4 pr-12 border-b border-[var(--border-blue)]">
+            <DialogTitle className="font-display font-bold text-lg">Résumé</DialogTitle>
+            <DialogDescription className="sr-only">Two-page résumé preview. Scroll to read, or download the full PDF.</DialogDescription>
+            <div className="ml-auto flex gap-2">
+              <a href={pdf} download="Bretton_Key_Resume.pdf" data-testid="resume-overlay-download" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--surface-blue)] px-3.5 py-2 font-display text-xs font-semibold uppercase tracking-wide text-white hover:opacity-90">
+                <Download className="h-3.5 w-3.5" aria-hidden="true" /> Download full version
+              </a>
+              <a href={pdf} target="_blank" rel="noopener noreferrer" aria-label="Open the PDF in a new tab" className="focus-ring hidden sm:inline-flex items-center rounded-[var(--radius-sm)] border border-[var(--border-blue)] px-2.5 py-2 hover:bg-[var(--background-blue-soft)]">
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+          <div data-lenis-prevent className="max-h-[78vh] overflow-y-auto overscroll-contain bg-[var(--background-blue-soft)] p-3 sm:p-5 space-y-4" data-testid="resume-overlay-pages">
+            {RESUME_PAGES.map((src, i) => (
+              <img key={src} src={src} alt={`Bretton Key résumé, page ${i + 1} of ${RESUME_PAGES.length}`} width="935" height="1210" className="block w-full h-auto bg-white shadow-[var(--shadow-room)] rounded-sm" />
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
