@@ -2,6 +2,7 @@ import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { themeFor } from "@/lib/theme";
 import ConnectForm from "@/components/connect/ConnectForm";
 import { Mail, Phone, MapPin, CalendarClock, Linkedin, Download } from "lucide-react";
+import { resumeUrl } from "@/lib/resume";
 
 export default function ContactRoom({ section, settings, projects }) {
   const c = section.content || {};
@@ -11,7 +12,7 @@ export default function ContactRoom({ section, settings, projects }) {
     c.scheduling_url && { label: "Schedule a Conversation", href: c.scheduling_url, icon: CalendarClock, external: true },
     { label: "Send a Message", href: "#contact-form-anchor", icon: Mail, scrollTo: true },
     settings?.social_linkedin && { label: "Connect on LinkedIn", href: settings.social_linkedin, icon: Linkedin, external: true },
-    settings?.resume_pdf_url && { label: "Download Résumé", href: settings.resume_pdf_url, icon: Download, external: true },
+    { label: "Download Résumé", href: resumeUrl(settings), icon: Download, external: true },
   ].filter(Boolean);
 
   return (
