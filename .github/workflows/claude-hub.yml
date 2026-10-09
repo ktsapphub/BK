@@ -25,6 +25,7 @@ on:
       base_branch: { description: "Branch to start from and open the PR into (staging-first projects)", required: false, type: string, default: "" }
       mobile_dir: { description: "Expo app folder (mobile projects); empty = no phone preview", required: false, type: string, default: "" }
       mobile_build: { description: "android = also start an EAS preview build", required: false, type: string, default: "" }
+      max_minutes: { description: "Time limit for the agent step, in minutes", required: false, type: string, default: "40" }
 
 permissions:
   contents: write
@@ -73,8 +74,10 @@ jobs:
           if [ -f .claude/HANDOFF.md ]; then echo "memory: HANDOFF.md ($(wc -l < .claude/HANDOFF.md) lines)"; else echo "memory: none yet"; fi
           # Pull the live skill pack from the hub so every run uses the current skills
           # (memory, usage, security, design...) without a PR to this repo.
-          SYNCED=0; PACKV=""
-          if [ -n "$HUB_URL" ] && curl -sf "$HUB_URL/api/hooks/skillpack" -H "authorization: Bearer $HUB_SECRET" -o /tmp/pack.json; then
+          SYNCED=0; PACKV=""; CODE=""
+          [ -n "$HUB_URL" ] && CODE=$(curl -s -o /tmp/pack.json -w '%{http_code}' "$HUB_URL/api/hooks/skillpack" -H "authorization: Bearer $HUB_SECRET" || true)
+          # Only a real skill pack counts. A login page (e.g. Cloudflare Access in front of the hub) must never fail the run.
+          if [ "$CODE" = "200" ] && jq -e '.files | type == "object"' /tmp/pack.json >/dev/null 2>&1; then
             while IFS= read -r f; do
               case "$f" in /*|*..*) continue ;; esac
               mkdir -p ".claude/skills/$(dirname "$f")"
@@ -83,11 +86,13 @@ jobs:
             done < <(jq -r '.files | keys[]' /tmp/pack.json)
             PACKV=$(jq -r '.version' /tmp/pack.json)
             echo "skills: synced $SYNCED files from hub (pack $PACKV)"
+          elif [ -n "$HUB_URL" ]; then
+            echo "::warning::HUB_UNREACHABLE: $HUB_URL/api/hooks/skillpack answered HTTP ${CODE:-none} without a skill pack. If it's 302 or a login page, Cloudflare Access (or another login) sits in front of the hub: add a Bypass for /api/hooks/* or remove it. Using the skills committed in this repo."
           else
-            echo "skills: using the copy committed in .claude/skills (hub not reachable)"
+            echo "skills: using the copy committed in .claude/skills (HUB_URL not set)"
           fi
           if [ -n "$HUB_URL" ]; then
-            curl -s -X POST "$HUB_URL/api/hooks/run" -H "authorization: Bearer $HUB_SECRET" -H "content-type: application/json" \
+            curl -s -o /dev/null -X POST "$HUB_URL/api/hooks/run" -H "authorization: Bearer $HUB_SECRET" -H "content-type: application/json" \
               -d "{\"run_id\":\"$RUN_ID\",\"phase\":\"started\",\"skills_synced\":$SYNCED,\"skills_version\":\"$PACKV\",\"actions_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}" || true
           fi
 
@@ -202,6 +207,10 @@ jobs:
       - name: "Agent team · Claude Code"
         id: claude
         uses: anthropics/claude-code-action@v1
+        # Hard time limit: a stuck or looping agent is stopped instead of running the hour out.
+        timeout-minutes: ${{ fromJSON(inputs.max_minutes || '40') }}
+        # The action fails a run that FINISHED but used a few more turns than the cap; the next step keeps that work.
+        continue-on-error: true
         env:
           RAILWAY_API_TOKEN: ${{ steps.railway.outputs.on == '1' && secrets.RAILWAY_API_TOKEN || '' }}
           RAILWAY_TOKEN: ${{ steps.railway.outputs.on == '1' && secrets.RAILWAY_TOKEN || '' }}
@@ -224,8 +233,24 @@ jobs:
             ${{ inputs.model != '' && format('--model {0}', inputs.model) || '' }}
             --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Task,TodoWrite,WebFetch,Bash(npm *),Bash(npx *),Bash(pnpm *),Bash(yarn *),Bash(node *),Bash(python *),Bash(python3 *),Bash(pip *),Bash(pytest *),Bash(git status),Bash(git diff *),Bash(git log *),Bash(ls *),Bash(cat *),Bash(mkdir *),Bash(rm *),Bash(mv *),Bash(cp *),Bash(cd *),Bash(find *),Bash(grep *),Bash(rg *),Bash(sed *),Bash(awk *),Bash(head *),Bash(tail *),Bash(wc *),Bash(sort *),Bash(uniq *),Bash(touch *),Bash(chmod *),Bash(echo *),Bash(printf *),Bash(diff *),Bash(test *),Bash(jq *),Bash(curl *),Bash(sleep *),Bash(timeout *),Bash(kill *),Bash(bun *),Bash(bunx *),Bash(uv *),Bash(git show *),Bash(git rm *),Bash(git mv *),Bash(graphify *),Bash(pipx *),Bash(railway *),mcp__context7,mcp__playwright,mcp__firecrawl"
 
+      - name: "Hub · did the agent finish?"
+        id: verdict
+        if: always()
+        env:
+          EXEC_FILE: ${{ steps.claude.outputs.execution_file }}
+          OUTCOME: ${{ steps.claude.outcome }}
+        run: |
+          SUB=""
+          [ -n "$EXEC_FILE" ] && [ -f "$EXEC_FILE" ] && SUB=$(jq -r '[.[] | select(.type=="result")] | last | .subtype // empty' "$EXEC_FILE" 2>/dev/null)
+          if [ "$OUTCOME" = "success" ] || [ "$SUB" = "success" ]; then
+            [ "$OUTCOME" = "success" ] || echo "::notice::The agent finished its work but went past the turn cap; keeping the work."
+            echo "ok=1" >> "$GITHUB_OUTPUT"; echo "outcome=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=0" >> "$GITHUB_OUTPUT"; echo "outcome=${OUTCOME:-failure}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: "Bram · checks"
-        if: inputs.mode != 'assess'
+        if: inputs.mode != 'assess' && steps.verdict.outputs.ok == '1'
         continue-on-error: true
         run: |
           if [ -f package.json ] && grep -q '"test"' package.json; then
@@ -236,7 +261,7 @@ jobs:
 
       - name: "Priya · phone preview"
         id: mobile
-        if: inputs.mobile_dir != '' && inputs.mode != 'assess'
+        if: inputs.mobile_dir != '' && inputs.mode != 'assess' && steps.verdict.outputs.ok == '1'
         continue-on-error: true
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -281,7 +306,7 @@ jobs:
 
       - name: "Ines · commit, push & open PR"
         id: pr
-        if: inputs.mode != 'assess'
+        if: inputs.mode != 'assess' && steps.verdict.outputs.ok == '1'
         env:
           GH_TOKEN: ${{ secrets.HUB_PR_TOKEN || github.token }}
           TITLE: ${{ inputs.title }}
@@ -330,12 +355,18 @@ jobs:
           path: .hub/out/
           retention-days: 30
 
+      - name: "Hub · mark a failed agent run"
+        if: always() && steps.verdict.outputs.ok != '1'
+        run: |
+          echo "::error::The agent didn't finish (${{ steps.claude.outcome }})."
+          exit 1
+
       - name: "Report to hub"
         if: always()
         env:
           EXEC_FILE: ${{ steps.claude.outputs.execution_file }}
           PR_URL: ${{ steps.pr.outputs.url }}
-          OUTCOME: ${{ steps.claude.outcome }}
+          OUTCOME: ${{ steps.verdict.outputs.outcome || steps.claude.outcome }}
           M_PREVIEW: ${{ steps.mobile.outputs.preview }}
           M_BUILD: ${{ steps.mobile.outputs.build }}
           M_ERROR: ${{ steps.mobile.outputs.error }}
