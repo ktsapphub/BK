@@ -6,6 +6,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { scrollToElement } from "@/lib/lenisSingleton";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 import { openCalendlyPopup } from "@/lib/calendly";
+import { resumeUrl } from "@/lib/resume";
 
 // Minimal floating site navigation.
 // - Desktop: vertical chapter-index edge rail + progress line (left), and a
@@ -107,9 +108,7 @@ export default function SiteNav({ navItems, settings }) {
 
   const persistentActions = useMemo(() => {
     const list = [];
-    if (settings?.resume_pdf_url) {
-      list.push({ key: "download-resume", label: "Download Résumé", icon: Download, href: settings.resume_pdf_url, external: true });
-    }
+    list.push({ key: "download-resume", label: "Download Résumé", icon: Download, href: resumeUrl(settings), external: true });
     if (settings?.social_linkedin) {
       list.push({ key: "connect-linkedin", label: "Connect on LinkedIn", icon: Linkedin, href: settings.social_linkedin, external: true });
     }

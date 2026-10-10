@@ -5,8 +5,11 @@ import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
 // wrapping at half the scroll width for a seamless loop. Touch swipes stay native
 // (auto-scroll resumes 1.5s after the finger lifts); pauses on hover/focus.
 // With prefers-reduced-motion it stays static but remains swipeable.
-export function useAutoScroll(speed = 40) {
+// `hold` (e.g. a card is expanded) keeps it still until released.
+export function useAutoScroll(speed = 40, hold = false) {
   const ref = useRef(null);
+  const holdRef = useRef(hold);
+  holdRef.current = hold;
   const reduced = useReducedMotionPref();
 
   useEffect(() => {
@@ -27,7 +30,8 @@ export function useAutoScroll(speed = 40) {
       const dt = Math.min(now - last, 64);
       last = now;
       const half = el.scrollWidth / 2;
-      if (!paused && half > el.clientWidth) {
+      if (holdRef.current) pos = el.scrollLeft;
+      if (!paused && !holdRef.current && half > el.clientWidth) {
         pos += (speed * dt) / 1000;
         if (pos >= half) pos -= half;
         el.scrollLeft = pos;

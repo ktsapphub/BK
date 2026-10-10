@@ -15,6 +15,7 @@ from auth_utils import (
     get_current_admin, now_iso, AUTH_COOKIE_NAME, JWT_EXPIRE_HOURS,
 )
 from storage_utils import init_storage, put_object, get_object
+from content_migrations import run_content_migrations
 from models import (
     LoginRequest, UserCreate, ChangePasswordRequest, SetPasswordRequest, PageviewCreate, PageCreate, SectionCreate, SectionUpdate,
     CareerEntryCreate, TestimonialCreate, ProjectCreate, ServiceCreate,
@@ -51,6 +52,10 @@ async def startup():
     except Exception as e:
         logger.error(f"Storage init failed: {e}")
     await seed_admin()
+    try:
+        await run_content_migrations(db, logger)
+    except Exception as e:  # content updates must never stop the site from starting
+        logger.error(f"Content migration failed: {e}")
     existing_settings = await db.global_settings.find_one({"key": "site"})
     if not existing_settings:
         await db.global_settings.insert_one({
