@@ -8,7 +8,7 @@ description: "Apply on every run. Spend the fewest tokens and turns that still p
 The goal is code that works and ships, written with as little usage as possible, so Bretton never hits limits mid-project.
 
 ## Write less code (ponytail)
-The ponytail plugin is installed. Follow its ladder: skip what isn't needed → reuse what's in the repo → stdlib or platform feature → one-liner → only then new code. Never cut input validation, error handling, security or accessibility to save lines. Use `ponytail-review` on your diff before finishing.
+The ponytail plugin is installed (also humanizer, caveman and web-animation-skills). Follow ponytail's ladder: skip what isn't needed → reuse what's in the repo → stdlib or platform feature → one-liner → only then new code. Never cut input validation, error handling, security or accessibility to save lines. Use `ponytail-review` on your diff before finishing.
 
 ## Do the right phase (agent-skills)
 The agent-skills plugin covers spec, plan, build, verify, review and ship. Pick the skill for the phase you're in rather than improvising a process. For a vibe-coded app being made production-ready, that usually means spec → tests → build → review.
@@ -25,3 +25,8 @@ The agent-skills plugin covers spec, plan, build, verify, review and ship. Pick 
 
 ## When a model is unavailable
 If Claude is rate-limited or out of credits, the hub re-runs the work through the OmniRoute gateway automatically. Write code that doesn't depend on which model wrote it: clear names, small functions, tests that prove behavior.
+
+## Copy and motion (humanizer, web-animation-skills)
+- Any words a person will read (page copy, button labels, emails, PR descriptions, release notes, the run summary for Bretton) go through `humanizer` in embedded mode: final text only, no AI tells, no em dashes, facts unchanged.
+- Motion work (transitions, micro-interactions, scroll or SVG animation, Lottie, GSAP) follows `web-animation-skills`: animate transform/opacity only at 60fps, respect prefers-reduced-motion, verify by rendering a frame.
+- `caveman` is for your own scratch notes and tool chatter if you want fewer tokens; never for anything Bretton reads or anything saved (code comments, commits, PRs, docs).
