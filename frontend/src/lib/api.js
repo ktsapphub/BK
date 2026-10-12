@@ -38,6 +38,7 @@ export const publicApi = {
   getThoughts: () => api.get(`/public/thoughts`).then((r) => r.data),
   getThought: (slug) => api.get(`/public/thoughts/${slug}`).then((r) => r.data),
   getImpactItems: () => api.get(`/public/impact-items`).then((r) => r.data),
+  getImpactCategories: () => api.get(`/public/impact-categories`).then((r) => r.data),
   getNavigation: () => api.get(`/public/navigation`).then((r) => r.data),
   getGlobalSettings: () => api.get(`/public/global-settings`).then((r) => r.data),
   submitInquiry: (payload) => api.post(`/public/inquiries`, payload).then((r) => r.data),
@@ -111,6 +112,10 @@ export const adminApi = {
   createImpactItem: (payload) => api.post(`/admin/impact-items`, payload).then((r) => r.data),
   updateImpactItem: (id, payload) => api.put(`/admin/impact-items/${id}`, payload).then((r) => r.data),
   deleteImpactItem: (id) => api.delete(`/admin/impact-items/${id}`).then((r) => r.data),
+  listImpactCategories: () => api.get(`/admin/impact-categories`).then((r) => r.data),
+  createImpactCategory: (payload) => api.post(`/admin/impact-categories`, payload).then((r) => r.data),
+  updateImpactCategory: (id, payload) => api.put(`/admin/impact-categories/${id}`, payload).then((r) => r.data),
+  deleteImpactCategory: (id, moveTo) => api.delete(`/admin/impact-categories/${id}`, { params: moveTo ? { move_to: moveTo } : {} }).then((r) => r.data),
 
   listNavItems: () => api.get(`/admin/navigation-items`).then((r) => r.data),
   createNavItem: (payload) => api.post(`/admin/navigation-items`, payload).then((r) => r.data),

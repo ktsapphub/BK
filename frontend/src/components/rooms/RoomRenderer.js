@@ -38,7 +38,7 @@ export default function RoomRenderer({ section, data, onSkipIntro }) {
       return <TestimonialsRoom section={section} testimonials={data.testimonials} />;
     case "media":
     case "impact":
-      return <ImpactRoom section={section} impactItems={data.impactItems} />;
+      return <ImpactRoom section={section} impactItems={data.impactItems} categories={data.impactCategories} />;
     case "personal":
       return <PersonalRoom section={section} />;
     case "gallery":

@@ -20,7 +20,7 @@ export default function Home() {
     let mounted = true;
     async function load() {
       try {
-        const [page, careerEntries, testimonials, projects, services, thoughts, impactItems, nav, siteSettings] =
+        const [page, careerEntries, testimonials, projects, services, thoughts, impactItems, impactCategories, nav, siteSettings] =
           await Promise.all([
             publicApi.getPage("home"),
             publicApi.getCareerEntries(),
@@ -29,12 +29,13 @@ export default function Home() {
             publicApi.getServices(),
             publicApi.getThoughts(),
             publicApi.getImpactItems(),
+            publicApi.getImpactCategories().catch(() => null), // ImpactRoom falls back to its defaults
             publicApi.getNavigation(),
             publicApi.getGlobalSettings(),
           ]);
         if (!mounted) return;
         setPageData(page);
-        setSupplementary({ careerEntries, testimonials, projects, services, thoughts, impactItems, settings: siteSettings });
+        setSupplementary({ careerEntries, testimonials, projects, services, thoughts, impactItems, impactCategories, settings: siteSettings });
         setNavItems(nav);
         setSettings(siteSettings);
         if (siteSettings?.seo_default_title) document.title = siteSettings.seo_default_title;
