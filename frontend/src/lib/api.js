@@ -8,6 +8,27 @@ export const API = `${BACKEND_URL}/api`;
 // localStorage/JS-readable state, reducing exposure to XSS token theft.
 export const api = axios.create({ baseURL: API, withCredentials: true });
 
+// Staging runs the site and the API on two *.up.railway.app addresses. Browsers treat those as
+// unrelated sites and don't send the login cookie between them, so the admin bounced straight
+// back to the login screen. Only in that cross-site case, the session token is kept for this
+// tab (sessionStorage, cleared when the tab closes) and sent as a Bearer header, which the
+// backend already accepts. Production (brettonkey.com + api.brettonkey.com) keeps cookie-only.
+const siteOf = (h) => (/\.up\.railway\.app$/.test(h) ? h : h.split(".").slice(-2).join("."));
+export const CROSS_SITE = (() => {
+  try { return typeof window !== "undefined" && siteOf(new URL(API).hostname) !== siteOf(window.location.hostname); } catch { return false; }
+})();
+const TOKEN_KEY = "bk_admin_session";
+export const sessionToken = {
+  get: () => { try { return CROSS_SITE ? sessionStorage.getItem(TOKEN_KEY) : null; } catch { return null; } },
+  set: (t) => { try { if (CROSS_SITE && t) sessionStorage.setItem(TOKEN_KEY, t); } catch {} },
+  clear: () => { try { sessionStorage.removeItem(TOKEN_KEY); } catch {} },
+};
+api.interceptors.request.use((config) => {
+  const t = sessionToken.get();
+  if (t && !config.headers?.Authorization) config.headers = { ...config.headers, Authorization: `Bearer ${t}` };
+  return config;
+});
+
 // Defense-in-depth for the cookie-based session: if any admin request comes
 // back 401 (expired/cleared/stale session — including a race right after
 // logout), broadcast an event so AuthContext can immediately clear local
@@ -19,6 +40,7 @@ api.interceptors.response.use(
     const status = error?.response?.status;
     const url = error?.config?.url || "";
     if (status === 401 && url.includes("/admin") && typeof window !== "undefined") {
+      if (!url.includes("/admin/login")) sessionToken.clear();
       window.dispatchEvent(new CustomEvent("bk:auth:unauthorized"));
     }
     return Promise.reject(error);
@@ -38,6 +60,7 @@ export const publicApi = {
   getThoughts: () => api.get(`/public/thoughts`).then((r) => r.data),
   getThought: (slug) => api.get(`/public/thoughts/${slug}`).then((r) => r.data),
   getImpactItems: () => api.get(`/public/impact-items`).then((r) => r.data),
+  getImpactCategories: () => api.get(`/public/impact-categories`).then((r) => r.data),
   getNavigation: () => api.get(`/public/navigation`).then((r) => r.data),
   getGlobalSettings: () => api.get(`/public/global-settings`).then((r) => r.data),
   submitInquiry: (payload) => api.post(`/public/inquiries`, payload).then((r) => r.data),
@@ -50,8 +73,8 @@ export const publicApi = {
 // Admin
 // ---------------------------------------------------------------------------
 export const adminApi = {
-  login: (email, password) => api.post(`/admin/login`, { email, password }).then((r) => r.data),
-  logout: () => api.post(`/admin/logout`).then((r) => r.data),
+  login: (email, password) => api.post(`/admin/login`, { email, password }).then((r) => { sessionToken.set(r.data?.token); return r.data; }),
+  logout: () => api.post(`/admin/logout`).then((r) => r.data).finally(() => sessionToken.clear()),
   me: () => api.get(`/admin/me`).then((r) => r.data),
 
   uploadMedia: (file, onProgress) => {
@@ -111,6 +134,10 @@ export const adminApi = {
   createImpactItem: (payload) => api.post(`/admin/impact-items`, payload).then((r) => r.data),
   updateImpactItem: (id, payload) => api.put(`/admin/impact-items/${id}`, payload).then((r) => r.data),
   deleteImpactItem: (id) => api.delete(`/admin/impact-items/${id}`).then((r) => r.data),
+  listImpactCategories: () => api.get(`/admin/impact-categories`).then((r) => r.data),
+  createImpactCategory: (payload) => api.post(`/admin/impact-categories`, payload).then((r) => r.data),
+  updateImpactCategory: (id, payload) => api.put(`/admin/impact-categories/${id}`, payload).then((r) => r.data),
+  deleteImpactCategory: (id, moveTo) => api.delete(`/admin/impact-categories/${id}`, { params: moveTo ? { move_to: moveTo } : {} }).then((r) => r.data),
 
   listNavItems: () => api.get(`/admin/navigation-items`).then((r) => r.data),
   createNavItem: (payload) => api.post(`/admin/navigation-items`, payload).then((r) => r.data),

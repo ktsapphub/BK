@@ -1,3 +1,5 @@
+import { IMPACT_ICONS } from "./impactIcons";
+
 export const COLLECTION_SCHEMAS = {
   career_entries: [
     { name: "title", type: "text", label: "Title" },
@@ -74,7 +76,7 @@ export const COLLECTION_SCHEMAS = {
     { name: "title", type: "text", label: "Title" },
     { name: "org", type: "text", label: "Source / Medium (e.g. USA Today)" },
     { name: "date", type: "text", label: "Date" },
-    { name: "category", type: "select", label: "Category", options: ["Feature", "Podcast", "TV & Video"] },
+    { name: "category", type: "select", label: "Category", options: [] }, // AdminImpact fills from the live category list
     { name: "image_url", type: "image", label: "Image" },
     { name: "video_url", type: "text", label: "Video URL (YouTube/Vimeo/MP4 — optional)" },
     { name: "description", type: "textarea", label: "Short Description" },
@@ -82,5 +84,12 @@ export const COLLECTION_SCHEMAS = {
     { name: "role", type: "text", label: "Role" },
     { name: "featured", type: "boolean", label: "Featured" },
     { name: "is_published", type: "boolean", label: "Published (visible on site)" },
+  ],
+  impact_categories: [
+    { name: "label", type: "text", label: "Label (tile title)" },
+    { name: "key", type: "text", label: "Key (saved on each item; renaming updates all its items)" },
+    { name: "subtitle", type: "text", label: "Subtitle" },
+    { name: "icon", type: "select", label: "Icon", options: Object.keys(IMPACT_ICONS) },
+    { name: "is_published", type: "boolean", label: "Visible on site" },
   ],
 };

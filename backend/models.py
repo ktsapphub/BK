@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Literal
 
 VALID_SECTION_TYPES = {
     "hero", "introduction", "values", "logos", "thoughts", "resume", "services",
@@ -171,6 +171,19 @@ class ImpactItemCreate(BaseModel):
     featured: bool = False
     is_published: bool = False
     display_order: int = 0
+
+
+IMPACT_ICONS = ("Newspaper", "Mic", "Tv", "Video", "Award", "Mic2", "BookOpen", "Globe")
+
+
+class ImpactCategoryCreate(BaseModel):
+    # key is what impact_items.category stores; legacy keys like "TV & Video" are not slugs.
+    key: str = Field(min_length=1, max_length=60, pattern=r"\S")
+    label: str = Field(min_length=1, max_length=80)
+    subtitle: str = Field("", max_length=120)
+    icon: Literal[IMPACT_ICONS] = "Newspaper"
+    order: Optional[int] = None
+    is_published: bool = True
 
 
 class NavigationItemCreate(BaseModel):

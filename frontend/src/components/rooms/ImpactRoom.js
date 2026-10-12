@@ -2,15 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { themeFor } from "@/lib/theme";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { ExternalLink, Mic, Newspaper, Tv, ChevronLeft, ChevronRight } from "lucide-react";
+import { ExternalLink, Newspaper, ChevronLeft, ChevronRight } from "lucide-react";
 import { resolveVideoEmbed } from "@/lib/mediaEmbed";
 import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
-
-const CATEGORIES = [
-  { key: "Feature", label: "Features", sub: "Digital Publications", icon: Newspaper },
-  { key: "Podcast", label: "Podcasts", sub: "Audio Interviews", icon: Mic },
-  { key: "TV & Video", label: "TV & Video Appearances", sub: "Broadcast & Video", icon: Tv },
-];
+import { IMPACT_ICONS, FALLBACK_IMPACT_CATEGORIES } from "@/lib/impactIcons";
 
 const AUTOPLAY_INTERVAL_MS = 4000;
 
@@ -109,12 +104,14 @@ function ImpactSlide({ item }) {
   );
 }
 
-export default function ImpactRoom({ section, impactItems }) {
+export default function ImpactRoom({ section, impactItems, categories }) {
   const c = section.content || {};
   const list = Array.isArray(impactItems) ? impactItems : [];
   const t = themeFor(section.theme);
   const reduced = useReducedMotionPref();
-  const grouped = CATEGORIES.map((cat) => ({ ...cat, items: list.filter((i) => i.category === cat.key) }));
+  // API returns published categories in order; null/invalid means the API failed.
+  const tiles = Array.isArray(categories) ? categories : FALLBACK_IMPACT_CATEGORIES;
+  const grouped = tiles.map((cat) => ({ ...cat, items: list.filter((i) => i.category === cat.key) }));
   const firstNonEmpty = grouped.find((g) => g.items.length > 0)?.key || null;
   const [activeCategory, setActiveCategory] = useState(firstNonEmpty);
   const [api, setApi] = useState(null);
@@ -155,7 +152,7 @@ export default function ImpactRoom({ section, impactItems }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10" data-testid="impact-category-tiles">
           {grouped.map((cat) => {
-            const Icon = cat.icon;
+            const Icon = IMPACT_ICONS[cat.icon] || Newspaper;
             const isActive = activeCategory === cat.key;
             return (
               <button
@@ -174,7 +171,7 @@ export default function ImpactRoom({ section, impactItems }) {
                 <Icon className="h-5 w-5 mb-3 opacity-80" aria-hidden="true" />
                 <p className="font-display text-lg font-semibold">{cat.label}</p>
                 <p className="font-body text-xs opacity-60 mt-1">
-                  {cat.sub} &middot; {cat.items.length} placement{cat.items.length === 1 ? "" : "s"}
+                  {cat.subtitle && <>{cat.subtitle} &middot; </>}{cat.items.length} placement{cat.items.length === 1 ? "" : "s"}
                 </p>
               </button>
             );
