@@ -56,7 +56,7 @@ function FieldRenderer({ field, value, onChange }) {
             <SelectTrigger data-testid={`admin-field-${field.name}`}><SelectValue placeholder="Select\u2026" /></SelectTrigger>
             <SelectContent>
               {field.options.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                <SelectItem key={opt.value ?? opt} value={opt.value ?? opt}>{opt.label ?? opt}</SelectItem>
               ))}
             </SelectContent>
           </Select>

@@ -64,8 +64,33 @@ async def _work_history_2026_10(db):
     return len(docs)
 
 
+# Today's hardcoded Impact tiles: (key, label, subtitle, icon). Order = list position.
+IMPACT_CATEGORIES = [
+    ("Feature", "Features", "Digital Publications", "Newspaper"),
+    ("Podcast", "Podcasts", "Audio Interviews", "Mic"),
+    ("TV & Video", "TV & Video Appearances", "Broadcast & Video", "Tv"),
+]
+
+
+async def _impact_categories_2026_10(db):
+    n = 0
+    for i, (key, label, subtitle, icon) in enumerate(IMPACT_CATEGORIES):
+        if await db.impact_categories.find_one({"key": key}):
+            continue  # never clobber admin edits
+        await db.impact_categories.insert_one({
+            "id": str(uuid.uuid4()), "key": key, "label": label, "subtitle": subtitle,
+            "icon": icon, "order": i, "is_published": True, "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        n += 1
+    return n
+
+
 # v2 replaces v1 (bullets) with the LinkedIn statements; a fresh database runs both, same result.
-MIGRATIONS = [("2026-10-09-work-history", _work_history_2026_10), ("2026-10-09-work-history-v2", _work_history_2026_10)]
+MIGRATIONS = [
+    ("2026-10-09-work-history", _work_history_2026_10),
+    ("2026-10-09-work-history-v2", _work_history_2026_10),
+    ("2026-10-12-impact-categories", _impact_categories_2026_10),
+]
 
 
 async def run_content_migrations(db, log):

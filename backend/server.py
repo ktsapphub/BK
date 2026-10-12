@@ -16,7 +16,9 @@ from auth_utils import (
 )
 from storage_utils import init_storage, put_object, get_object
 from content_migrations import run_content_migrations
+from impact_categories import CategoryError, create_category, update_category, delete_category
 from models import (
+    ImpactCategoryCreate,
     LoginRequest, UserCreate, ChangePasswordRequest, SetPasswordRequest, PageviewCreate, PageCreate, SectionCreate, SectionUpdate,
     CareerEntryCreate, TestimonialCreate, ProjectCreate, ServiceCreate,
     ThoughtCreate, ImpactItemCreate, NavigationItemCreate,
@@ -40,8 +42,10 @@ REORDER_COLLECTIONS = {
     "services": "services",
     "thoughts": "thoughts",
     "impact_items": "impact_items",
+    "impact_categories": "impact_categories",
     "navigation_items": "navigation_items",
 }
+REORDER_FIELD = {"impact_categories": "order"}  # default is display_order
 
 
 @app.on_event("startup")
@@ -424,8 +428,9 @@ async def reorder_collection(collection: str, body: ReorderRequest, admin=Depend
     if collection not in REORDER_COLLECTIONS:
         raise HTTPException(status_code=400, detail="Invalid collection")
     coll = db[REORDER_COLLECTIONS[collection]]
+    field = REORDER_FIELD.get(collection, "display_order")
     for item in body.items:
-        await coll.update_one({"id": item.id}, {"$set": {"display_order": item.display_order}})
+        await coll.update_one({"id": item.id}, {"$set": {field: item.display_order}})
     return {"success": True}
 
 
@@ -665,6 +670,46 @@ async def delete_impact_item(iid: str, admin=Depends(get_current_admin)):
 @api_router.get("/public/impact-items")
 async def get_public_impact_items():
     return await db.impact_items.find({"is_published": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+# --- impact categories (tiles on the Impact page; impact_items.category stores the key) ---
+def _category_http(e: CategoryError) -> HTTPException:
+    return HTTPException(status_code=e.status, detail=e.detail)
+
+
+@api_router.get("/admin/impact-categories")
+async def list_impact_categories_admin(admin=Depends(get_current_admin)):
+    return await db.impact_categories.find({}, {"_id": 0}).sort("order", 1).to_list(100)
+
+
+@api_router.post("/admin/impact-categories")
+async def create_impact_category(body: ImpactCategoryCreate, admin=Depends(get_current_admin)):
+    doc = {**body.model_dump(), "id": str(uuid.uuid4()), "created_at": now_iso()}
+    try:
+        return clean_doc(await create_category(db, doc))
+    except CategoryError as e:
+        raise _category_http(e)
+
+
+@api_router.put("/admin/impact-categories/{cid}")
+async def update_impact_category(cid: str, body: ImpactCategoryCreate, admin=Depends(get_current_admin)):
+    try:
+        return clean_doc(await update_category(db, cid, body.model_dump()))
+    except CategoryError as e:
+        raise _category_http(e)
+
+
+@api_router.delete("/admin/impact-categories/{cid}")
+async def delete_impact_category(cid: str, move_to: Optional[str] = None, admin=Depends(get_current_admin)):
+    try:
+        return {"success": True, "moved": await delete_category(db, cid, move_to)}
+    except CategoryError as e:
+        raise _category_http(e)
+
+
+@api_router.get("/public/impact-categories")
+async def get_public_impact_categories():
+    return await db.impact_categories.find({"is_published": True}, {"_id": 0}).sort("order", 1).to_list(100)
 
 
 # ===========================================================================

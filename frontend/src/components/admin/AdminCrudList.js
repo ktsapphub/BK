@@ -5,12 +5,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DynamicForm from "./DynamicForm";
 
-export default function AdminCrudList({ title, description, schema, apiMethods, columns, reorderKey, emptyLabel = "item" }) {
+export default function AdminCrudList({ title, description, schema, apiMethods, columns, reorderKey, emptyLabel = "item", moveOnDelete }) {
   const [items, setItems] = useState(null);
   const [editing, setEditing] = useState(null); // object being edited, or {} for new
   const [deletingId, setDeletingId] = useState(null);
+  const [conflict, setConflict] = useState(null); // 409 message when moveOnDelete rows still have dependents
+  const [moveTo, setMoveTo] = useState("");
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -52,14 +55,22 @@ export default function AdminCrudList({ title, description, schema, apiMethods, 
     }
   };
 
-  const handleDelete = async () => {
+  const closeDelete = () => {
+    setDeletingId(null);
+    setConflict(null);
+    setMoveTo("");
+  };
+
+  const handleDelete = async (e) => {
+    e.preventDefault(); // keep the dialog open so a 409 can ask for a move target
     try {
-      await apiMethods.remove(deletingId);
+      await apiMethods.remove(deletingId, moveTo || undefined);
       toast.success(`Deleted ${emptyLabel}`);
-      setDeletingId(null);
+      closeDelete();
       load();
-    } catch (e) {
-      toast.error("Delete failed");
+    } catch (err) {
+      if (moveOnDelete && err.response?.status === 409) setConflict(err.response.data?.detail || "Items still use this.");
+      else toast.error(err.response?.data?.detail || "Delete failed");
     }
   };
 
@@ -146,15 +157,25 @@ export default function AdminCrudList({ title, description, schema, apiMethods, 
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
+      <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && closeDelete()}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this {emptyLabel}?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>{conflict || "This action cannot be undone."}</AlertDialogDescription>
           </AlertDialogHeader>
+          {conflict && (
+            <Select value={moveTo || undefined} onValueChange={setMoveTo}>
+              <SelectTrigger data-testid="admin-move-to-select"><SelectValue placeholder="Move items to…" /></SelectTrigger>
+              <SelectContent className="z-[200]">{/* above the alert overlay (z-[100]) */}
+                {items.filter((it) => it.id !== deletingId).map((it) => (
+                  <SelectItem key={it.id} value={it[moveOnDelete.value]}>{it[moveOnDelete.label]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} data-testid="admin-confirm-delete-button">Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} disabled={!!conflict && !moveTo} data-testid="admin-confirm-delete-button">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

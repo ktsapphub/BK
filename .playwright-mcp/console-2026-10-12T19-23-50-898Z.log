@@ -1,0 +1,5 @@
+[   49893ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3111/undefined/api/public/impact-categories:0
+[   53874ms] [ERROR] Failed to load resource: the server responded with a status of 409 (Conflict) @ http://localhost:3111/admin/undefined/api/admin/impact-categories/2:0
+[  121674ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3111/undefined/api/public/impact-categories:0
+[  125654ms] [ERROR] Failed to load resource: the server responded with a status of 409 (Conflict) @ http://localhost:3111/admin/undefined/api/admin/impact-categories/2:0
+[  126494ms] [WARNING] Select is changing from uncontrolled to controlled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component. @ http://localhost:3111/static/js/main.f28b9cc8.js:1
