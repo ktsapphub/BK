@@ -20,13 +20,24 @@ function serviceUtmTag(title, index) {
   return `${String(index + 1).padStart(2, "0")}_${tag}`;
 }
 
-export default function ServicesRoom({ section, services, settings }) {
+const EXTERNAL = /^https?:\/\//i; // only web links: anything else (javascript:, data:) never becomes an href
+
+export default function ServicesRoom({ section, services, products, settings }) {
   const c = section.content || {};
   const list = Array.isArray(services) ? services : [];
   const t = themeFor(section.theme);
   const [expandedId, setExpandedId] = useState(null);
 
   const toggle = (id) => setExpandedId((cur) => (cur === id ? null : id));
+
+  // CTA: a web link (https://…) opens in a new tab; anything else opens scheduling, as before.
+  const openCta = (svc, i) =>
+    openCalendlyPopup({
+      baseUrl: settings?.scheduling_url,
+      utm: { utm_source: "ServicesRoom", utm_medium: "cta", utm_campaign: "Consulting_Services", utm_content: serviceUtmTag(svc.title, i) },
+      prefill: svc.title ? { customAnswers: { a1: svc.title } } : undefined,
+    });
+  const ctaClass = "focus-ring inline-flex w-fit items-center rounded-[var(--radius-sm)] bg-gradient-to-b from-zinc-500 via-zinc-700 to-zinc-900 px-5 py-2.5 font-display text-xs font-semibold uppercase tracking-wide text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:from-zinc-400 hover:via-zinc-600 hover:to-zinc-800 transition-colors";
 
   return (
     <RoomWrapper id={section.id} theme={section.theme} transitionStyle={section.transition_style} testId="services-room" sectionType={section.section_type} className="py-24 md:py-32">
@@ -69,6 +80,11 @@ export default function ServicesRoom({ section, services, settings }) {
                           <h3 className="font-display text-lg md:text-xl font-semibold text-white" data-testid="service-title">
                             {svc.title}
                           </h3>
+                          {svc.starting_price && (
+                            <p className="font-display text-sm text-white/70 mt-1.5" data-testid="service-price">
+                              From <span className="font-semibold text-white">{svc.starting_price}</span>
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -100,27 +116,15 @@ export default function ServicesRoom({ section, services, settings }) {
                               ))}
                             </ul>
                           )}
-                          {svc.cta_label && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                openCalendlyPopup({
-                                  baseUrl: settings?.scheduling_url,
-                                  utm: {
-                                    utm_source: "ServicesRoom",
-                                    utm_medium: "cta",
-                                    utm_campaign: "Consulting_Services",
-                                    utm_content: serviceUtmTag(svc.title, i),
-                                  },
-                                  prefill: svc.title ? { customAnswers: { a1: svc.title } } : undefined,
-                                })
-                              }
-                              data-testid="service-cta-button"
-                              className="focus-ring inline-flex w-fit items-center rounded-[var(--radius-sm)] bg-gradient-to-b from-zinc-500 via-zinc-700 to-zinc-900 px-5 py-2.5 font-display text-xs font-semibold uppercase tracking-wide text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:from-zinc-400 hover:via-zinc-600 hover:to-zinc-800 transition-colors"
-                            >
+                          {svc.cta_label && (EXTERNAL.test((svc.cta_href || "").trim()) ? (
+                            <a href={svc.cta_href.trim()} target="_blank" rel="noopener noreferrer" data-testid="service-cta-button" className={ctaClass}>
+                              {svc.cta_label}
+                            </a>
+                          ) : (
+                            <button type="button" onClick={() => openCta(svc, i)} data-testid="service-cta-button" className={ctaClass}>
                               {svc.cta_label}
                             </button>
-                          )}
+                          ))}
                         </div>
                       </CollapsibleContent>
                     </div>
@@ -130,7 +134,7 @@ export default function ServicesRoom({ section, services, settings }) {
             })}
           </div>
         )}
-      <ProductsCarousel />
+      <ProductsCarousel products={products} />
       </RoomContainer>
     </RoomWrapper>
   );

@@ -31,7 +31,7 @@ export default function RoomRenderer({ section, data, onSkipIntro }) {
     case "resume":
       return <ResumeRoom section={section} careerEntries={data.careerEntries} settings={data.settings} />;
     case "services":
-      return <ServicesRoom section={section} services={data.services} settings={data.settings} />;
+      return <ServicesRoom section={section} services={data.services} products={data.products} settings={data.settings} />;
     case "projects":
       return <ProjectsRoom section={section} projects={data.projects} />;
     case "testimonials":

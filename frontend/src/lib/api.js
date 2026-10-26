@@ -57,6 +57,7 @@ export const publicApi = {
   getProjects: () => api.get(`/public/projects`).then((r) => r.data),
   getProject: (slug) => api.get(`/public/projects/${slug}`).then((r) => r.data),
   getServices: () => api.get(`/public/services`).then((r) => r.data),
+  getProducts: () => api.get(`/public/products`).then((r) => r.data),
   getThoughts: () => api.get(`/public/thoughts`).then((r) => r.data),
   getThought: (slug) => api.get(`/public/thoughts/${slug}`).then((r) => r.data),
   getImpactItems: () => api.get(`/public/impact-items`).then((r) => r.data),
@@ -124,6 +125,10 @@ export const adminApi = {
   createService: (payload) => api.post(`/admin/services`, payload).then((r) => r.data),
   updateService: (id, payload) => api.put(`/admin/services/${id}`, payload).then((r) => r.data),
   deleteService: (id) => api.delete(`/admin/services/${id}`).then((r) => r.data),
+  listProducts: () => api.get(`/admin/products`).then((r) => r.data),
+  createProduct: (payload) => api.post(`/admin/products`, payload).then((r) => r.data),
+  updateProduct: (id, payload) => api.put(`/admin/products/${id}`, payload).then((r) => r.data),
+  deleteProduct: (id) => api.delete(`/admin/products/${id}`).then((r) => r.data),
 
   listThoughts: () => api.get(`/admin/thoughts`).then((r) => r.data),
   createThought: (payload) => api.post(`/admin/thoughts`, payload).then((r) => r.data),

@@ -85,11 +85,94 @@ async def _impact_categories_2026_10(db):
     return n
 
 
+# An earlier agent run (2026-10-26) shipped a migration to staging that gave main services made-up
+# starting prices and added three made-up services. It was removed before reaching production; this
+# undoes it where it ran. Only exact matches are touched, so on production (and for anything Bretton
+# has since edited in admin) it changes nothing. Prices are set in admin only.
+_PLACEHOLDER_PRICES = {
+    "Agile Delivery Leadership": "$2,500",
+    "Product Ownership & Strategy": "$2,000",
+    "Mentorship & Public Speaking": "$150",
+    "Tech Solutions, Built Around You": "$1,500",
+}
+_PLACEHOLDER_SERVICES = {
+    "Resume & LinkedIn Review": "A line-by-line review that turns military and operations experience into a clear PM story.",
+    "Agile Training & Workshops": "Half-day workshops that give your team a shared delivery vocabulary and a working cadence.",
+    "Fractional Project Management": "Part-time delivery leadership for a program that needs structure but not a full-time hire.",
+}
+
+
+async def _undo_placeholder_services_2026_10(db):
+    if not await db.content_migrations.find_one({"key": "2026-10-26-service-prices"}):
+        return 0  # the placeholder migration never ran on this database (production)
+    n = 0
+    for title, price in _PLACEHOLDER_PRICES.items():
+        r = await db.services.update_one({"title": title, "starting_price": price}, {"$set": {"starting_price": None}})
+        n += r.modified_count
+    for title, desc in _PLACEHOLDER_SERVICES.items():
+        r = await db.services.delete_one({"title": title, "description": desc})
+        n += r.deleted_count
+    return n
+
+
+# The products carousel used to be written into the site code (frontend/src/constants/products.js).
+# This copies those eight cards into the database once, so they're edited in Admin → Products.
+_PRODUCTS_SEED = [
+    ("Workflow Mapping & SOP Toolkit", "Digital kit", "$18", "Turn any process into a diagram and a document someone new could follow, without you in the room.",
+     ["7-page PDF: a four-step method, a diagram picker, three diagram templates, a worked onboarding example, an interview question bank and a fillable SOP template.",
+      "The SOP template, question bank and diagram guide as an editable Excel workbook.",
+      "For small business owners, operations leads, and anyone who is the only person who knows how something works."],
+     "https://ktsguides.gumroad.com/l/workflow", "Buy on Gumroad"),
+    ("PMP Practice Question Bank", "Digital kit", "$20", "500 original scenario questions on the 2026 PMP exam outline, each with a short explanation of why the best answer wins.",
+     ["Print-ready 102-page PDF with the answer key at the back, plus an Excel version you can filter by domain, task and approach.",
+      "Matches the outline weights across all 26 tasks, in predictive, agile and hybrid approaches, with calculations worked out.",
+      "Not affiliated with or endorsed by PMI. Contains no real exam questions. No guarantee of exam results."],
+     "https://ktsguides.gumroad.com/l/pmp", "Buy on Gumroad"),
+    ("The Test Plan Kit", "Digital kit", "$29", "A 6-page guide with worked examples plus an Excel tracker that calls GO or NO-GO from your own release rules.",
+     ["Worked examples: test strategy map, test plan, test cases, defect report and release gate.",
+      "Emailed within 1 business day of purchase."],
+     "https://buy.stripe.com/14A6oHcJR14R4uBb8Dbo40a", "Buy"),
+    ("Process Quick-Look", "Service · 30 min", "$47", "Thirty minutes mapping one slow workflow live, then the three fixes to make first.",
+     ["A one-page summary with the 3 fixes to make first, within 2 business days.",
+      "After paying, book your 30 minutes and reply to the receipt describing the process."],
+     "https://buy.stripe.com/8x2fZh6lt5l7bX3gsXbo409", "Book"),
+    ("PMP Study Plan Session", "Service · 45 min 1:1", "$97", "A personal PMP study plan from a PMP-certified program leader.",
+     ["45 minutes 1:1: a study plan, exam-day strategy and what to practice first.",
+      "After paying, book your session and send your target exam date and study materials so far."],
+     "https://buy.stripe.com/eVqdR96lteVH4uB90vbo408", "Book"),
+    ("Accessibility Quick Audit", "Service · WCAG 2.2 AA", "$197", "One page or flow checked against WCAG 2.2 AA, with plain-language findings and fixes.",
+     ["Each finding has a priority and a fix, delivered in 5 business days, plus a second look after you fix them.",
+      "A findings report, not a legal opinion or certification."],
+     "https://buy.stripe.com/7sYbJ1dNV14R4uBdgLbo40b", "Book"),
+    ("Workflow Snapshot", "Service · 45 min", "$397", "A walkthrough of one process, a current-state map, and the three fixes to make first, in writing.",
+     ["45-minute walkthrough, current-state process map and written recommendations.",
+      "Full refund if it isn't useful."],
+     "https://buy.stripe.com/3cI3cv9xF9Bn5yF2C7bo405", "Book"),
+    ("Process Map & Fix", "Project", "$750 deposit", "Current and future-state process maps, an entity diagram, an SOP and an implementation plan.",
+     ["The deposit starts the engagement; the balance is due on delivery.",
+      "After paying, book a kickoff and complete the intake form."],
+     "https://buy.stripe.com/eVqdR939h4h36CJ1y3bo407", "Start"),
+]
+
+
+async def _products_seed_2026_10(db):
+    if await db.products.count_documents({}):
+        return 0  # products already managed in admin
+    now = datetime.now(timezone.utc).isoformat()
+    docs = [{"id": str(uuid.uuid4()), "name": n, "kind": k, "price": p, "summary": s, "details": d, "href": h, "cta": c,
+             "is_published": True, "display_order": i, "created_at": now}
+            for i, (n, k, p, s, d, h, c) in enumerate(_PRODUCTS_SEED)]
+    await db.products.insert_many(docs)
+    return len(docs)
+
+
 # v2 replaces v1 (bullets) with the LinkedIn statements; a fresh database runs both, same result.
 MIGRATIONS = [
     ("2026-10-09-work-history", _work_history_2026_10),
     ("2026-10-09-work-history-v2", _work_history_2026_10),
     ("2026-10-12-impact-categories", _impact_categories_2026_10),
+    ("2026-10-26-undo-placeholder-services", _undo_placeholder_services_2026_10),
+    ("2026-10-26-products-seed", _products_seed_2026_10),
 ]
 
 
