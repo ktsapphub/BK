@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard, Rows3, Image, Briefcase, MessageSquareQuote, FolderKanban,
   Wrench, Newspaper, Sparkles, Mail, Settings, LogOut, ExternalLink,
-  Compass, Palette, Tags, BarChart3, Users, MailPlus,
+  Compass, Palette, Tags, BarChart3, Users, MailPlus, ShoppingBag,
 } from "lucide-react";
 
 const NAV = [
@@ -16,6 +16,7 @@ const NAV = [
   { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote, testId: "testimonials" },
   { to: "/admin/projects", label: "Projects", icon: FolderKanban, testId: "projects" },
   { to: "/admin/services", label: "Services", icon: Wrench, testId: "services" },
+  { to: "/admin/products", label: "Products", icon: ShoppingBag, testId: "products" },
   { to: "/admin/thoughts", label: "Thoughts", icon: Newspaper, testId: "thoughts" },
   { to: "/admin/impact", label: "Media & Impact", icon: Sparkles, testId: "impact" },
   { to: "/admin/impact-categories", label: "Impact Categories", icon: Tags, testId: "impact-categories" },

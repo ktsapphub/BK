@@ -20,7 +20,7 @@ from impact_categories import CategoryError, create_category, update_category, d
 from models import (
     ImpactCategoryCreate,
     LoginRequest, UserCreate, ChangePasswordRequest, SetPasswordRequest, PageviewCreate, PageCreate, SectionCreate, SectionUpdate,
-    CareerEntryCreate, TestimonialCreate, ProjectCreate, ServiceCreate,
+    CareerEntryCreate, TestimonialCreate, ProjectCreate, ServiceCreate, ProductCreate,
     ThoughtCreate, ImpactItemCreate, NavigationItemCreate,
     GlobalSettingsUpdate, InquiryCreate, NewsletterSignup, ReorderRequest,
     VALID_SECTION_TYPES, VALID_STATUS,
@@ -40,6 +40,7 @@ REORDER_COLLECTIONS = {
     "testimonials": "testimonials",
     "projects": "projects",
     "services": "services",
+    "products": "products",
     "thoughts": "thoughts",
     "impact_items": "impact_items",
     "impact_categories": "impact_categories",
@@ -588,6 +589,60 @@ async def delete_service(sid: str, admin=Depends(get_current_admin)):
 @api_router.get("/public/services")
 async def get_public_services():
     return await db.services.find({"is_published": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+# ===========================================================================
+# PRODUCTS (the "Products & quick help" carousel: kits and short engagements)
+# ===========================================================================
+PRODUCT_FIELDS = set(ProductCreate.model_fields)
+
+
+def _checked_product(body: dict) -> dict:
+    doc = {k: v for k, v in body.items() if k in PRODUCT_FIELDS}
+    href = (doc.get("href") or "").strip()
+    if href and not href.lower().startswith("https://"):
+        raise HTTPException(status_code=400, detail="Checkout link must start with https://")
+    if "href" in doc:
+        doc["href"] = href or None
+    if isinstance(doc.get("details"), list):
+        doc["details"] = [str(d).strip() for d in doc["details"] if str(d).strip()]
+    return doc
+
+
+@api_router.post("/admin/products")
+async def create_product(body: ProductCreate, admin=Depends(get_current_admin)):
+    doc = _checked_product(body.model_dump())
+    last = await db.products.find_one({}, {"_id": 0, "display_order": 1}, sort=[("display_order", -1)])
+    doc["display_order"] = (last or {}).get("display_order", -1) + 1  # new products go to the end
+    doc["id"] = str(uuid.uuid4())
+    doc["created_at"] = now_iso()
+    await db.products.insert_one(doc)
+    return clean_doc(doc)
+
+
+@api_router.get("/admin/products")
+async def list_products_admin(admin=Depends(get_current_admin)):
+    return await db.products.find({}, {"_id": 0}).sort("display_order", 1).to_list(500)
+
+
+@api_router.put("/admin/products/{pid}")
+async def update_product(pid: str, body: dict, admin=Depends(get_current_admin)):
+    doc = _checked_product(body)
+    result = await db.products.update_one({"id": pid}, {"$set": doc})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return await db.products.find_one({"id": pid}, {"_id": 0})
+
+
+@api_router.delete("/admin/products/{pid}")
+async def delete_product(pid: str, admin=Depends(get_current_admin)):
+    await db.products.delete_one({"id": pid})
+    return {"success": True}
+
+
+@api_router.get("/public/products")
+async def get_public_products():
+    return await db.products.find({"is_published": True}, {"_id": 0}).sort("display_order", 1).to_list(500)
 
 
 # ===========================================================================

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { ExternalLink, Plus, Minus } from "lucide-react";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
-import { PRODUCTS } from "@/constants/products";
+import { PRODUCTS as FALLBACK } from "@/constants/products";
+
+const SAFE_LINK = /^https:\/\//i; // checkout links open only if they're https
 
 function ProductCard({ p, open, onToggle, copy }) {
   return (
@@ -19,7 +21,7 @@ function ProductCard({ p, open, onToggle, copy }) {
       <p className="font-body text-sm text-zinc-600 mt-2 leading-relaxed">{p.summary}</p>
       {open && (
         <ul className="mt-3 space-y-2 border-t border-zinc-200 pt-3" data-testid="product-details">
-          {p.details.map((d, i) => (
+          {(p.details || []).map((d, i) => (
             <li key={i} className="font-body text-sm text-zinc-700 leading-relaxed">— {d}</li>
           ))}
         </ul>
@@ -29,9 +31,11 @@ function ProductCard({ p, open, onToggle, copy }) {
           {open ? <Minus className="h-3.5 w-3.5" aria-hidden="true" /> : <Plus className="h-3.5 w-3.5" aria-hidden="true" />}
           {open ? "Show less" : "Read more"}
         </button>
-        <a href={p.href} target="_blank" rel="noopener noreferrer" className="focus-ring ml-auto inline-flex items-center gap-1.5 rounded-full border border-blue-200 px-3 py-1.5 font-display text-xs font-semibold text-blue-700 hover:bg-blue-50">
-          {p.cta} <ExternalLink className="h-3 w-3" aria-hidden="true" />
-        </a>
+        {SAFE_LINK.test(p.href || "") && (
+          <a href={p.href} target="_blank" rel="noopener noreferrer" className="focus-ring ml-auto inline-flex items-center gap-1.5 rounded-full border border-blue-200 px-3 py-1.5 font-display text-xs font-semibold text-blue-700 hover:bg-blue-50">
+            {p.cta || "Buy"} <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
+        )}
       </div>
     </article>
   );
@@ -39,10 +43,14 @@ function ProductCard({ p, open, onToggle, copy }) {
 
 // Auto-scrolling strip of Bretton's products and services. Pauses on hover, focus and
 // touch, and while a card is expanded; still (but swipeable) with reduced motion.
-export default function ProductsCarousel() {
+// products: published items from Admin → Products. null (API unreachable) uses the built-in list;
+// an empty list (everything unpublished) hides the carousel.
+export default function ProductsCarousel({ products = null }) {
+  const PRODUCTS = Array.isArray(products) ? products.map((p) => ({ ...p, id: p.id || p.name })) : FALLBACK;
   const [openId, setOpenId] = useState(null);
   const ref = useAutoScroll(30, !!openId);
   const toggle = (id) => setOpenId((cur) => (cur === id ? null : id));
+  if (!PRODUCTS.length) return null;
   return (
     <div className="mt-16" data-testid="products-carousel">
       <h3 className="font-display font-bold text-xl md:text-2xl">Products & quick help</h3>

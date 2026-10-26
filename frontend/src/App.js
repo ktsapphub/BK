@@ -22,6 +22,7 @@ import AdminCareer from "@/pages/admin/AdminCareer";
 import AdminTestimonials from "@/pages/admin/AdminTestimonials";
 import AdminProjects from "@/pages/admin/AdminProjects";
 import AdminServices from "@/pages/admin/AdminServices";
+import AdminProducts from "@/pages/admin/AdminProducts";
 import AdminThoughts from "@/pages/admin/AdminThoughts";
 import AdminImpact from "@/pages/admin/AdminImpact";
 import AdminImpactCategories from "@/pages/admin/AdminImpactCategories";
@@ -72,6 +73,7 @@ function App() {
             <Route path="testimonials" element={<AdminTestimonials />} />
             <Route path="projects" element={<AdminProjects />} />
             <Route path="services" element={<AdminServices />} />
+            <Route path="products" element={<AdminProducts />} />
             <Route path="thoughts" element={<AdminThoughts />} />
             <Route path="impact" element={<AdminImpact />} />
             <Route path="impact-categories" element={<AdminImpactCategories />} />
