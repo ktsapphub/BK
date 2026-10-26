@@ -134,6 +134,7 @@ class ServiceCreate(BaseModel):
     description: Optional[str] = None
     image_url: Optional[str] = None
     icon: Optional[str] = None
+    starting_price: Optional[str] = None
     capabilities: List[str] = Field(default_factory=list)
     cta_label: Optional[str] = None
     cta_href: Optional[str] = None

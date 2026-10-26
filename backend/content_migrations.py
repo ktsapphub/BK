@@ -85,11 +85,47 @@ async def _impact_categories_2026_10(db):
     return n
 
 
+# Placeholder prices: Bretton edits them in admin. Existing services only get a price if they have none.
+SERVICE_PRICES = {
+    "Agile Delivery Leadership": "$2,500",
+    "Product Ownership & Strategy": "$2,000",
+    "Mentorship & Public Speaking": "$150",
+    "Tech Solutions, Built Around You": "$1,500",
+}
+ADDITIONAL_SERVICES = [
+    ("Resume & LinkedIn Review", "A line-by-line review that turns military and operations experience into a clear PM story.", "$100", "Book a Review"),
+    ("Agile Training & Workshops", "Half-day workshops that give your team a shared delivery vocabulary and a working cadence.", "$1,200", "Plan a Workshop"),
+    ("Fractional Project Management", "Part-time delivery leadership for a program that needs structure but not a full-time hire.", "$3,000/mo", "Discuss Your Program"),
+]
+
+
+async def _service_prices_2026_10(db):
+    n = 0
+    for title, price in SERVICE_PRICES.items():
+        r = await db.services.update_one({"title": title, "starting_price": {"$in": [None, ""]}}, {"$set": {"starting_price": price}})
+        n += r.modified_count
+    last = await db.services.find_one({}, {"_id": 0, "display_order": 1}, sort=[("display_order", -1)])
+    order = (last or {}).get("display_order", 0)
+    for title, desc, price, cta in ADDITIONAL_SERVICES:
+        if await db.services.find_one({"title": title}):
+            continue
+        order += 1
+        await db.services.insert_one({
+            "id": str(uuid.uuid4()), "title": title, "description": desc, "image_url": None, "icon": None,
+            "starting_price": price, "capabilities": [], "cta_label": cta, "cta_href": "contact",
+            "related_project_id": None, "is_published": True, "display_order": order,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        n += 1
+    return n
+
+
 # v2 replaces v1 (bullets) with the LinkedIn statements; a fresh database runs both, same result.
 MIGRATIONS = [
     ("2026-10-09-work-history", _work_history_2026_10),
     ("2026-10-09-work-history-v2", _work_history_2026_10),
     ("2026-10-12-impact-categories", _impact_categories_2026_10),
+    ("2026-10-26-service-prices", _service_prices_2026_10),
 ]
 
 
