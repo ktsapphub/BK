@@ -4,7 +4,6 @@ import { RoomWrapper, RoomContainer, RoomEyebrow } from "./RoomWrapper";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { themeFor } from "@/lib/theme";
 import { openCalendlyPopup } from "@/lib/calendly";
-import { scrollToElement } from "@/lib/lenisSingleton";
 import ProductsCarousel from "./ProductsCarousel";
 
 // Derives a short, human-readable UTM tag for a service so booked Calendly
@@ -31,17 +30,13 @@ export default function ServicesRoom({ section, services, settings }) {
 
   const toggle = (id) => setExpandedId((cur) => (cur === id ? null : id));
 
-  // CTA link: https URL opens a tab; a section id/type scrolls there; blank opens scheduling.
-  const openCta = (svc, i) => {
-    const href = (svc.cta_href || "").trim();
-    const target = href && !EXTERNAL.test(href) && (document.getElementById(href) || document.querySelector(`[data-section-type="${CSS.escape(href)}"]`));
-    if (target) return scrollToElement(target);
+  // CTA: a web link (https://…) opens in a new tab; anything else opens scheduling, as before.
+  const openCta = (svc, i) =>
     openCalendlyPopup({
       baseUrl: settings?.scheduling_url,
       utm: { utm_source: "ServicesRoom", utm_medium: "cta", utm_campaign: "Consulting_Services", utm_content: serviceUtmTag(svc.title, i) },
       prefill: svc.title ? { customAnswers: { a1: svc.title } } : undefined,
     });
-  };
   const ctaClass = "focus-ring inline-flex w-fit items-center rounded-[var(--radius-sm)] bg-gradient-to-b from-zinc-500 via-zinc-700 to-zinc-900 px-5 py-2.5 font-display text-xs font-semibold uppercase tracking-wide text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:from-zinc-400 hover:via-zinc-600 hover:to-zinc-800 transition-colors";
 
   return (
