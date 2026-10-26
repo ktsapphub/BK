@@ -60,6 +60,16 @@ export const COLLECTION_SCHEMAS = {
     { name: "cta_href", type: "text", label: "CTA Link (optional https://… URL; otherwise the button opens scheduling)" },
     { name: "is_published", type: "boolean", label: "Published (visible on site)" },
   ],
+  products: [
+    { name: "name", type: "text", label: "Name" },
+    { name: "kind", type: "text", label: "Type label (e.g. Digital kit, Service · 30 min, Project)" },
+    { name: "price", type: "text", label: "Price (shown as typed, e.g. $18 or $750 deposit)" },
+    { name: "summary", type: "textarea", label: "Summary (on the card)" },
+    { name: "details", type: "array_string", label: "Details (shown under Read more)" },
+    { name: "href", type: "text", label: "Checkout link (https://… Gumroad or Stripe)" },
+    { name: "cta", type: "text", label: "Button text (e.g. Buy on Gumroad, Book)" },
+    { name: "is_published", type: "boolean", label: "Published (visible on site)" },
+  ],
   thoughts: [
     { name: "title", type: "text", label: "Title" },
     { name: "slug", type: "text", label: "Slug" },

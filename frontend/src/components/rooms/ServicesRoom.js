@@ -22,7 +22,7 @@ function serviceUtmTag(title, index) {
 
 const EXTERNAL = /^https?:\/\//i; // only web links: anything else (javascript:, data:) never becomes an href
 
-export default function ServicesRoom({ section, services, settings }) {
+export default function ServicesRoom({ section, services, products, settings }) {
   const c = section.content || {};
   const list = Array.isArray(services) ? services : [];
   const t = themeFor(section.theme);
@@ -134,7 +134,7 @@ export default function ServicesRoom({ section, services, settings }) {
             })}
           </div>
         )}
-      <ProductsCarousel />
+      <ProductsCarousel products={products} />
       </RoomContainer>
     </RoomWrapper>
   );

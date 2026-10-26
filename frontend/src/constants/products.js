@@ -1,5 +1,6 @@
-// Bretton's products and services (KTS Guides catalog, checked against live Stripe and
-// Gumroad on 2026-10-09). Prices are one-time, USD. Edit here to change the carousel.
+// Fallback only. Products are edited in Admin → Products (seeded from this list once by the
+// backend's 2026-10-26-products-seed migration). The carousel uses this list only if the
+// products API can't be reached, so the section never goes blank.
 export const PRODUCTS = [
   {
     id: "workflow-toolkit", name: "Workflow Mapping & SOP Toolkit", price: "$18", kind: "Digital kit",

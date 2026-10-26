@@ -143,6 +143,19 @@ class ServiceCreate(BaseModel):
     display_order: int = 0
 
 
+class ProductCreate(BaseModel):
+    """A card in the "Products & quick help" carousel: a kit or short engagement sold on Gumroad or Stripe."""
+    name: str
+    kind: Optional[str] = None          # e.g. "Digital kit", "Service · 30 min"
+    price: Optional[str] = None         # shown as typed, e.g. "$18" or "$750 deposit"
+    summary: Optional[str] = None
+    details: List[str] = Field(default_factory=list)
+    href: Optional[str] = None          # checkout link (https only)
+    cta: Optional[str] = None           # button text, e.g. "Buy on Gumroad"
+    is_published: bool = True
+    display_order: int = 0
+
+
 class ThoughtCreate(BaseModel):
     title: str
     slug: Optional[str] = None
