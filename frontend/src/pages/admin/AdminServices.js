@@ -12,6 +12,7 @@ export default function AdminServices() {
       reorderKey="services"
       columns={[
         { key: "title", label: "Title" },
+        { key: "starting_price", label: "From" },
         { key: "is_published", label: "Published", render: (i) => (i.is_published ? "Yes" : "No") },
       ]}
       apiMethods={{

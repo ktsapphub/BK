@@ -53,10 +53,11 @@ export const COLLECTION_SCHEMAS = {
   services: [
     { name: "title", type: "text", label: "Title" },
     { name: "description", type: "textarea", label: "Description" },
-    { name: "image_url", type: "image", label: "Image" },
+    { name: "image_url", type: "image", label: "Graphic (optional)" },
+    { name: "starting_price", type: "text", label: "Starting Price (e.g. $150 or $3,000/mo)" },
     { name: "capabilities", type: "array_string", label: "Capabilities" },
     { name: "cta_label", type: "text", label: "CTA Label" },
-    { name: "cta_href", type: "text", label: "CTA Link (room id, e.g. contact)" },
+    { name: "cta_href", type: "text", label: "CTA Link (https://… URL, a section type like contact, or blank to open scheduling)" },
     { name: "is_published", type: "boolean", label: "Published (visible on site)" },
   ],
   thoughts: [
