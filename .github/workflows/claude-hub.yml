@@ -432,7 +432,13 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          if timeout 900 npx --yes wrangler@4 deploy --dry-run --outdir "$RUNNER_TEMP/wrangler-dry" 2>&1 | tee "$RUNNER_TEMP/deploycheck.log"; then
+          # Install the app's own packages first, as Cloudflare's build does. Without node_modules every npm
+          # import (e.g. @cloudflare/puppeteer) looks missing and finished work is wrongly blocked.
+          if [ -f package.json ]; then
+            if [ -f package-lock.json ]; then npm ci --no-audit --no-fund || npm install --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+          fi
+          # --env="" targets the top-level (production) config even when a staging env is defined.
+          if timeout 900 npx --yes wrangler@4 deploy --dry-run --env="" --outdir "$RUNNER_TEMP/wrangler-dry" 2>&1 | tee "$RUNNER_TEMP/deploycheck.log"; then
             echo "result=pass" >> "$GITHUB_OUTPUT"; echo "Builds and bundles cleanly."
           else
             echo "result=fail" >> "$GITHUB_OUTPUT"
