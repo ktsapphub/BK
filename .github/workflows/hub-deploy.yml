@@ -57,8 +57,8 @@ jobs:
         run: |
           if [ -f package.json ]; then (npm ci || npm install) && npm run build --if-present; fi
           npx --yes wrangler@4 versions upload --env staging --preview-alias "pr-$PR" --message "PR #$PR" 2>&1 | tee /tmp/preview.log
-          URL=$(grep -Eo 'https://pr-[^ ]+\.workers\.dev[^ ]*' /tmp/preview.log | tail -1)
-          [ -n "$URL" ] || URL=$(grep -Eo 'https://[^ ]+\.workers\.dev[^ ]*' /tmp/preview.log | tail -1)
+          URL=$(grep -Eo 'https://pr-[^ ]+\.workers\.dev[^ ]*' /tmp/preview.log | tail -1 || true)
+          [ -n "$URL" ] || URL=$(grep -Eo 'https://[^ ]+\.workers\.dev[^ ]*' /tmp/preview.log | tail -1 || true)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           [ -n "$URL" ] || echo "::warning::Uploaded, but Cloudflare returned no preview URL. Turn on Preview URLs for the staging worker (Settings → Domains & Routes) and re-run."
       - name: "Vision · post preview link on the PR"
